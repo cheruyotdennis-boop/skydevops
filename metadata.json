@@ -1,0 +1,8 @@
+{
+  "name": "Fortune Investment",
+  "description": "A professional financial investment platform with M-PESA integration, referral tracking, portfolio growth analytics, interactive charts, and contact management.",
+  "requestFramePermissions": [],
+
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
