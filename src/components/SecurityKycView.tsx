@@ -18,11 +18,13 @@ import { UserProfile } from '../types';
 interface SecurityKycViewProps {
   user: UserProfile;
   onUpdateUser: (updated: Partial<UserProfile>) => void;
+  onOpenCreateProfile?: () => void;
 }
 
 export const SecurityKycView: React.FC<SecurityKycViewProps> = ({
   user,
-  onUpdateUser
+  onUpdateUser,
+  onOpenCreateProfile
 }) => {
   const [walletAddress, setWalletAddress] = useState(user.walletAddressUSDT);
   const [mpesaNumber, setMpesaNumber] = useState(user.mpesaNumber || user.phone || '0712345678');
@@ -47,7 +49,6 @@ export const SecurityKycView: React.FC<SecurityKycViewProps> = ({
     setTimeout(() => setSavedSuccess(false), 2500);
   };
 
-
   return (
     <div className="space-y-6">
       
@@ -55,209 +56,188 @@ export const SecurityKycView: React.FC<SecurityKycViewProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-black text-slate-900 font-heading">
-              Security & Identity Verification (KYC)
+            <h1 className="text-2xl font-black text-white font-heading">
+              Security Vault, KYC & Withdrawal Rails
             </h1>
-            <span className="text-xs font-bold bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              Level 3 KYC Verified
+            <span className="text-xs font-bold bg-emerald-950 text-emerald-300 px-2.5 py-0.5 rounded-full border border-emerald-500/40">
+              KYC Level 2 Verified
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Manage your authenticated withdrawal wallet, 2FA security credentials, and identity credentials.
+          <p className="text-xs sm:text-sm text-slate-400 mt-1">
+            Manage your authenticated payout addresses (TRC-20 & M-PESA), 2-Factor Authentication, and personal identification.
           </p>
         </div>
+
+        {onOpenCreateProfile && (
+          <button
+            onClick={onOpenCreateProfile}
+            className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 px-4 py-2.5 rounded-xl font-black text-xs shadow-md transition-all cursor-pointer hover:from-amber-400 hover:to-yellow-400 shrink-0"
+          >
+            <User className="w-4 h-4" />
+            <span>+ Create / Switch Profile</span>
+          </button>
+        )}
       </div>
 
-      {savedSuccess && (
-        <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl flex items-center gap-2 animate-in fade-in duration-200">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-          <span>Security preferences and withdrawal wallet address updated successfully!</span>
-        </div>
-      )}
-
-      {/* Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Left Column: User Profile Details (1 col) */}
-        <div className="bg-white rounded-3xl p-6 border border-sky-100 shadow-xs space-y-5">
-          <div className="text-center pb-4 border-b border-slate-100">
-            <div className="relative inline-block">
-              <img
-                src={user.avatar}
-                alt={user.fullName}
-                className="w-20 h-20 rounded-2xl object-cover ring-4 ring-sky-500/20 mx-auto"
-              />
-              <span className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full border-2 border-white flex items-center justify-center text-white text-[10px]">
-                ✓
-              </span>
+        {/* Left Column: KYC Status Card */}
+        <div className="space-y-6">
+          <div className="bg-[#0B0F17]/90 rounded-3xl p-6 border border-amber-500/20 shadow-2xl backdrop-blur-xl">
+            <div className="flex items-center gap-3 pb-4 border-b border-slate-800">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-white font-heading">Institutional Verification</h2>
+                <div className="text-xs text-emerald-400 font-bold">100% Fully Compliant</div>
+              </div>
             </div>
-            <h3 className="font-black text-base text-slate-900 mt-3 font-heading">{user.fullName}</h3>
-            <p className="text-xs text-sky-700 font-bold">@{user.username} • {user.tier}</p>
+
+            <div className="mt-4 space-y-3 text-xs">
+              <div className="flex items-center justify-between text-slate-300">
+                <span>Account Tier:</span>
+                <span className="font-bold text-amber-400">{user.tier} Private</span>
+              </div>
+              <div className="flex items-center justify-between text-slate-300">
+                <span>KYC Status:</span>
+                <span className="font-bold text-emerald-400">{user.kycStatus}</span>
+              </div>
+              <div className="flex items-center justify-between text-slate-300">
+                <span>Sponsor ID:</span>
+                <span className="font-mono font-bold text-amber-400">#{user.referralCode}</span>
+              </div>
+              <div className="flex items-center justify-between text-slate-300">
+                <span>Enrolled Date:</span>
+                <span className="font-mono text-slate-400">{user.joinedDate}</span>
+              </div>
+            </div>
+
+            <div className="mt-5 p-3 rounded-2xl bg-[#07090E] border border-slate-800 text-[11px] text-slate-400">
+              Daily withdrawal limit: <b className="text-white">Ksh 10,000,000</b> with zero holding periods.
+            </div>
           </div>
 
-          <div className="space-y-3 text-xs">
-            <div className="flex justify-between py-1 border-b border-slate-100">
-              <span className="text-slate-500">Email Address:</span>
-              <span className="font-medium text-slate-900 truncate max-w-[170px]">{user.email}</span>
+          <div className="bg-[#0B0F17]/90 rounded-3xl p-6 border border-amber-500/20 shadow-2xl backdrop-blur-xl space-y-4">
+            <div className="flex items-center gap-2 text-xs font-bold text-amber-400 uppercase tracking-wider">
+              <Lock className="w-4 h-4" />
+              <span>Two-Factor Authentication</span>
             </div>
-            <div className="flex justify-between py-1 border-b border-slate-100">
-              <span className="text-slate-500">Phone Number:</span>
-              <span className="font-medium text-slate-900">{user.phone}</span>
-            </div>
-            <div className="flex justify-between py-1 border-b border-slate-100">
-              <span className="text-slate-500">Country:</span>
-              <span className="font-medium text-slate-900">{user.country}</span>
-            </div>
-            <div className="flex justify-between py-1 border-b border-slate-100">
-              <span className="text-slate-500">Sponsor ID:</span>
-              <span className="font-mono font-bold text-sky-700">#{user.referralCode}</span>
-            </div>
-            <div className="flex justify-between py-1 border-b border-slate-100">
-              <span className="text-slate-500">Referred By:</span>
-              <span className="font-mono text-slate-700">{user.referredBy}</span>
-            </div>
-            <div className="flex justify-between py-1">
-              <span className="text-slate-500">Member Since:</span>
-              <span className="font-medium text-slate-900">{user.joinedDate}</span>
+            
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-xs font-bold text-white">Google Authenticator (TOTP)</div>
+                <div className="text-[11px] text-slate-400">Required for instant payouts</div>
+              </div>
+              <input
+                type="checkbox"
+                checked={twoFactor}
+                onChange={(e) => setTwoFactor(e.target.checked)}
+                className="w-5 h-5 rounded text-amber-500 focus:ring-amber-500 cursor-pointer"
+              />
             </div>
           </div>
         </div>
 
-        {/* Right Column: Security Controls (2 cols) */}
-        <div className="lg:col-span-2 space-y-6">
-          
-          <form onSubmit={handleSave} className="bg-white rounded-3xl p-6 border border-sky-100 shadow-xs space-y-5">
-            <h2 className="text-lg font-bold text-slate-900 font-heading">Payout & Wallet Security</h2>
+        {/* Right 2 Columns: Edit Form */}
+        <div className="lg:col-span-2 bg-[#0B0F17]/90 rounded-3xl p-6 sm:p-8 border border-amber-500/20 shadow-2xl backdrop-blur-xl">
+          <h2 className="text-lg font-bold text-white font-heading pb-4 border-b border-slate-800">
+            Payout Gateways & Profile Details
+          </h2>
 
-            {/* M-PESA Phone Number */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
-                <span>Safaricom M-PESA Phone Number</span>
-                <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                  Instant B2C Payout Active
-                </span>
-              </label>
-              <div className="relative">
-                <Smartphone className="w-4 h-4 text-emerald-600 absolute left-3 top-3" />
-                <input
-                  id="security-mpesa-number"
-                  type="tel"
-                  value={mpesaNumber}
-                  onChange={(e) => setMpesaNumber(e.target.value)}
-                  placeholder="0712345678 or 254712345678"
-                  className="w-full pl-9 pr-3 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-                />
+          <form onSubmit={handleSave} className="mt-6 space-y-5">
+            {savedSuccess && (
+              <div className="p-3 bg-emerald-950/80 border border-emerald-500/40 rounded-2xl text-xs text-emerald-300 font-bold flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Security credentials updated successfully!</span>
               </div>
-              <p className="mt-1 text-[11px] text-slate-500">
-                Direct Lipa Na M-PESA withdrawals and STK Push deposits will target this verified Safaricom line.
-              </p>
-            </div>
+            )}
 
-            {/* USDT Whitelisted Address */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
-                <span>Whitelisted Payout USDT Address (TRC-20)</span>
-                <span className="text-[10px] font-bold text-sky-600">Crypto Auto-Settlement</span>
-              </label>
-              <div className="relative">
-                <Wallet className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                <input
-                  id="security-wallet-address"
-                  type="text"
-                  value={walletAddress}
-                  onChange={(e) => setWalletAddress(e.target.value)}
-                  placeholder="TXq7j8kP39LmNxR8w92Z0A1m4kVyTe6pQc"
-                  className="w-full pl-9 pr-3 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
-                />
-              </div>
-            </div>
-
-            {/* Personal Contacts Update */}
-            <div className="pt-2 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Email Address</label>
+                <label className="block text-xs font-bold text-slate-300 mb-1">Full Legal Name</label>
+                <input
+                  type="text"
+                  readOnly
+                  value={user.fullName}
+                  className="w-full bg-[#07090E] border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-400 cursor-not-allowed"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">Country / Jurisdiction</label>
+                <input
+                  type="text"
+                  value={userCountry}
+                  onChange={(e) => setUserCountry(e.target.value)}
+                  className="w-full bg-[#07090E] border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">Email Address</label>
                 <input
                   type="email"
                   value={userEmail}
                   onChange={(e) => setUserEmail(e.target.value)}
-                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none"
+                  className="w-full bg-[#07090E] border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
                 />
               </div>
+
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Phone Number</label>
+                <label className="block text-xs font-bold text-slate-300 mb-1">Phone Number</label>
                 <input
-                  type="tel"
+                  type="text"
                   value={userPhone}
                   onChange={(e) => setUserPhone(e.target.value)}
-                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl font-mono focus:bg-white focus:outline-none"
+                  className="w-full bg-[#07090E] border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
                 />
               </div>
             </div>
 
-
-            {/* 2FA Toggle */}
-            <div className="flex items-center justify-between p-4 bg-sky-50/60 border border-sky-100 rounded-2xl">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-sky-600 text-white flex items-center justify-center">
-                  <Smartphone className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="font-bold text-xs text-slate-900">Google Authenticator (2FA)</div>
-                  <div className="text-[11px] text-slate-500">Requires 6-digit one-time code on withdrawals</div>
+            <div className="pt-4 border-t border-slate-800 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  Default USDT (TRC-20) Payout Address
+                </label>
+                <div className="relative">
+                  <Wallet className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                  <input
+                    type="text"
+                    value={walletAddress}
+                    onChange={(e) => setWalletAddress(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2.5 bg-[#07090E] border border-slate-700 rounded-xl text-xs font-mono text-amber-300 focus:outline-none focus:border-amber-500"
+                  />
                 </div>
               </div>
 
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  checked={twoFactor} 
-                  onChange={(e) => setTwoFactor(e.target.checked)}
-                  className="sr-only peer" 
-                />
-                <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-600"></div>
-              </label>
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  M-PESA Payout Phone Number (Kenya Lipa Na M-PESA)
+                </label>
+                <div className="relative">
+                  <Smartphone className="w-4 h-4 text-emerald-400 absolute left-3 top-3" />
+                  <input
+                    type="text"
+                    value={mpesaNumber}
+                    onChange={(e) => setMpesaNumber(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2.5 bg-[#07090E] border border-slate-700 rounded-xl text-xs font-mono text-emerald-400 focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+              </div>
             </div>
 
-            <button
-              id="save-security-btn"
-              type="submit"
-              className="w-full sm:w-auto px-6 py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs rounded-xl shadow-xs transition-colors cursor-pointer"
-            >
-              Save Security Changes
-            </button>
+            <div className="pt-4">
+              <button
+                type="submit"
+                className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black py-3 rounded-xl shadow-lg transition-all cursor-pointer text-xs uppercase tracking-wider"
+              >
+                Save Updated Security Settings
+              </button>
+            </div>
           </form>
-
-          {/* Login Session History */}
-          <div className="bg-white rounded-3xl p-6 border border-sky-100 shadow-xs">
-            <h2 className="text-base font-bold text-slate-900 font-heading mb-3 flex items-center gap-2">
-              <History className="w-4 h-4 text-sky-600" />
-              <span>Recent Security & Login Sessions</span>
-            </h2>
-
-            <div className="space-y-2.5 text-xs text-slate-600">
-              <div className="p-3 bg-slate-50 rounded-xl flex items-center justify-between">
-                <div>
-                  <div className="font-bold text-slate-900">Current Session • Chrome / Windows 11</div>
-                  <div className="text-[10px] text-slate-400">IP: 198.51.100.42 • United States</div>
-                </div>
-                <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
-                  Active Now
-                </span>
-              </div>
-
-              <div className="p-3 bg-slate-50 rounded-xl flex items-center justify-between">
-                <div>
-                  <div className="font-bold text-slate-900">Mobile Login • iOS Fortune App</div>
-                  <div className="text-[10px] text-slate-400">IP: 198.51.100.18 • 2 days ago</div>
-                </div>
-                <span className="text-[10px] font-bold text-slate-400">
-                  Signed Out
-                </span>
-              </div>
-            </div>
-          </div>
-
         </div>
 
       </div>

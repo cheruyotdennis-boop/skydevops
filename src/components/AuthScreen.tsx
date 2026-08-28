@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { 
-  TrendingUp, 
   ShieldCheck, 
   Sparkles, 
   Lock, 
@@ -12,433 +11,708 @@ import {
   CheckCircle2, 
   Eye, 
   EyeOff, 
-  HelpCircle,
-  Award,
-  Globe2,
-  KeyRound
+  Award, 
+  Globe2, 
+  KeyRound,
+  Smartphone,
+  UserPlus,
+  Users,
+  Coins
 } from 'lucide-react';
-import { UserProfile } from '../types';
+import { triggerConfetti } from '../utils/confetti';
+import { UserProfile, ProfileCreationData, InvestmentPlan } from '../types';
+import { QuantiqLogo } from './QuantiqLogo';
+import bgWallpaper from '../assets/images/quantiq_prime_bg_1787826829164.jpg';
 
 interface AuthScreenProps {
-  onLoginSuccess: (user: Partial<UserProfile>) => void;
+  onLoginSuccess: (user: Partial<UserProfile>, initialDeposit?: number) => void;
   defaultReferralCode?: string;
+  savedProfiles?: UserProfile[];
+  initialMode?: 'register' | 'login';
+  selectedPlan?: InvestmentPlan | null;
+  onBrowsePublic?: () => void;
 }
+
+const AVATAR_PRESETS = [
+  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250',
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=250',
+  'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=250',
+  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=250',
+  'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=250'
+];
 
 export const AuthScreen: React.FC<AuthScreenProps> = ({
   onLoginSuccess,
-  defaultReferralCode = '505031'
+  defaultReferralCode = '505031',
+  savedProfiles = [],
+  initialMode = 'register',
+  selectedPlan = null,
+  onBrowsePublic
 }) => {
-  const [authMode, setAuthMode] = useState<'register' | 'login'>('register');
+  const [authMode, setAuthMode] = useState<'register' | 'login'>(initialMode);
   const [showPassword, setShowPassword] = useState(false);
 
   // Registration Form State
-  const [fullName, setFullName] = useState('Dennis Cheruiyot');
-  const [username, setUsername] = useState('DennisFortune');
-  const [email, setEmail] = useState('cheruyot.dennis@student.moringaschool.com');
+  const [fullName, setFullName] = useState('');
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('+254 712 345 678');
+  const [mpesaNumber, setMpesaNumber] = useState('0712345678');
   const [country, setCountry] = useState('Kenya');
-  const [password, setPassword] = useState('FortuneSecure2026!');
-
-  const [confirmPassword, setConfirmPassword] = useState('FortuneSecure2026!');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [referralCode, setReferralCode] = useState(defaultReferralCode);
+  const [selectedAvatar, setSelectedAvatar] = useState(AVATAR_PRESETS[0]);
+  const [initialDeposit, setInitialDeposit] = useState<number>(selectedPlan ? selectedPlan.minDeposit : 50000);
   const [agreedTerms, setAgreedTerms] = useState(true);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Login Form State
+  const [loginIdentifier, setLoginIdentifier] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+
+  const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
 
-    if (authMode === 'register') {
-      if (!fullName.trim() || !username.trim() || !email.trim() || !password) {
-        setErrorMessage('Please fill in all required fields.');
-        return;
-      }
-      if (password !== confirmPassword) {
-        setErrorMessage('Passwords do not match.');
-        return;
-      }
-      if (!agreedTerms) {
-        setErrorMessage('Please accept the Terms of Service to proceed.');
-        return;
-      }
-    } else {
-      if (!email.trim() || !password) {
-        setErrorMessage('Please enter your email and password.');
-        return;
-      }
+    if (!fullName.trim()) {
+      setErrorMessage('Please enter your full legal name.');
+      return;
+    }
+    if (!username.trim()) {
+      setErrorMessage('Please choose a unique username.');
+      return;
+    }
+    if (!email.trim() || !email.includes('@')) {
+      setErrorMessage('Please provide a valid email address.');
+      return;
+    }
+    if (!password || password.length < 6) {
+      setErrorMessage('Password must be at least 6 characters long.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setErrorMessage('Passwords do not match. Please re-enter.');
+      return;
+    }
+    if (!agreedTerms) {
+      setErrorMessage('Please accept the Terms of Service to create your profile.');
+      return;
     }
 
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      onLoginSuccess({
-        fullName: fullName.trim() || 'Investor Member',
-        username: username.trim() || 'FortuneMember',
-        email: email.trim(),
-        phone,
+      triggerConfetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+      
+      const cleanUsername = username.trim().toLowerCase().replace(/\s+/g, '');
+      const createdUser: Partial<UserProfile> = {
+        id: `usr_${Date.now()}`,
+        fullName: fullName.trim(),
+        username: cleanUsername,
+        email: email.trim().toLowerCase(),
+        phone: phone.trim(),
+        mpesaNumber: mpesaNumber.trim() || '0712345678',
         country,
-        referralCode: referralCode || '505031',
-        referredBy: referralCode ? `Sponsor #${referralCode}` : 'Direct Member',
+        referralCode: referralCode.trim() || '505031',
+        referredBy: referralCode ? `Sponsor #${referralCode}` : 'Quantiq Sovereign Partner',
         joinedDate: new Date().toISOString().split('T')[0],
-        tier: 'Gold VIP',
+        tier: initialDeposit >= 200000 ? 'Platinum Sovereign' : initialDeposit >= 50000 ? 'Gold VIP' : 'Silver VIP',
         kycStatus: 'Verified',
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250',
+        avatar: selectedAvatar,
         walletAddressUSDT: 'TXq7j8kP39LmNxR8w92Z0A1m4kVyTe6pQc'
-      });
+      };
+
+      onLoginSuccess(createdUser, initialDeposit);
     }, 800);
   };
 
-  const handleDemoLogin = () => {
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage('');
+
+    if (!loginIdentifier.trim()) {
+      setErrorMessage('Please enter your email or username to sign in.');
+      return;
+    }
+    if (!loginPassword) {
+      setErrorMessage('Please enter your password.');
+      return;
+    }
+
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      onLoginSuccess({
-        fullName: 'Dennis Cheruiyot',
-        username: 'DennisFortune',
-        email: 'cheruyot.dennis@student.moringaschool.com',
-        phone: '+1 (555) 389-4921',
-        country: 'United States',
-        referralCode: '505031',
-        referredBy: 'AlphaWealth_Corp (505031)',
-        joinedDate: '2025-11-14',
-        tier: 'Gold VIP',
-        kycStatus: 'Verified',
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250',
-        walletAddressUSDT: 'TXq7j8kP39LmNxR8w92Z0A1m4kVyTe6pQc'
-      });
+
+      // Check if matches a saved profile
+      const found = savedProfiles.find(
+        p => p.email.toLowerCase() === loginIdentifier.toLowerCase() || 
+             p.username.toLowerCase() === loginIdentifier.toLowerCase()
+      );
+
+      if (found) {
+        onLoginSuccess(found);
+      } else {
+        // Sign in with typed credentials
+        onLoginSuccess({
+          fullName: loginIdentifier.includes('@') ? loginIdentifier.split('@')[0] : loginIdentifier,
+          username: loginIdentifier.replace(/[^a-zA-Z0-9]/g, ''),
+          email: loginIdentifier.includes('@') ? loginIdentifier : `${loginIdentifier}@quantiqprime.com`,
+          phone: '+254 712 345 678',
+          mpesaNumber: '0712345678',
+          country: 'Kenya',
+          referralCode: defaultReferralCode,
+          referredBy: `Sponsor #${defaultReferralCode}`,
+          joinedDate: new Date().toISOString().split('T')[0],
+          tier: 'Gold VIP',
+          kycStatus: 'Verified',
+          avatar: AVATAR_PRESETS[0],
+          walletAddressUSDT: 'TXq7j8kP39LmNxR8w92Z0A1m4kVyTe6pQc'
+        });
+      }
+    }, 600);
+  };
+
+  const handleSelectSavedProfile = (saved: UserProfile) => {
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      onLoginSuccess(saved);
     }, 400);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-sky-950 to-slate-900 flex flex-col justify-center py-10 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div className="min-h-screen bg-[#07090E] flex flex-col justify-center py-10 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       
-      {/* Background Decorative Glows */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      {/* Background Wallpaper matching uploaded style */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-30 mix-blend-screen pointer-events-none scale-105"
+        style={{ backgroundImage: `url(${bgWallpaper})` }}
+      ></div>
+
+      {/* Luxury Golden Ambient Glows */}
+      <div className="absolute top-10 left-1/3 w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute bottom-10 right-1/4 w-[400px] h-[400px] bg-yellow-600/10 rounded-full blur-3xl pointer-events-none"></div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-xl z-10">
         
         {/* Brand Header */}
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-tr from-sky-500 via-blue-600 to-cyan-400 p-0.5 shadow-xl shadow-sky-500/30 mb-3">
-            <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
-              <TrendingUp className="w-8 h-8 text-sky-400 stroke-[2.5]" />
-            </div>
-          </div>
-          <h1 className="text-3xl font-black tracking-tight text-white font-heading">
-            FORTUNE <span className="text-sky-400 font-normal">INVESTMENT</span>
-          </h1>
-          <p className="mt-1 text-sm text-slate-300">
-            Institutional Wealth Management & High-Yield Growth Engine
+        <div className="flex flex-col items-center text-center mb-6">
+          <QuantiqLogo size="xl" showTagline={true} className="justify-center" />
+          <p className="mt-3 text-xs sm:text-sm text-slate-300 max-w-md mx-auto">
+            Institutional Algorithmic Wealth, Daily Compounded ROI & Lipa Na M-PESA Integration
           </p>
+          {onBrowsePublic && (
+            <button
+              type="button"
+              onClick={onBrowsePublic}
+              className="mt-3 inline-flex items-center gap-1.5 text-xs text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 px-3.5 py-1.5 rounded-full border border-amber-500/30 transition-colors font-bold cursor-pointer"
+            >
+              <span>Explore Yield Packages in Guest Mode</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
 
-        {/* Sponsor Banner (Honoring ref=505031) */}
-        {referralCode && (
-          <div className="mb-4 bg-sky-950/80 border border-sky-500/30 rounded-2xl p-3.5 flex items-center justify-between gap-3 text-sky-100 backdrop-blur-md shadow-lg">
+        {/* Selected Plan Alert Banner if redirected from clicking a plan */}
+        {selectedPlan && (
+          <div className="mb-4 bg-gradient-to-r from-amber-950/70 via-yellow-950/70 to-amber-950/70 border-2 border-amber-500/60 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-slate-100 shadow-xl shadow-amber-500/10">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-sky-500/20 border border-sky-400/40 flex items-center justify-center text-sky-300 shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-black shrink-0">
+                <Lock className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-[11px] font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <span>Target Contract Selected</span>
+                  <span className="bg-amber-500 text-slate-950 text-[10px] font-black px-1.5 py-0.2 rounded">Locked until maturity</span>
+                </div>
+                <div className="text-sm font-black text-white font-heading">
+                  {selectedPlan.name} • +{selectedPlan.dailyRoi}% Daily ROI ({selectedPlan.durationDays} Days)
+                </div>
+                <div className="text-[11px] text-slate-300 mt-0.5">
+                  Min allocation: Ksh {selectedPlan.minDeposit.toLocaleString()} • Principal releases automatically on Day {selectedPlan.durationDays}.
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Sponsor Banner */}
+        {referralCode && (
+          <div className="mb-4 bg-[#0E131F]/90 border border-amber-500/30 rounded-2xl p-3.5 flex items-center justify-between gap-3 text-slate-100 backdrop-blur-xl shadow-xl shadow-amber-500/5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-amber-400 shrink-0">
                 <Gift className="w-5 h-5" />
               </div>
               <div>
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-sky-300">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Referral Invitation Verified</span>
+                <div className="flex items-center gap-1.5 text-xs font-bold text-amber-300">
+                  <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
+                  <span>Sponsor Partner Linked</span>
                 </div>
                 <div className="text-xs text-slate-300">
-                  Sponsor Code: <span className="font-mono font-bold text-white bg-sky-900/80 px-2 py-0.5 rounded border border-sky-500/40">#{referralCode}</span>
+                  Sponsor Code: <span className="font-mono font-bold text-white bg-amber-950/80 border border-amber-500/40 px-2 py-0.5 rounded">#{referralCode}</span>
                 </div>
               </div>
             </div>
             <div className="text-right hidden sm:block">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-950/60 px-2.5 py-1 rounded-full border border-emerald-500/30">
-                Tier 1 VIP Bonus Active
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-400 bg-emerald-950/80 px-3 py-1 rounded-full border border-emerald-500/40">
+                8% Tier 1 Yield Active
               </span>
             </div>
           </div>
         )}
 
-        {/* Main Auth Card */}
-        <div className="bg-white/98 rounded-3xl shadow-2xl border border-sky-100 p-6 sm:p-8 backdrop-blur-xl">
+        {/* Main Card */}
+        <div className="bg-[#0B0F17]/95 rounded-3xl shadow-2xl border border-amber-500/25 p-6 sm:p-8 backdrop-blur-2xl">
           
           {/* Auth Mode Tabs */}
-          <div className="flex rounded-xl bg-slate-100 p-1 mb-6 border border-slate-200">
+          <div className="flex rounded-2xl bg-[#04060A] p-1 mb-6 border border-slate-800">
             <button
               id="tab-register-btn"
               type="button"
-              onClick={() => setAuthMode('register')}
-              className={`w-1/2 py-2.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+              onClick={() => {
+                setAuthMode('register');
+                setErrorMessage('');
+              }}
+              className={`w-1/2 py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                 authMode === 'register'
-                  ? 'bg-sky-600 text-white shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 shadow-md font-black'
+                  : 'text-slate-400 hover:text-white'
               }`}
             >
-              Create Account (Register)
+              <UserPlus className="w-4 h-4" />
+              <span>Create Investor Profile</span>
             </button>
             <button
               id="tab-login-btn"
               type="button"
-              onClick={() => setAuthMode('login')}
-              className={`w-1/2 py-2.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+              onClick={() => {
+                setAuthMode('login');
+                setErrorMessage('');
+              }}
+              className={`w-1/2 py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                 authMode === 'login'
-                  ? 'bg-sky-600 text-white shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 shadow-md font-black'
+                  : 'text-slate-400 hover:text-white'
               }`}
             >
-              Existing Member Sign In
+              <Lock className="w-4 h-4" />
+              <span>Sign In to Account</span>
             </button>
           </div>
 
           {errorMessage && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-red-500"></span>
-              {errorMessage}
+            <div className="mb-4 p-3 bg-rose-950/50 border border-rose-500/50 text-rose-200 text-xs rounded-xl flex items-center gap-2 font-medium">
+              <span className="w-2 h-2 rounded-full bg-rose-400 shrink-0"></span>
+              <span>{errorMessage}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            
-            {authMode === 'register' && (
-              <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Full Legal Name
-                    </label>
-                    <div className="relative">
-                      <User className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                      <input
-                        id="reg-fullname"
-                        type="text"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        placeholder="e.g. Dennis Cheruiyot"
-                        className="w-full pl-9 pr-3 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-colors"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Username
-                    </label>
-                    <div className="relative">
-                      <span className="text-slate-400 absolute left-3 top-2.5 text-xs font-bold">@</span>
-                      <input
-                        id="reg-username"
-                        type="text"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        placeholder="DennisFortune"
-                        className="w-full pl-8 pr-3 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-colors"
-                        required
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Phone Number
-                    </label>
-                    <div className="relative">
-                      <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                      <input
-                        id="reg-phone"
-                        type="tel"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        placeholder="+1 (555) 000-0000"
-                        className="w-full pl-9 pr-3 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-colors"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Country of Residence
-                    </label>
-                    <div className="relative">
-                      <Globe2 className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                      <input
-                        id="reg-country"
-                        type="text"
-                        value={country}
-                        onChange={(e) => setCountry(e.target.value)}
-                        placeholder="United States"
-                        className="w-full pl-9 pr-3 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-colors"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Email Address
-              </label>
-              <div className="relative">
-                <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                <input
-                  id="auth-email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@example.com"
-                  className="w-full pl-9 pr-3 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-colors"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          {authMode === 'register' ? (
+            /* CREATE PROFILE / REGISTER FORM */
+            <form onSubmit={handleRegister} className="space-y-4">
+              
+              {/* Avatar Selector */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Password
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                  Choose Investor Avatar
                 </label>
-                <div className="relative">
-                  <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                  <input
-                    id="auth-password"
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••••••"
-                    className="w-full pl-9 pr-8 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-colors"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-2.5 top-3 text-slate-400 hover:text-slate-600"
-                  >
-                    {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                  </button>
+                <div className="flex items-center gap-2.5 overflow-x-auto pb-1">
+                  {AVATAR_PRESETS.map((av, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setSelectedAvatar(av)}
+                      className={`relative rounded-xl p-0.5 transition-all shrink-0 cursor-pointer ${
+                        selectedAvatar === av ? 'ring-3 ring-amber-400 shadow-md shadow-amber-500/20' : 'opacity-50 hover:opacity-100'
+                      }`}
+                    >
+                      <img src={av} alt="Avatar" className="w-10 h-10 rounded-lg object-cover" />
+                      {selectedAvatar === av && (
+                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 text-slate-950 rounded-full text-[9px] font-black flex items-center justify-center">
+                          ✓
+                        </span>
+                      )}
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              {authMode === 'register' ? (
+              {/* Full Name & Username */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Confirm Password
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    Full Legal Name *
                   </label>
                   <div className="relative">
-                    <KeyRound className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                    <User className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
                     <input
-                      id="reg-confirm-password"
-                      type={showPassword ? 'text' : 'password'}
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="••••••••••••"
-                      className="w-full pl-9 pr-3 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-colors"
+                      id="reg-fullname"
+                      type="text"
                       required
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="Dennis Cheruiyot"
+                      className="w-full pl-9 pr-3 py-2.5 text-xs bg-[#0E131F] border border-slate-700/80 rounded-xl text-slate-100 focus:bg-[#131929] focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 font-medium"
                     />
                   </div>
                 </div>
-              ) : (
-                <div className="flex items-end justify-between pb-1">
-                  <a href="#forgot" onClick={(e) => { e.preventDefault(); alert('A password reset link has been dispatched to your email address.'); }} className="text-xs font-semibold text-sky-600 hover:text-sky-700">
-                    Forgot Password?
-                  </a>
-                </div>
-              )}
-            </div>
 
-            {authMode === 'register' && (
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
-                  <span>Referral Code (Sponsor ID)</span>
-                  <span className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3" /> Auto-Linked (#505031)
-                  </span>
-                </label>
-                <div className="relative">
-                  <Gift className="w-4 h-4 text-sky-600 absolute left-3 top-3" />
-                  <input
-                    id="reg-referral-code"
-                    type="text"
-                    value={referralCode}
-                    onChange={(e) => setReferralCode(e.target.value)}
-                    placeholder="505031"
-                    className="w-full pl-9 pr-3 py-2.5 text-xs bg-sky-50/50 border border-sky-200 font-mono font-bold text-sky-900 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-colors"
-                  />
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    Unique Username *
+                  </label>
+                  <div className="relative">
+                    <span className="text-amber-500 font-bold absolute left-3 top-2.5 text-xs">@</span>
+                    <input
+                      id="reg-username"
+                      type="text"
+                      required
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="DennisPrime"
+                      className="w-full pl-8 pr-3 py-2.5 text-xs bg-[#0E131F] border border-slate-700/80 rounded-xl text-slate-100 focus:bg-[#131929] focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 font-medium"
+                    />
+                  </div>
                 </div>
-                <p className="mt-1 text-[11px] text-slate-500">
-                  Referred by sponsor <b className="text-slate-800">#{referralCode || '505031'}</b>. Earn up to 8% affiliate tier commissions.
-                </p>
               </div>
-            )}
 
-            {authMode === 'register' && (
+              {/* Email & M-PESA Phone */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    Email Address *
+                  </label>
+                  <div className="relative">
+                    <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                    <input
+                      id="reg-email"
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="cheruyot.dennis@student.moringaschool.com"
+                      className="w-full pl-9 pr-3 py-2.5 text-xs bg-[#0E131F] border border-slate-700/80 rounded-xl text-slate-100 focus:bg-[#131929] focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 font-medium"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    Safaricom M-PESA Number *
+                  </label>
+                  <div className="relative">
+                    <Smartphone className="w-4 h-4 text-emerald-400 absolute left-3 top-3" />
+                    <input
+                      id="reg-mpesa"
+                      type="tel"
+                      required
+                      value={mpesaNumber}
+                      onChange={(e) => setMpesaNumber(e.target.value)}
+                      placeholder="0712345678"
+                      className="w-full pl-9 pr-3 py-2.5 text-xs bg-[#0E131F] border border-emerald-500/40 rounded-xl text-emerald-300 font-mono font-bold focus:bg-[#131929] focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Country & Referral */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    Country of Residence
+                  </label>
+                  <select
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                    className="w-full px-3 py-2.5 text-xs bg-[#0E131F] border border-slate-700/80 rounded-xl text-slate-100 focus:bg-[#131929] focus:outline-none font-medium"
+                  >
+                    <option value="Kenya">Kenya (KES)</option>
+                    <option value="Uganda">Uganda (UGX)</option>
+                    <option value="Tanzania">Tanzania (TZS)</option>
+                    <option value="Rwanda">Rwanda (RWF)</option>
+                    <option value="Nigeria">Nigeria (NGN)</option>
+                    <option value="South Africa">South Africa (ZAR)</option>
+                    <option value="United States">United States (USD)</option>
+                    <option value="United Kingdom">United Kingdom (GBP)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    Sponsor Code
+                  </label>
+                  <div className="relative">
+                    <Gift className="w-4 h-4 text-amber-400 absolute left-3 top-3" />
+                    <input
+                      id="reg-referral"
+                      type="text"
+                      value={referralCode}
+                      onChange={(e) => setReferralCode(e.target.value)}
+                      placeholder="505031"
+                      className="w-full pl-9 pr-3 py-2.5 text-xs bg-amber-950/20 border border-amber-500/40 rounded-xl font-mono font-bold text-amber-300 focus:bg-[#131929] focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Password & Confirm */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    Create Password *
+                  </label>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                    <input
+                      id="reg-password"
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••••••"
+                      className="w-full pl-9 pr-8 py-2.5 text-xs bg-[#0E131F] border border-slate-700/80 rounded-xl text-slate-100 focus:bg-[#131929] focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-2.5 top-3 text-slate-400 hover:text-slate-200 cursor-pointer"
+                    >
+                      {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    Confirm Password *
+                  </label>
+                  <div className="relative">
+                    <KeyRound className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                    <input
+                      id="reg-confirm-password"
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="••••••••••••"
+                      className="w-full pl-9 pr-3 py-2.5 text-xs bg-[#0E131F] border border-slate-700/80 rounded-xl text-slate-100 focus:bg-[#131929] focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Initial Demo Balance */}
+              <div className="p-3.5 bg-amber-950/20 border border-amber-500/30 rounded-2xl">
+                <div className="flex items-center justify-between text-xs font-bold text-amber-300 mb-1.5">
+                  <span>Initial Sandbox Balance</span>
+                  <span className="text-[10px] text-amber-400 font-extrabold">Instant Testing Capital (KES)</span>
+                </div>
+                <div className="grid grid-cols-4 gap-2">
+                  {[10000, 30000, 100000, 200000].map((amt) => (
+                    <button
+                      key={amt}
+                      type="button"
+                      onClick={() => setInitialDeposit(amt)}
+                      className={`py-2 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+                        initialDeposit === amt 
+                          ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-black shadow-md' 
+                          : 'bg-[#0E131F] text-slate-300 hover:bg-slate-800 border border-slate-700'
+                      }`}
+                    >
+                      Ksh {amt >= 1000 ? `${amt / 1000}k` : amt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Terms Checkbox */}
               <div className="pt-1">
                 <label className="flex items-start gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={agreedTerms}
                     onChange={(e) => setAgreedTerms(e.target.checked)}
-                    className="mt-0.5 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                    className="mt-0.5 rounded border-slate-700 bg-[#0E131F] text-amber-500 focus:ring-amber-500"
                   />
-                  <span className="text-[11px] text-slate-600 leading-tight">
-                    I agree to the <span className="text-sky-600 font-bold underline">Fortune Investment Terms of Service</span>, Risk Disclosure, and Privacy Policy.
+                  <span className="text-[11px] text-slate-400 leading-tight">
+                    I agree to the <span className="text-amber-400 font-bold underline">Quantiq Prime Terms of Service</span> and automated daily algorithmic yield distributions.
                   </span>
                 </label>
               </div>
-            )}
 
-            {/* Submit Button */}
-            <div className="pt-2">
-              <button
-                id="auth-submit-btn"
-                type="submit"
-                disabled={loading}
-                className="w-full bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white font-bold py-3 px-4 rounded-xl text-xs sm:text-sm shadow-md shadow-sky-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75 active:scale-[0.99]"
-              >
-                {loading ? (
-                  <span>Authenticating...</span>
-                ) : (
-                  <>
-                    <span>{authMode === 'register' ? 'Complete Registration & Open Dashboard' : 'Sign In to Fortune Account'}</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
+              {/* Submit */}
+              <div className="pt-2">
+                <button
+                  id="create-profile-submit-btn"
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black py-3.5 px-4 rounded-2xl text-xs sm:text-sm shadow-xl shadow-amber-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 disabled:opacity-50"
+                >
+                  {loading ? (
+                    <span>Creating Quantiq Profile & Entering...</span>
+                  ) : (
+                    <>
+                      <UserPlus className="w-4 h-4" />
+                      <span>Create Profile & Launch Quantiq Dashboard</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+            </form>
+          ) : (
+            /* SIGN IN FORM */
+            <div className="space-y-4">
+              
+              {/* Saved Profiles Quick Select */}
+              {savedProfiles.length > 0 && (
+                <div className="pb-3 border-b border-slate-800">
+                  <label className="block text-xs font-bold text-slate-300 mb-2 flex items-center gap-1.5">
+                    <Users className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Saved Quantiq Profiles on this Device:</span>
+                  </label>
+                  <div className="space-y-2">
+                    {savedProfiles.map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => handleSelectSavedProfile(p)}
+                        className="w-full p-2.5 rounded-2xl border border-slate-800 bg-[#0E131F] hover:border-amber-500/40 hover:bg-amber-950/20 flex items-center justify-between transition-all cursor-pointer text-left"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <img src={p.avatar} alt={p.fullName} className="w-9 h-9 rounded-xl object-cover ring-1 ring-amber-400/40" />
+                          <div>
+                            <div className="text-xs font-bold text-white">{p.fullName}</div>
+                            <div className="text-[10px] text-slate-400">@{p.username} • {p.email}</div>
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-black bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 px-2.5 py-1 rounded-lg">
+                          Sign In
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    Email or Username
+                  </label>
+                  <div className="relative">
+                    <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                    <input
+                      id="login-identifier"
+                      type="text"
+                      required
+                      value={loginIdentifier}
+                      onChange={(e) => setLoginIdentifier(e.target.value)}
+                      placeholder="cheruyot.dennis@student.moringaschool.com or DennisPrime"
+                      className="w-full pl-9 pr-3 py-2.5 text-xs bg-[#0E131F] border border-slate-700/80 rounded-xl text-slate-100 focus:bg-[#131929] focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 font-medium"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-xs font-bold text-slate-300">
+                      Password
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => alert('Password reset instructions dispatched to your email.')}
+                      className="text-[11px] font-semibold text-amber-400 hover:text-amber-300 cursor-pointer"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                    <input
+                      id="login-password"
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      placeholder="••••••••••••"
+                      className="w-full pl-9 pr-8 py-2.5 text-xs bg-[#0E131F] border border-slate-700/80 rounded-xl text-slate-100 focus:bg-[#131929] focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-2.5 top-3 text-slate-400 hover:text-slate-200 cursor-pointer"
+                    >
+                      {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  id="login-submit-btn"
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black py-3.5 px-4 rounded-2xl text-xs sm:text-sm shadow-xl shadow-amber-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 disabled:opacity-50"
+                >
+                  {loading ? (
+                    <span>Authenticating...</span>
+                  ) : (
+                    <>
+                      <span>Sign In to Quantiq Prime</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+              </form>
+
+              {/* Quick Launch Dennis VIP Profile Demo */}
+              <div className="pt-2 text-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onLoginSuccess({
+                      fullName: 'Dennis Cheruiyot',
+                      username: 'DennisPrime',
+                      email: 'cheruyot.dennis@student.moringaschool.com',
+                      phone: '+254 712 345 678',
+                      mpesaNumber: '0712345678',
+                      country: 'Kenya',
+                      referralCode: '505031',
+                      referredBy: 'Quantiq_VIP (505031)',
+                      joinedDate: '2025-11-14',
+                      tier: 'Gold VIP',
+                      kycStatus: 'Verified',
+                      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250',
+                      walletAddressUSDT: 'TXq7j8kP39LmNxR8w92Z0A1m4kVyTe6pQc'
+                    });
+                  }}
+                  className="w-full py-2.5 px-4 bg-amber-950/20 hover:bg-amber-950/40 text-amber-300 text-xs font-bold rounded-2xl border border-amber-500/30 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
+                  <span>Launch Dennis Cheruiyot Profile (Ksh 4,530,597.50 Balance)</span>
+                </button>
+              </div>
+
             </div>
-
-          </form>
-
-          {/* Quick Demo Access Divider */}
-          <div className="mt-6 pt-5 border-t border-slate-100 text-center">
-            <p className="text-xs text-slate-500 mb-3">Want to preview the live platform immediately?</p>
-            <button
-              id="demo-access-btn"
-              type="button"
-              onClick={handleDemoLogin}
-              className="w-full py-2.5 px-4 bg-slate-50 hover:bg-sky-50 border border-slate-200 hover:border-sky-200 text-slate-800 hover:text-sky-800 text-xs font-bold rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span>Launch Dennis's VIP Portfolio Demo ($34,850.75 Balance)</span>
-            </button>
-          </div>
+          )}
 
         </div>
 
         {/* Security Trust Badges */}
         <div className="mt-6 grid grid-cols-3 gap-3 text-center text-slate-400 text-[11px]">
           <div className="flex flex-col items-center gap-1">
-            <ShieldCheck className="w-5 h-5 text-sky-400" />
+            <ShieldCheck className="w-5 h-5 text-amber-400" />
             <span className="text-slate-300">256-Bit SSL Encrypted</span>
           </div>
           <div className="flex flex-col items-center gap-1">
-            <Award className="w-5 h-5 text-sky-400" />
-            <span className="text-slate-300">Daily Automated Yield</span>
+            <Award className="w-5 h-5 text-amber-400" />
+            <span className="text-slate-300">Daily Algorithmic ROI</span>
           </div>
           <div className="flex flex-col items-center gap-1">
-            <Sparkles className="w-5 h-5 text-sky-400" />
-            <span className="text-slate-300">Instant TRC20 Payouts</span>
+            <Smartphone className="w-5 h-5 text-emerald-400" />
+            <span className="text-slate-300">Lipa Na M-PESA KES</span>
           </div>
         </div>
 

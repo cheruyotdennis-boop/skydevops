@@ -5,12 +5,14 @@ import {
   Sparkles, 
   DollarSign, 
   ArrowRight, 
-  CheckCircle2,
-  AlertCircle,
-  Clock,
-  Coins
+  CheckCircle2, 
+  AlertCircle, 
+  Clock, 
+  Coins, 
+  Lock, 
+  ShieldCheck 
 } from 'lucide-react';
-import confetti from 'canvas-confetti';
+import { triggerConfetti } from '../utils/confetti';
 import { InvestmentPlan, WalletState } from '../types';
 
 interface InvestModalProps {
@@ -32,9 +34,7 @@ export const InvestModal: React.FC<InvestModalProps> = ({
 }) => {
   if (!isOpen || !plan) return null;
 
-  const [investAmount, setInvestAmount] = useState<number>(
-    Math.max(plan.minDeposit, Math.min(plan.maxDeposit, 2500))
-  );
+  const [investAmount, setInvestAmount] = useState<number>(plan.minDeposit);
   const [autoReinvest, setAutoReinvest] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -44,172 +44,171 @@ export const InvestModal: React.FC<InvestModalProps> = ({
   const totalProfit = dailyYield * plan.durationDays;
   const totalReturn = investAmount + totalProfit;
 
+  // Calculate maturity date
+  const maturityDateObj = new Date();
+  maturityDateObj.setDate(maturityDateObj.getDate() + plan.durationDays);
+  const maturityDateStr = maturityDateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
   const hasSufficientBalance = wallet.availableCash >= investAmount;
 
   const handleExecuteInvest = () => {
     setErrorMessage('');
 
     if (investAmount < plan.minDeposit) {
-      setErrorMessage(`Minimum deposit for ${plan.name} is $${plan.minDeposit.toLocaleString()}.`);
+      setErrorMessage(`Minimum deposit for ${plan.name} is Ksh ${plan.minDeposit.toLocaleString()}.`);
       return;
     }
 
     if (investAmount > plan.maxDeposit) {
-      setErrorMessage(`Maximum deposit for ${plan.name} is $${plan.maxDeposit.toLocaleString()}.`);
+      setErrorMessage(`Maximum deposit for ${plan.name} is Ksh ${plan.maxDeposit.toLocaleString()}.`);
       return;
     }
 
     if (!hasSufficientBalance) {
-      setErrorMessage('Insufficient available cash in your wallet balance.');
+      setErrorMessage(`Insufficient liquid wallet capital (Ksh ${wallet.availableCash.toLocaleString('en-KE', { minimumFractionDigits: 2 })} available). Please deposit funds first via M-PESA.`);
       return;
     }
 
     setIsProcessing(true);
+
     setTimeout(() => {
       setIsProcessing(false);
       setSuccessStep(true);
-      confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
+      triggerConfetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+
+      onConfirmInvest(plan, investAmount);
 
       setTimeout(() => {
-        onConfirmInvest(plan, investAmount);
         setSuccessStep(false);
         onClose();
       }, 1400);
-    }, 900);
+    }, 700);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
-      <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-sky-100 animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+      <div className="bg-[#0B0F17] border border-amber-500/30 rounded-3xl max-w-lg w-full text-white shadow-2xl overflow-hidden backdrop-blur-2xl">
         
-        {/* Modal Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center">
-              <Layers className="w-5 h-5" />
+        {/* Header */}
+        <div className="bg-gradient-to-r from-[#0E131F] via-[#151A29] to-[#0E131F] p-6 border-b border-amber-500/20 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/40 flex items-center justify-center">
+              <Lock className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-black text-lg text-slate-900 font-heading">Lock Investment Plan</h3>
-              <p className="text-xs text-slate-500">{plan.name} • {plan.dailyRoi}% Daily Yield</p>
+              <h2 className="text-lg font-bold font-heading">Activate {plan.name}</h2>
+              <p className="text-xs text-amber-400 font-bold">+{plan.dailyRoi}% Daily Yield • 🔒 Locked {plan.durationDays} Days</p>
             </div>
           </div>
+
           <button 
             onClick={onClose}
-            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+            className="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {successStep ? (
-          <div className="py-10 text-center space-y-3">
-            <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto animate-bounce">
-              <CheckCircle2 className="w-10 h-10" />
+        {/* Content */}
+        <div className="p-6 space-y-4 text-xs">
+          
+          {errorMessage && (
+            <div className="p-3 bg-rose-950/80 border border-rose-500/40 rounded-xl text-rose-300 font-bold flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{errorMessage}</span>
             </div>
-            <h4 className="text-xl font-black text-slate-900 font-heading">Investment Activated!</h4>
-            <p className="text-xs text-slate-500 max-w-xs mx-auto">
-              ${investAmount.toLocaleString()} has been placed into {plan.name}. Your first daily yield accrues in 24 hours.
-            </p>
-          </div>
-        ) : (
-          <div className="my-5 space-y-4 text-xs">
-            
-            {/* Balance Preview */}
-            <div className="bg-sky-50 border border-sky-200 rounded-2xl p-3.5 flex items-center justify-between">
-              <div>
-                <span className="text-[11px] font-bold text-sky-800 uppercase">Available Wallet Balance</span>
-                <div className="text-xl font-black text-slate-900 font-mono">
-                  ${wallet.availableCash.toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT
-                </div>
-              </div>
+          )}
 
-              {!hasSufficientBalance && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    onClose();
-                    onOpenDeposit();
-                  }}
-                  className="text-xs font-bold text-sky-700 bg-white border border-sky-300 px-3 py-1.5 rounded-xl shadow-2xs hover:bg-sky-100 cursor-pointer"
-                >
-                  + Deposit Funds
-                </button>
-              )}
-            </div>
-
-            {errorMessage && (
-              <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>{errorMessage}</span>
-              </div>
-            )}
-
-            {/* Investment Input */}
+          {/* Capital Balance Bar */}
+          <div className="flex items-center justify-between p-3.5 bg-[#07090E] border border-slate-800 rounded-2xl">
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Capital Amount to Invest
-              </label>
-              <div className="relative mb-2">
-                <span className="text-slate-400 font-bold absolute left-3 top-2.5">$</span>
-                <input
-                  type="number"
-                  min={plan.minDeposit}
-                  max={plan.maxDeposit}
-                  value={investAmount}
-                  onChange={(e) => setInvestAmount(Number(e.target.value))}
-                  className="w-full pl-8 pr-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-900 focus:bg-white focus:outline-none"
-                />
-              </div>
-
-              <div className="flex justify-between text-[11px] text-slate-500">
-                <span>Min: ${plan.minDeposit.toLocaleString()}</span>
-                <span>Max: ${plan.maxDeposit.toLocaleString()}</span>
-              </div>
+              <span className="text-slate-400 block text-[11px]">Available Liquid Capital:</span>
+              <span className="font-mono font-bold text-white text-sm">
+                Ksh {wallet.availableCash.toLocaleString('en-KE', { minimumFractionDigits: 2 })}
+              </span>
             </div>
-
-            {/* Projected Returns Box */}
-            <div className="p-4 bg-slate-900 text-white rounded-2xl space-y-2">
-              <div className="text-[11px] font-bold text-sky-400 uppercase tracking-wider">
-                Contract Returns Summary
-              </div>
-              <div className="flex justify-between text-xs text-slate-300">
-                <span>Daily ROI (+{plan.dailyRoi}%):</span>
-                <span className="font-mono font-bold text-emerald-400">+${dailyYield.toFixed(2)} / day</span>
-              </div>
-              <div className="flex justify-between text-xs text-slate-300">
-                <span>Contract Duration:</span>
-                <span className="font-mono font-bold text-white">{plan.durationDays} Days</span>
-              </div>
-              <div className="flex justify-between text-xs text-slate-300">
-                <span>Net Profit Expected:</span>
-                <span className="font-mono font-bold text-emerald-400">+${totalProfit.toFixed(2)}</span>
-              </div>
-              <div className="pt-2 border-t border-slate-700 flex justify-between text-xs font-bold text-white">
-                <span>Total Maturity Payout:</span>
-                <span className="font-mono text-base font-black text-white">${totalReturn.toFixed(2)} USDT</span>
-              </div>
-            </div>
-
-            {/* Submit Action */}
-            <button
-              id="confirm-invest-btn"
-              type="button"
-              disabled={isProcessing || !hasSufficientBalance}
-              onClick={handleExecuteInvest}
-              className="w-full py-3 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 active:scale-98"
-            >
-              {isProcessing ? (
-                <span>Locking Contract on Chain...</span>
-              ) : (
-                <>
-                  <Coins className="w-4 h-4" />
-                  <span>Confirm & Activate Plan (${investAmount.toLocaleString()})</span>
-                </>
-              )}
-            </button>
-
+            <span className="text-[10px] font-bold uppercase text-emerald-400 bg-emerald-950/80 border border-emerald-500/40 px-2 py-0.5 rounded-full">
+              Ready for Allocation
+            </span>
           </div>
-        )}
+
+          {/* Amount input */}
+          <div>
+            <div className="flex justify-between items-center mb-1">
+              <label className="font-bold text-slate-300">Contract Principal Allocation (KES)</label>
+              <span className="text-slate-400 font-mono text-[11px]">
+                Min: Ksh {plan.minDeposit.toLocaleString()} • Max: Ksh {plan.maxDeposit.toLocaleString()}
+              </span>
+            </div>
+            <div className="relative">
+              <span className="text-xs font-bold text-amber-400 absolute left-3 top-3 font-mono">KES</span>
+              <input
+                type="number"
+                min={plan.minDeposit}
+                max={plan.maxDeposit}
+                value={investAmount}
+                onChange={(e) => setInvestAmount(Number(e.target.value))}
+                className="w-full pl-12 pr-3 py-2.5 bg-[#07090E] border border-slate-700 rounded-xl text-white font-mono font-bold text-sm focus:outline-none focus:border-amber-500"
+              />
+            </div>
+          </div>
+
+          {/* Lock Terms Card */}
+          <div className="p-3.5 rounded-2xl bg-amber-950/20 border border-amber-500/30 flex items-start gap-2.5 text-slate-300">
+            <Lock className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+            <div className="text-[11px] leading-relaxed">
+              <span className="text-amber-300 font-bold block">🔒 Balance Locked Until Maturity</span>
+              Your principal of <b>Ksh {investAmount.toLocaleString()}</b> will be locked in trading contracts for <b>{plan.durationDays} days</b> until <b>{maturityDateStr}</b>. Daily earnings (+Ksh {dailyYield.toLocaleString()} / day) are paid into your wallet every 24h, and the principal unlocks automatically on maturity.
+            </div>
+          </div>
+
+          {/* Projected returns overview */}
+          <div className="p-4 rounded-2xl bg-[#07090E] border border-slate-800 space-y-2">
+            <div className="flex justify-between text-slate-300">
+              <span>Contract Duration:</span>
+              <span className="font-bold text-white font-mono">{plan.durationDays} Days (Matures: {maturityDateStr})</span>
+            </div>
+            <div className="flex justify-between text-slate-300">
+              <span>Daily Automated ROI (7.5%):</span>
+              <span className="font-bold text-emerald-400 font-mono">+Ksh {dailyYield.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / day</span>
+            </div>
+            <div className="flex justify-between text-slate-300">
+              <span>Total Guaranteed Net Profit:</span>
+              <span className="font-bold text-emerald-400 font-mono">+Ksh {totalProfit.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            </div>
+            <div className="pt-2 border-t border-slate-800 flex justify-between font-bold text-white">
+              <span>Total Return (Principal + Profit):</span>
+              <span className="text-amber-400 font-mono text-sm">Ksh {totalReturn.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            </div>
+          </div>
+
+          {/* Action button */}
+          <div className="pt-2">
+            {!hasSufficientBalance ? (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onOpenDeposit();
+                }}
+                className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black py-3 rounded-xl shadow-lg transition-all cursor-pointer uppercase tracking-wider text-xs flex items-center justify-center gap-2"
+              >
+                <span>Deposit Ksh {(investAmount - wallet.availableCash).toLocaleString('en-KE', { minimumFractionDigits: 2 })} to Complete Package</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                disabled={isProcessing}
+                onClick={handleExecuteInvest}
+                className="w-full bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black py-3 rounded-xl shadow-lg transition-all cursor-pointer uppercase tracking-wider text-xs flex items-center justify-center gap-2"
+              >
+                <Lock className="w-4 h-4" />
+                <span>{isProcessing ? 'Locking Capital & Deploying Contract...' : `Lock in Ksh ${investAmount.toLocaleString()} in ${plan.name}`}</span>
+              </button>
+            )}
+          </div>
+
+        </div>
 
       </div>
     </div>

@@ -114,3 +114,28 @@ export interface NotificationItem {
   type: 'payout' | 'deposit' | 'referral' | 'security' | 'mpesa';
 }
 
+export interface UserAccount {
+  user: UserProfile;
+  wallet: WalletState;
+  password?: string;
+}
+
+
+export interface ProfileCreationData {
+  fullName: string;
+  username: string;
+  email: string;
+  phone: string;
+  mpesaNumber: string;
+  country: string;
+  password?: string;
+  referralCode?: string;
+  avatar?: string;
+  avatarUrl?: string;
+  walletAddressUSDT?: string;
+  initialDepositUSD?: number;
+  initialDepositKES?: number;
+  initialDeposit?: number;
+}
+
+

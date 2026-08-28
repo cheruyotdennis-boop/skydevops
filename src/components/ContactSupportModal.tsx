@@ -17,6 +17,7 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { PlatformContacts, UserProfile } from '../types';
+import { safeCopyText } from '../utils/storage';
 
 interface ContactSupportModalProps {
   isOpen: boolean;
@@ -50,7 +51,7 @@ export const ContactSupportModal: React.FC<ContactSupportModalProps> = ({
   const [copiedItem, setCopiedItem] = useState<string | null>(null);
 
   const handleCopy = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
+    safeCopyText(text);
     setCopiedItem(label);
     setTimeout(() => setCopiedItem(null), 2000);
   };
@@ -64,330 +65,248 @@ export const ContactSupportModal: React.FC<ContactSupportModalProps> = ({
       email: userEmail,
       country: userCountry
     });
+
     setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 2500);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-xs">
-      <div className="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-sky-100 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
+      <div className="bg-[#0B0F17] border border-amber-500/30 rounded-3xl max-w-xl w-full p-6 shadow-2xl text-white my-8 backdrop-blur-2xl">
         
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+        <div className="flex items-center justify-between pb-4 border-b border-slate-800">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-sky-100 text-sky-700 flex items-center justify-center">
-              <Phone className="w-5 h-5" />
+            <div className="w-11 h-11 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center font-bold">
+              <Building2 className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="font-black text-lg text-slate-900 font-heading">
-                Fortune Investment Kenya Support & Contacts
-              </h3>
-              <p className="text-xs text-slate-500">Official Nairobi HQ Desk & Personal Contact Directory</p>
+              <h3 className="font-black text-lg text-white font-heading">Support & Liaison Contacts</h3>
+              <p className="text-xs text-slate-400">Nairobi Regional Executive Headquarters & Safaricom Rails</p>
             </div>
           </div>
           <button 
             onClick={onClose}
-            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+            className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Tab Switcher */}
-        <div className="flex bg-slate-100 p-1 rounded-xl font-bold my-4 text-xs">
+        {/* Tab switcher */}
+        <div className="flex bg-[#07090E] p-1 rounded-2xl border border-slate-800 mt-4 text-xs font-bold">
           <button
             type="button"
             onClick={() => setActiveTab('official_contacts')}
-            className={`w-1/2 py-2 rounded-lg transition-all ${
-              activeTab === 'official_contacts' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+            className={`w-1/2 py-2 rounded-xl transition-all cursor-pointer ${
+              activeTab === 'official_contacts' 
+                ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-black shadow-md' 
+                : 'text-slate-400 hover:text-white'
             }`}
           >
-            Official Contact Directory
+            Official Quantiq Contacts
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('edit_contacts')}
-            className={`w-1/2 py-2 rounded-lg transition-all ${
-              activeTab === 'edit_contacts' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+            className={`w-1/2 py-2 rounded-xl transition-all cursor-pointer ${
+              activeTab === 'edit_contacts' 
+                ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-black shadow-md' 
+                : 'text-slate-400 hover:text-white'
             }`}
           >
-            Edit / Update Contacts
+            Edit Platform Numbers
           </button>
         </div>
 
         {savedSuccess && (
-          <div className="p-3 mb-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>Contact details and M-PESA parameters updated successfully!</span>
+          <div className="mt-4 p-3 bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 rounded-xl text-xs flex items-center gap-2 font-bold">
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
+            <span>Updated contact details saved!</span>
           </div>
         )}
 
+        {/* Tab 1: Official Contacts Display */}
         {activeTab === 'official_contacts' ? (
-          <div className="space-y-4 text-xs">
+          <div className="mt-5 space-y-4 text-xs">
             
-            {/* M-PESA Payment Desk Box */}
-            <div className="p-4 bg-gradient-to-br from-emerald-50 to-emerald-100/50 border border-emerald-200 rounded-2xl space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-black text-emerald-950 flex items-center gap-1.5">
-                  <Smartphone className="w-4 h-4 text-emerald-600" />
-                  <span>Safaricom M-PESA Official Payment Channels</span>
-                </span>
-                <span className="text-[10px] font-bold bg-emerald-600 text-white px-2 py-0.5 rounded-full">
-                  Live & Automated
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-800">
-                <div className="bg-white p-2.5 rounded-xl border border-emerald-200/80 flex items-center justify-between">
-                  <div>
-                    <div className="text-[10px] text-slate-400 font-bold uppercase">M-PESA Paybill</div>
-                    <div className="text-sm font-mono font-black text-slate-900">{contacts.mpesaPaybill}</div>
-                  </div>
-                  <button
-                    onClick={() => handleCopy(contacts.mpesaPaybill, 'paybill')}
-                    className="p-1.5 text-emerald-700 hover:bg-emerald-50 rounded-lg cursor-pointer"
-                  >
-                    {copiedItem === 'paybill' ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
-                  </button>
+            {/* Quick Action Channels */}
+            <div className="grid grid-cols-2 gap-2">
+              <a
+                href={`https://wa.me/${(contacts.whatsappSupport || '').replace(/[^0-9]/g, '')}?text=Hello%20Quantiq%20Prime%20Support`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-3 rounded-2xl bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/30 text-emerald-300 flex items-center gap-2.5 transition-colors"
+              >
+                <MessageCircle className="w-5 h-5" />
+                <div>
+                  <div className="font-bold text-white">WhatsApp VIP</div>
+                  <div className="text-[10px] text-emerald-400 font-mono">{contacts.whatsappSupport}</div>
                 </div>
+              </a>
 
-                <div className="bg-white p-2.5 rounded-xl border border-emerald-200/80 flex items-center justify-between">
-                  <div>
-                    <div className="text-[10px] text-slate-400 font-bold uppercase">Buy Goods Till</div>
-                    <div className="text-sm font-mono font-black text-slate-900">{contacts.mpesaTillNumber}</div>
-                  </div>
-                  <button
-                    onClick={() => handleCopy(contacts.mpesaTillNumber, 'till')}
-                    className="p-1.5 text-emerald-700 hover:bg-emerald-50 rounded-lg cursor-pointer"
-                  >
-                    {copiedItem === 'till' ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
-                  </button>
+              <a
+                href={`https://t.me/${(contacts.telegramSupport || '').replace('@', '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-3 rounded-2xl bg-[#0E131F] hover:bg-slate-800 border border-amber-500/30 text-amber-300 flex items-center gap-2.5 transition-colors"
+              >
+                <Send className="w-5 h-5" />
+                <div>
+                  <div className="font-bold text-white">Telegram Desk</div>
+                  <div className="text-[10px] text-amber-400 font-mono">{contacts.telegramSupport}</div>
                 </div>
-              </div>
+              </a>
             </div>
 
-            {/* Official Support Details */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3">
-              <h4 className="font-bold text-slate-900 flex items-center gap-1.5">
-                <Building2 className="w-4 h-4 text-sky-600" />
-                <span>Headquarters & Communication Lines</span>
-              </h4>
-
-              <div className="space-y-2.5 text-slate-700">
-                <div className="flex items-start gap-3 p-2 rounded-xl bg-slate-50">
-                  <Phone className="w-4 h-4 text-sky-600 shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <div className="text-[10px] text-slate-400 font-bold">Kenya Customer Support Line</div>
-                    <a href={`tel:${contacts.supportPhone}`} className="font-mono font-bold text-sky-700 hover:underline">
-                      {contacts.supportPhone}
-                    </a>
-                  </div>
-                  <button
-                    onClick={() => handleCopy(contacts.supportPhone, 'phone')}
-                    className="p-1 text-slate-400 hover:text-slate-600"
-                  >
-                    {copiedItem === 'phone' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+            {/* Detailed list */}
+            <div className="space-y-2.5 bg-[#07090E] p-4 rounded-2xl border border-slate-800">
+              
+              <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                <div className="flex items-center gap-2 text-slate-300">
+                  <Smartphone className="w-4 h-4 text-emerald-400" />
+                  <span>M-PESA Official Paybill:</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono font-bold text-amber-400">{contacts.mpesaPaybill}</span>
+                  <button onClick={() => handleCopy(contacts.mpesaPaybill, 'paybill')} className="text-slate-400 hover:text-white cursor-pointer">
+                    {copiedItem === 'paybill' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                   </button>
-                </div>
-
-                <div className="flex items-start gap-3 p-2 rounded-xl bg-slate-50">
-                  <Mail className="w-4 h-4 text-sky-600 shrink-0 mt-0.5" />
-                  <div className="flex-1 truncate">
-                    <div className="text-[10px] text-slate-400 font-bold">Official Support & Inquiries Email</div>
-                    <a href={`mailto:${contacts.supportEmail}`} className="font-mono font-semibold text-sky-700 hover:underline">
-                      {contacts.supportEmail}
-                    </a>
-                  </div>
-                  <button
-                    onClick={() => handleCopy(contacts.supportEmail, 'email')}
-                    className="p-1 text-slate-400 hover:text-slate-600"
-                  >
-                    {copiedItem === 'email' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                  </button>
-                </div>
-
-                <div className="flex items-start gap-3 p-2 rounded-xl bg-slate-50">
-                  <MapPin className="w-4 h-4 text-sky-600 shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <div className="text-[10px] text-slate-400 font-bold">Physical Nairobi Office</div>
-                    <div className="font-medium text-slate-800">{contacts.officeLocation}</div>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3 p-2 rounded-xl bg-slate-50">
-                  <MessageCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <div className="text-[10px] text-slate-400 font-bold">WhatsApp Direct Advisory</div>
-                    <div className="font-mono font-bold text-slate-800">{contacts.whatsappSupport}</div>
-                  </div>
                 </div>
               </div>
+
+              <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                <div className="flex items-center gap-2 text-slate-300">
+                  <Smartphone className="w-4 h-4 text-emerald-400" />
+                  <span>M-PESA Buy Goods Till:</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono font-bold text-emerald-400">{contacts.mpesaTillNumber}</span>
+                  <button onClick={() => handleCopy(contacts.mpesaTillNumber, 'till')} className="text-slate-400 hover:text-white cursor-pointer">
+                    {copiedItem === 'till' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                <div className="flex items-center gap-2 text-slate-300">
+                  <Phone className="w-4 h-4 text-amber-400" />
+                  <span>Nairobi Support Line:</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono font-bold text-white">{contacts.supportPhone}</span>
+                  <button onClick={() => handleCopy(contacts.supportPhone, 'phone')} className="text-slate-400 hover:text-white cursor-pointer">
+                    {copiedItem === 'phone' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                <div className="flex items-center gap-2 text-slate-300">
+                  <Mail className="w-4 h-4 text-amber-400" />
+                  <span>Official Support Email:</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-white text-[11px]">{contacts.supportEmail}</span>
+                  <button onClick={() => handleCopy(contacts.supportEmail, 'email')} className="text-slate-400 hover:text-white cursor-pointer">
+                    {copiedItem === 'email' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-start justify-between pt-1 text-slate-300">
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                  <span>Physical Address:</span>
+                </div>
+                <span className="font-semibold text-right text-slate-400 max-w-[200px]">
+                  {contacts.officeLocation}
+                </span>
+              </div>
+
             </div>
 
-            {/* User Personal Contact Snapshot */}
-            <div className="bg-sky-50/70 border border-sky-200 rounded-2xl p-4 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-sky-900">Your Registered User Contacts:</span>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('edit_contacts')}
-                  className="text-[11px] font-bold text-sky-700 hover:underline flex items-center gap-1 cursor-pointer"
-                >
-                  <Edit3 className="w-3.5 h-3.5" /> Edit My Details
-                </button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 text-[11px]">
-                <div>
-                  <span className="text-slate-500">Name:</span> <b className="text-slate-900">{user.fullName}</b>
-                </div>
-                <div>
-                  <span className="text-slate-500">Email:</span> <b className="text-slate-900 truncate">{user.email}</b>
-                </div>
-                <div>
-                  <span className="text-slate-500">Phone:</span> <b className="text-slate-900">{user.phone}</b>
-                </div>
-                <div>
-                  <span className="text-slate-500">M-PESA:</span> <b className="text-emerald-800 font-mono">{user.mpesaNumber || user.phone}</b>
-                </div>
-              </div>
+            <div className="p-3 bg-[#07090E] rounded-2xl border border-slate-800 flex items-center gap-2 text-[11px] text-slate-400">
+              <Clock className="w-4 h-4 text-amber-400 shrink-0" />
+              <span>Desk Hours: <b>24/7 Priority Support</b> (Automated trading 24/7/365)</span>
             </div>
 
           </div>
         ) : (
-          /* Edit Form */
-          <form onSubmit={handleSaveAll} className="space-y-4 text-xs">
+          /* Tab 2: Edit Form */
+          <form onSubmit={handleSaveAll} className="mt-5 space-y-4 text-xs">
             
-            {/* User Profile Contacts Section */}
-            <div className="space-y-3">
-              <h4 className="font-bold text-slate-900 flex items-center gap-1.5">
-                <Edit3 className="w-4 h-4 text-sky-600" />
-                <span>Your Personal Contact Information</span>
-              </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-slate-300 font-bold mb-1">M-PESA Paybill Business No</label>
+                <input
+                  type="text"
+                  value={formData.mpesaPaybill}
+                  onChange={(e) => setFormData({ ...formData, mpesaPaybill: e.target.value })}
+                  className="w-full px-3 py-2 bg-[#07090E] border border-slate-700 rounded-xl text-white font-mono focus:outline-none focus:border-amber-500"
+                />
+              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-slate-700 font-bold mb-1">Email Address</label>
-                  <input
-                    type="email"
-                    value={userEmail}
-                    onChange={(e) => setUserEmail(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-slate-700 font-bold mb-1">Phone Number</label>
-                  <input
-                    type="text"
-                    value={userPhone}
-                    onChange={(e) => setUserPhone(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono focus:bg-white focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-slate-700 font-bold mb-1">M-PESA Phone Number</label>
-                  <input
-                    type="text"
-                    value={userMpesa}
-                    onChange={(e) => setUserMpesa(e.target.value)}
-                    placeholder="0712345678"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono text-emerald-800 font-bold focus:bg-white focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-slate-700 font-bold mb-1">Country</label>
-                  <input
-                    type="text"
-                    value={userCountry}
-                    onChange={(e) => setUserCountry(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none"
-                  />
-                </div>
+              <div>
+                <label className="block text-slate-300 font-bold mb-1">M-PESA Till Number</label>
+                <input
+                  type="text"
+                  value={formData.mpesaTillNumber}
+                  onChange={(e) => setFormData({ ...formData, mpesaTillNumber: e.target.value })}
+                  className="w-full px-3 py-2 bg-[#07090E] border border-slate-700 rounded-xl text-white font-mono focus:outline-none focus:border-amber-500"
+                />
               </div>
             </div>
 
-            {/* Platform Official Contacts Section */}
-            <div className="pt-3 border-t border-slate-100 space-y-3">
-              <h4 className="font-bold text-slate-900 flex items-center gap-1.5">
-                <Building2 className="w-4 h-4 text-sky-600" />
-                <span>Fortune Investment Platform Details</span>
-              </h4>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-slate-700 font-bold mb-1">M-PESA Paybill Business No</label>
-                  <input
-                    type="text"
-                    value={formData.mpesaPaybill}
-                    onChange={(e) => setFormData(prev => ({ ...prev, mpesaPaybill: e.target.value }))}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono focus:bg-white focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-slate-700 font-bold mb-1">M-PESA Till Number</label>
-                  <input
-                    type="text"
-                    value={formData.mpesaTillNumber}
-                    onChange={(e) => setFormData(prev => ({ ...prev, mpesaTillNumber: e.target.value }))}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono focus:bg-white focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-slate-700 font-bold mb-1">Kenya Support Phone</label>
-                  <input
-                    type="text"
-                    value={formData.supportPhone}
-                    onChange={(e) => setFormData(prev => ({ ...prev, supportPhone: e.target.value }))}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono focus:bg-white focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-slate-700 font-bold mb-1">Official Support Email</label>
-                  <input
-                    type="email"
-                    value={formData.supportEmail}
-                    onChange={(e) => setFormData(prev => ({ ...prev, supportEmail: e.target.value }))}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none"
-                  />
-                </div>
-
-                <div className="sm:col-span-2">
-                  <label className="block text-slate-700 font-bold mb-1">Nairobi Office Location</label>
-                  <input
-                    type="text"
-                    value={formData.officeLocation}
-                    onChange={(e) => setFormData(prev => ({ ...prev, officeLocation: e.target.value }))}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-slate-700 font-bold mb-1">USD/KES Exchange Rate (1 USD = KES)</label>
-                  <input
-                    type="number"
-                    value={formData.kesUsdExchangeRate}
-                    onChange={(e) => setFormData(prev => ({ ...prev, kesUsdExchangeRate: Number(e.target.value) }))}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-emerald-800 focus:bg-white focus:outline-none"
-                  />
-                </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-slate-300 font-bold mb-1">Support Phone Hotline</label>
+                <input
+                  type="text"
+                  value={formData.supportPhone}
+                  onChange={(e) => setFormData({ ...formData, supportPhone: e.target.value })}
+                  className="w-full px-3 py-2 bg-[#07090E] border border-slate-700 rounded-xl text-white font-mono focus:outline-none focus:border-amber-500"
+                />
               </div>
+
+              <div>
+                <label className="block text-slate-300 font-bold mb-1">WhatsApp Direct Support</label>
+                <input
+                  type="text"
+                  value={formData.whatsappSupport}
+                  onChange={(e) => setFormData({ ...formData, whatsappSupport: e.target.value })}
+                  className="w-full px-3 py-2 bg-[#07090E] border border-slate-700 rounded-xl text-white font-mono focus:outline-none focus:border-amber-500"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-slate-300 font-bold mb-1">Support Email</label>
+              <input
+                type="email"
+                value={formData.supportEmail}
+                onChange={(e) => setFormData({ ...formData, supportEmail: e.target.value })}
+                className="w-full px-3 py-2 bg-[#07090E] border border-slate-700 rounded-xl text-white focus:outline-none focus:border-amber-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-slate-300 font-bold mb-1">HQ Physical Office Address</label>
+              <input
+                type="text"
+                value={formData.officeLocation}
+                onChange={(e) => setFormData({ ...formData, officeLocation: e.target.value })}
+                className="w-full px-3 py-2 bg-[#07090E] border border-slate-700 rounded-xl text-white focus:outline-none focus:border-amber-500"
+              />
             </div>
 
             <button
-              id="save-all-contacts-btn"
               type="submit"
-              className="w-full py-3 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+              className="w-full py-3 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer uppercase tracking-wider text-xs"
             >
               <Save className="w-4 h-4" />
-              <span>Save & Update Contact Directory</span>
+              <span>Save Official Contact Details</span>
             </button>
-
           </form>
         )}
 

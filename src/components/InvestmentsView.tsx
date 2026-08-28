@@ -11,7 +11,10 @@ import {
   Layers, 
   Lock,
   Flame,
-  Zap
+  Zap,
+  LogIn,
+  Unlock,
+  Check
 } from 'lucide-react';
 import { InvestmentPlan, ActiveInvestment, WalletState } from '../types';
 import { INVESTMENT_PLANS } from '../data/mockData';
@@ -19,20 +22,26 @@ import { INVESTMENT_PLANS } from '../data/mockData';
 interface InvestmentsViewProps {
   wallet: WalletState;
   activeInvestments: ActiveInvestment[];
+  isAuthenticated?: boolean;
   onSelectPlanToInvest: (plan: InvestmentPlan) => void;
+  onRedirectToAuth?: (plan: InvestmentPlan) => void;
+  onReleaseMaturedContract?: (contractId: string) => void;
 }
 
 export const InvestmentsView: React.FC<InvestmentsViewProps> = ({
   wallet,
   activeInvestments,
-  onSelectPlanToInvest
+  isAuthenticated = true,
+  onSelectPlanToInvest,
+  onRedirectToAuth,
+  onReleaseMaturedContract
 }) => {
   // Calculator state
-  const [selectedPlanId, setSelectedPlanId] = useState<string>('plan_gold');
-  const [calcAmount, setCalcAmount] = useState<number>(5000);
+  const [selectedPlanId, setSelectedPlanId] = useState<string>('plan_growth');
+  const [calcAmount, setCalcAmount] = useState<number>(30000);
   const [isCompounding, setIsCompounding] = useState<boolean>(false);
 
-  const selectedPlan = INVESTMENT_PLANS.find(p => p.id === selectedPlanId) || INVESTMENT_PLANS[1];
+  const selectedPlan = INVESTMENT_PLANS.find(p => p.id === selectedPlanId) || INVESTMENT_PLANS[0];
 
   // Calculation logic
   const dailyYield = (calcAmount * (selectedPlan.dailyRoi / 100));
@@ -51,6 +60,14 @@ export const InvestmentsView: React.FC<InvestmentsViewProps> = ({
   const totalReturn = calcAmount + totalProfit;
   const netRoiPercent = ((totalProfit / calcAmount) * 100).toFixed(1);
 
+  const handlePlanClick = (plan: InvestmentPlan) => {
+    if (!isAuthenticated && onRedirectToAuth) {
+      onRedirectToAuth(plan);
+    } else {
+      onSelectPlanToInvest(plan);
+    }
+  };
+
   return (
     <div className="space-y-8">
       
@@ -58,47 +75,175 @@ export const InvestmentsView: React.FC<InvestmentsViewProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-black text-slate-900 font-heading">
-              Investment Packages & Yield Contracts
+            <h1 className="text-2xl font-black text-white font-heading">
+              Quantiq Prime Yield Contracts
             </h1>
-            <span className="text-xs font-bold bg-sky-100 text-sky-800 px-2.5 py-0.5 rounded-full border border-sky-200">
-              Principal Protected
+            <span className="text-xs font-bold bg-amber-500/20 text-amber-300 px-3 py-0.5 rounded-full border border-amber-500/40 flex items-center gap-1">
+              <Lock className="w-3 h-3 text-amber-400" />
+              <span>Capital Locked Until Maturity</span>
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Choose institutional-grade algorithmic plans with daily interest payouts directly credited to your wallet.
+          <p className="text-xs sm:text-sm text-slate-400 mt-1">
+            Choose institutional algorithmic plans with 7.5% daily interest payouts automatically credited to your balance every 24 hours.
           </p>
         </div>
 
-        <div className="bg-sky-50 border border-sky-200 rounded-2xl px-4 py-2 text-right">
-          <div className="text-[11px] font-bold text-sky-800 uppercase tracking-wider">Available Balance</div>
-          <div className="text-lg font-black text-slate-900 font-mono">
-            ${wallet.availableCash.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+        <div className="flex items-center gap-3">
+          <div className="bg-[#0B0F17] border border-amber-500/30 rounded-2xl px-4 py-2 text-right shadow-lg">
+            <div className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">Available Liquid Cash</div>
+            <div className="text-base sm:text-lg font-black text-white font-mono">
+              Ksh {wallet.availableCash.toLocaleString('en-KE', { minimumFractionDigits: 2 })}
+            </div>
+          </div>
+          <div className="bg-[#0B0F17] border border-slate-700/80 rounded-2xl px-4 py-2 text-right shadow-lg">
+            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1 justify-end">
+              <Lock className="w-3 h-3 text-amber-400" />
+              <span>Locked Capital</span>
+            </div>
+            <div className="text-base sm:text-lg font-black text-amber-300 font-mono">
+              Ksh {wallet.activeInvested.toLocaleString('en-KE', { minimumFractionDigits: 2 })}
+            </div>
           </div>
         </div>
       </div>
 
+      {/* Capital Lock & Maturity Rule Info Banner */}
+      <div className="bg-gradient-to-r from-amber-950/40 via-yellow-950/30 to-[#0B0F17] border border-amber-500/40 rounded-2xl p-4 sm:p-5 text-xs text-slate-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0">
+            <Lock className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="text-amber-300 font-extrabold text-xs uppercase tracking-wider flex items-center gap-1.5">
+              <span>Security Policy: Balance Locked Until Maturity</span>
+              <span className="bg-emerald-950 text-emerald-400 border border-emerald-500/40 text-[10px] font-bold px-2 py-0.2 rounded-full">Automated 7.5% Daily ROI</span>
+            </div>
+            <p className="text-slate-300 text-[11px] sm:text-xs mt-0.5 leading-relaxed">
+              When activating a contract, your principal is safely locked for the contract horizon (10, 15, or 20 days). Your daily 7.5% yield is paid out every 24h into your liquid cash, and the principal unlocks automatically upon contract maturity.
+            </p>
+          </div>
+        </div>
+        {!isAuthenticated && (
+          <button
+            onClick={() => onRedirectToAuth && onRedirectToAuth(selectedPlan)}
+            className="shrink-0 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-black px-4 py-2.5 rounded-xl text-xs flex items-center gap-1.5 shadow-md hover:from-amber-400 hover:to-yellow-400 cursor-pointer"
+          >
+            <LogIn className="w-3.5 h-3.5" />
+            <span>Sign In to Invest</span>
+          </button>
+        )}
+      </div>
+
+      {/* Active Locked Contracts if any exist */}
+      {activeInvestments.length > 0 && (
+        <div className="bg-[#0B0F17]/95 rounded-3xl p-6 border border-amber-500/30 shadow-xl backdrop-blur-xl">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Lock className="w-4 h-4 text-amber-400" />
+              <h2 className="text-sm sm:text-base font-black text-white uppercase tracking-wider font-heading">
+                Active Locked Yield Contracts ({activeInvestments.length})
+              </h2>
+            </div>
+            <span className="text-xs text-amber-400 font-bold">
+              Total Locked: Ksh {wallet.activeInvested.toLocaleString()}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {activeInvestments.map((inv) => {
+              const progressPct = Math.min(100, Math.round((inv.daysPassed / inv.totalDays) * 100));
+              const isMatured = inv.daysPassed >= inv.totalDays;
+
+              return (
+                <div 
+                  key={inv.id}
+                  className={`p-4 rounded-2xl border transition-all ${
+                    isMatured 
+                      ? 'bg-emerald-950/30 border-emerald-500/60 shadow-lg shadow-emerald-500/10' 
+                      : 'bg-[#0E131F] border-slate-800 hover:border-amber-500/40'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <div className="text-xs font-bold text-white font-heading">{inv.planName}</div>
+                      <div className="text-[11px] text-slate-400">Contract #{inv.id}</div>
+                    </div>
+                    <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full border flex items-center gap-1 ${
+                      isMatured
+                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 animate-pulse'
+                        : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                    }`}>
+                      {isMatured ? <Unlock className="w-3 h-3 text-emerald-400" /> : <Lock className="w-3 h-3 text-amber-400" />}
+                      <span>{isMatured ? 'Matured — Ready to Release' : `Locked: Day ${inv.daysPassed} of ${inv.totalDays}`}</span>
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 py-2.5 my-2 border-y border-slate-800 text-center">
+                    <div>
+                      <div className="text-[10px] text-slate-400 font-bold uppercase">Locked Principal</div>
+                      <div className="text-xs font-black text-amber-400 font-mono">Ksh {inv.investedAmount.toLocaleString()}</div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-slate-400 font-bold uppercase">Daily Yield</div>
+                      <div className="text-xs font-black text-emerald-400 font-mono">+Ksh {inv.dailyYieldAmount.toLocaleString()}</div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-slate-400 font-bold uppercase">Maturity Date</div>
+                      <div className="text-xs font-bold text-slate-200 font-mono">{inv.maturityDate}</div>
+                    </div>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="space-y-1 mt-2">
+                    <div className="flex items-center justify-between text-[11px] text-slate-400">
+                      <span>Maturity Lock Progress</span>
+                      <span className="text-amber-400 font-bold">{progressPct}% ({inv.daysPassed}/{inv.totalDays} Days)</span>
+                    </div>
+                    <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full transition-all duration-500 ${isMatured ? 'bg-emerald-400' : 'bg-gradient-to-r from-amber-500 to-yellow-400'}`}
+                        style={{ width: `${progressPct}%` }}
+                      ></div>
+                    </div>
+                  </div>
+
+                  {isMatured && onReleaseMaturedContract && (
+                    <button
+                      onClick={() => onReleaseMaturedContract(inv.id)}
+                      className="mt-3 w-full py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 text-xs font-black rounded-xl hover:from-emerald-400 hover:to-teal-400 flex items-center justify-center gap-1.5 shadow-md cursor-pointer"
+                    >
+                      <Unlock className="w-3.5 h-3.5" />
+                      <span>Release Ksh {inv.investedAmount.toLocaleString()} Principal to Liquid Cash</span>
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Interactive ROI Calculator */}
-      <div className="bg-gradient-to-br from-slate-900 via-sky-950 to-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl border border-sky-800/40 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="bg-[#0B0F17]/95 text-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-amber-500/30 relative overflow-hidden backdrop-blur-2xl">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           
           {/* Controls (7 cols) */}
           <div className="lg:col-span-7 space-y-5">
-            <div className="flex items-center gap-2 text-sky-400 text-xs font-bold uppercase tracking-wider">
+            <div className="flex items-center gap-2 text-amber-400 text-xs font-bold uppercase tracking-wider">
               <Calculator className="w-4 h-4" />
-              <span>Interactive ROI & Yield Profit Calculator</span>
+              <span>Institutional ROI Yield Simulator (KES)</span>
             </div>
 
             <h2 className="text-xl sm:text-2xl font-extrabold font-heading text-white">
-              Simulate Your Growth Before Investing
+              Forecast Growth & Compounded Returns
             </h2>
 
             {/* Plan Picker */}
             <div>
               <label className="block text-xs font-bold text-slate-300 mb-2">
-                1. Select Investment Tier
+                1. Select Yield Package Tier
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {INVESTMENT_PLANS.map((plan) => (
@@ -110,12 +255,14 @@ export const InvestmentsView: React.FC<InvestmentsViewProps> = ({
                     }}
                     className={`p-2.5 rounded-xl border text-left text-xs transition-all cursor-pointer ${
                       selectedPlanId === plan.id
-                        ? 'bg-sky-600 border-sky-400 text-white font-bold shadow-md'
-                        : 'bg-slate-800/80 border-slate-700 text-slate-300 hover:bg-slate-800'
+                        ? 'bg-gradient-to-r from-amber-500 to-yellow-500 border-amber-400 text-slate-950 font-black shadow-md'
+                        : 'bg-[#0E131F] border-slate-800 text-slate-300 hover:bg-slate-800'
                     }`}
                   >
                     <div className="font-extrabold truncate">{plan.name}</div>
-                    <div className="text-[11px] text-sky-200 mt-0.5 font-mono">+{plan.dailyRoi}% daily</div>
+                    <div className={`text-[11px] mt-0.5 font-mono ${selectedPlanId === plan.id ? 'text-slate-900 font-bold' : 'text-amber-400'}`}>
+                      +{plan.dailyRoi}% daily • {plan.durationDays}d
+                    </div>
                   </button>
                 ))}
               </div>
@@ -124,93 +271,129 @@ export const InvestmentsView: React.FC<InvestmentsViewProps> = ({
             {/* Amount Slider & Input */}
             <div>
               <div className="flex items-center justify-between text-xs font-bold text-slate-300 mb-2">
-                <span>2. Deposit Capital Amount (USDT)</span>
-                <span className="text-sky-300 font-mono">${calcAmount.toLocaleString()}</span>
+                <span>2. Deposit Capital (Kenyan Shillings)</span>
+                <span className="text-amber-400 font-mono font-bold">Ksh {calcAmount.toLocaleString()}</span>
               </div>
               
               <div className="relative mb-3">
-                <DollarSign className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                <span className="text-xs font-bold text-amber-400 absolute left-3 top-3 font-mono">KES</span>
                 <input
                   type="number"
                   min={selectedPlan.minDeposit}
                   max={selectedPlan.maxDeposit}
                   value={calcAmount}
                   onChange={(e) => setCalcAmount(Math.max(0, Number(e.target.value)))}
-                  className="w-full pl-9 pr-4 py-2.5 bg-slate-800/90 border border-slate-700 rounded-xl text-white font-mono font-bold text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  className="w-full bg-[#0E131F] border border-amber-500/40 rounded-xl py-2.5 pl-12 pr-4 text-white font-mono font-bold text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
               </div>
 
+              {/* Slider */}
               <input
                 type="range"
                 min={selectedPlan.minDeposit}
                 max={selectedPlan.maxDeposit}
-                step={100}
+                step={1000}
                 value={calcAmount}
                 onChange={(e) => setCalcAmount(Number(e.target.value))}
-                className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-400"
+                className="w-full accent-amber-500 cursor-pointer h-2 bg-slate-800 rounded-lg"
               />
-              <div className="flex justify-between text-[10px] text-slate-400 mt-1">
-                <span>Min: ${selectedPlan.minDeposit.toLocaleString()}</span>
-                <span>Max: ${selectedPlan.maxDeposit.toLocaleString()}</span>
+
+              <div className="flex justify-between text-[11px] text-slate-400 font-mono mt-1">
+                <span>Min: Ksh {selectedPlan.minDeposit.toLocaleString()}</span>
+                <span>Max: Ksh {selectedPlan.maxDeposit.toLocaleString()}</span>
               </div>
             </div>
 
-            {/* Compounding switch */}
-            <div className="flex items-center justify-between bg-slate-800/60 p-3 rounded-xl border border-slate-700 text-xs">
-              <div className="flex items-center gap-2">
-                <Zap className="w-4 h-4 text-amber-400" />
-                <span>Enable Daily Auto-Compounding Multiplier</span>
+            {/* Compounding Toggle */}
+            <div className="flex items-center justify-between bg-[#0E131F] p-3.5 rounded-2xl border border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-white">Compound Daily Yields</div>
+                  <div className="text-[11px] text-slate-400">Auto-reinvest daily 7.5% for geometric profit growth</div>
+                </div>
               </div>
-              <input
-                type="checkbox"
-                checked={isCompounding}
-                onChange={(e) => setIsCompounding(e.target.checked)}
-                className="w-4 h-4 rounded text-sky-600 focus:ring-sky-500 cursor-pointer"
-              />
+              
+              <button
+                type="button"
+                onClick={() => setIsCompounding(!isCompounding)}
+                className={`w-12 h-6 flex items-center rounded-full p-1 transition-colors cursor-pointer ${
+                  isCompounding ? 'bg-amber-500 justify-end' : 'bg-slate-700 justify-start'
+                }`}
+              >
+                <div className="w-4 h-4 rounded-full bg-slate-950 shadow-md"></div>
+              </button>
             </div>
+
           </div>
 
-          {/* Results Summary Box (5 cols) */}
-          <div className="lg:col-span-5 bg-gradient-to-b from-sky-900/60 to-slate-900/90 border border-sky-500/30 rounded-2xl p-6 backdrop-blur-md shadow-2xl space-y-4">
-            <div className="text-xs font-bold text-sky-300 uppercase tracking-wider">
-              Projected Earnings Breakdown
+          {/* Result Card (5 cols) */}
+          <div className="lg:col-span-5 bg-[#0E131F] border-2 border-amber-500/50 rounded-3xl p-6 sm:p-7 space-y-4 shadow-xl">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <span className="text-xs font-bold uppercase text-slate-400">Contract Term</span>
+              <span className="text-xs font-black text-amber-400 bg-amber-950/80 px-2.5 py-1 rounded-full border border-amber-500/40">
+                🔒 {totalDays} Days Locked Horizon
+              </span>
             </div>
 
             <div className="space-y-3">
-              <div className="flex items-center justify-between text-xs text-slate-300">
-                <span>Contract Duration:</span>
-                <span className="font-bold text-white font-mono">{totalDays} Calendar Days</span>
-              </div>
-
-              <div className="flex items-center justify-between text-xs text-slate-300">
-                <span>Daily ROI Return:</span>
-                <span className="font-bold text-emerald-400 font-mono">+${dailyYield.toFixed(2)} / day</span>
-              </div>
-
-              <div className="flex items-center justify-between text-xs text-slate-300">
-                <span>Total Net Profit Earned:</span>
-                <span className="text-base font-extrabold text-emerald-400 font-mono">
-                  +${totalProfit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-400">Initial Principal (Locked):</span>
+                <span className="text-sm font-bold text-white font-mono">
+                  Ksh {calcAmount.toLocaleString('en-KE', { minimumFractionDigits: 2 })}
                 </span>
               </div>
 
-              <div className="pt-3 border-t border-slate-700 flex items-center justify-between">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-400">Daily Automated ROI (7.5%):</span>
+                <span className="text-sm font-bold text-emerald-400 font-mono">
+                  +Ksh {dailyYield.toLocaleString('en-KE', { minimumFractionDigits: 2 })} / day
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-400">Referral Bonus on Referee (20%):</span>
+                <span className="text-sm font-bold text-amber-300 font-mono">
+                  +Ksh {(calcAmount * 0.20).toLocaleString('en-KE', { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-400">Total Net Yield Profit:</span>
+                <span className="text-sm font-extrabold text-emerald-300 font-mono">
+                  +Ksh {totalProfit.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+
+              <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
                 <span className="text-xs font-bold text-white">Total Payout (Capital + Yield):</span>
-                <span className="text-xl font-black text-white font-mono">
-                  ${totalReturn.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                <span className="text-xl font-black text-amber-400 font-mono">
+                  Ksh {totalReturn.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               </div>
 
-              <div className="bg-emerald-950/60 border border-emerald-500/30 rounded-xl p-2.5 text-center text-xs text-emerald-300 font-semibold">
-                Net ROI: <b className="text-white">+{netRoiPercent}%</b> over {totalDays} days
+              <div className="bg-emerald-950/40 border border-emerald-500/40 rounded-xl p-2.5 text-center text-xs text-emerald-300 font-bold">
+                Net ROI: <b className="text-white">+{netRoiPercent}%</b> over {totalDays} days • Principal returns on maturity
               </div>
             </div>
 
             <button
-              onClick={() => onSelectPlanToInvest(selectedPlan)}
-              className="w-full bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-slate-950 font-black py-3 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 text-xs sm:text-sm"
+              onClick={() => handlePlanClick(selectedPlan)}
+              className="w-full bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black py-3.5 rounded-xl shadow-xl shadow-amber-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 text-xs sm:text-sm"
             >
-              <span>Invest ${calcAmount.toLocaleString()} in {selectedPlan.name}</span>
+              {isAuthenticated ? (
+                <>
+                  <Lock className="w-4 h-4" />
+                  <span>Lock in Ksh {calcAmount.toLocaleString()} in {selectedPlan.name}</span>
+                </>
+              ) : (
+                <>
+                  <LogIn className="w-4 h-4" />
+                  <span>Sign In / Register to Activate {selectedPlan.name}</span>
+                </>
+              )}
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -223,60 +406,69 @@ export const InvestmentsView: React.FC<InvestmentsViewProps> = ({
         {INVESTMENT_PLANS.map((plan) => (
           <div
             key={plan.id}
-            className={`relative bg-white rounded-3xl p-6 border transition-all flex flex-col justify-between ${
+            className={`relative bg-[#0B0F17]/90 rounded-3xl p-6 border transition-all flex flex-col justify-between backdrop-blur-xl ${
               plan.popular
-                ? 'border-sky-500 shadow-lg shadow-sky-500/10 ring-2 ring-sky-500/20'
-                : 'border-slate-200/80 shadow-xs hover:shadow-md'
+                ? 'border-amber-500 shadow-xl shadow-amber-500/10 ring-2 ring-amber-500/30'
+                : 'border-slate-800 shadow-md hover:border-amber-500/40'
             }`}
           >
             {plan.popular && (
-              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-sky-600 to-cyan-600 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-md">
-                ★ Most Popular Package
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 text-[10px] font-black uppercase tracking-widest px-3.5 py-1 rounded-full shadow-md">
+                ★ Prime Recommended
               </div>
             )}
 
             <div>
               <div className="flex items-center justify-between">
-                <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
-                  {plan.durationDays} Days Horizon
+                <span className="text-xs font-extrabold uppercase tracking-wider text-amber-400 flex items-center gap-1">
+                  <Lock className="w-3 h-3 text-amber-400" />
+                  <span>{plan.durationDays} Days Horizon</span>
                 </span>
-                <span className="text-xs font-bold text-sky-700 bg-sky-50 px-2 py-0.5 rounded-full">
+                <span className="text-xs font-bold text-amber-400 bg-amber-950/60 border border-amber-500/30 px-2 py-0.5 rounded-full">
                   Tier {plan.id.split('_')[1].toUpperCase()}
                 </span>
               </div>
 
-              <h3 className="text-xl font-black text-slate-900 mt-2 font-heading">
+              <h3 className="text-lg font-black text-white mt-2 font-heading">
                 {plan.name}
               </h3>
-              <p className="text-xs text-slate-500 mt-1 min-h-[32px] leading-relaxed">
+              <p className="text-xs text-slate-400 mt-1 min-h-[32px] leading-relaxed">
                 {plan.tagline}
               </p>
 
               {/* Rate Highlight */}
-              <div className="mt-4 p-4 rounded-2xl bg-sky-50/70 border border-sky-100">
-                <div className="text-3xl font-black text-sky-700 font-heading">
+              <div className="mt-4 p-4 rounded-2xl bg-[#07090E] border border-amber-500/30">
+                <div className="text-3xl font-black text-amber-400 font-heading">
                   {plan.dailyRoi}%
-                  <span className="text-xs font-bold text-slate-600 ml-1">/ daily</span>
+                  <span className="text-xs font-bold text-slate-400 ml-1">/ daily</span>
                 </div>
-                <div className="text-[11px] text-slate-600 mt-1 font-medium">
-                  Total Yield: <b className="text-slate-900">{(plan.dailyRoi * plan.durationDays).toFixed(0)}% Net ROI</b>
+                <div className="text-[11px] text-slate-300 mt-1 font-medium flex items-center justify-between">
+                  <span>Total Yield: <b className="text-emerald-400">{(plan.dailyRoi * plan.durationDays).toFixed(0)}% Net</b></span>
+                  <span className="text-amber-400 font-bold">🔒 Locked {plan.durationDays}d</span>
                 </div>
               </div>
 
               {/* Features list */}
-              <div className="mt-5 space-y-2.5 text-xs text-slate-600">
-                <div className="flex items-center justify-between text-slate-700 font-semibold pb-1 border-b border-slate-100">
+              <div className="mt-5 space-y-2.5 text-xs text-slate-300">
+                <div className="flex items-center justify-between text-slate-400 font-semibold pb-1 border-b border-slate-800">
                   <span>Min Deposit:</span>
-                  <span className="font-mono text-slate-900 font-bold">${plan.minDeposit.toLocaleString()}</span>
+                  <span className="font-mono text-white font-bold">Ksh {plan.minDeposit.toLocaleString()}</span>
                 </div>
-                <div className="flex items-center justify-between text-slate-700 font-semibold pb-1 border-b border-slate-100">
+                <div className="flex items-center justify-between text-slate-400 font-semibold pb-1 border-b border-slate-800">
                   <span>Max Deposit:</span>
-                  <span className="font-mono text-slate-900 font-bold">${plan.maxDeposit.toLocaleString()}</span>
+                  <span className="font-mono text-white font-bold">Ksh {plan.maxDeposit.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center justify-between text-amber-400 font-semibold pb-1 border-b border-slate-800">
+                  <span className="flex items-center gap-1">
+                    <Lock className="w-3 h-3" />
+                    <span>Lock Terms:</span>
+                  </span>
+                  <span className="font-bold text-white">Locked until maturity</span>
                 </div>
                 
                 {plan.features.map((feat, idx) => (
-                  <div key={idx} className="flex items-center gap-2 text-slate-600">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+                  <div key={idx} className="flex items-center gap-2 text-slate-300">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                     <span>{feat}</span>
                   </div>
                 ))}
@@ -284,10 +476,20 @@ export const InvestmentsView: React.FC<InvestmentsViewProps> = ({
             </div>
 
             <button
-              onClick={() => onSelectPlanToInvest(plan)}
-              className="mt-6 w-full py-3 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+              onClick={() => handlePlanClick(plan)}
+              className="mt-6 w-full py-3 bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
             >
-              <span>Invest in {plan.name}</span>
+              {isAuthenticated ? (
+                <>
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>Invest in {plan.name}</span>
+                </>
+              ) : (
+                <>
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>Sign In to Select Plan</span>
+                </>
+              )}
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>

@@ -16,7 +16,9 @@ import {
   Clock,
   X
 } from 'lucide-react';
-import { Transaction, TransactionType } from '../types';
+import { Transaction } from '../types';
+import { safeCopyText } from '../utils/storage';
+import { sanitizeCsvField } from '../utils/security';
 
 interface TransactionHistoryViewProps {
   transactions: Transaction[];
@@ -25,48 +27,63 @@ interface TransactionHistoryViewProps {
 export const TransactionHistoryView: React.FC<TransactionHistoryViewProps> = ({
   transactions
 }) => {
-  const [selectedFilter, setSelectedFilter] = useState<'ALL' | TransactionType>('ALL');
+  const [selectedFilter, setSelectedFilter] = useState<'ALL' | string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
   const [copiedHash, setCopiedHash] = useState(false);
 
   const filteredTransactions = transactions.filter((tx) => {
-    const matchesFilter = selectedFilter === 'ALL' || tx.type === selectedFilter;
+    let matchesFilter = true;
+    if (selectedFilter === 'yield') {
+      matchesFilter = tx.type === 'ROI_PAYOUT' || tx.type === 'INVESTMENT';
+    } else if (selectedFilter === 'deposit') {
+      matchesFilter = tx.type === 'DEPOSIT';
+    } else if (selectedFilter === 'withdrawal') {
+      matchesFilter = tx.type === 'WITHDRAWAL';
+    } else if (selectedFilter === 'referral') {
+      matchesFilter = tx.type === 'REFERRAL_BONUS';
+    }
+
     const matchesSearch = 
-      tx.txHash.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tx.note.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tx.methodOrAddress.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tx.type.toLowerCase().includes(searchQuery.toLowerCase());
+      (tx.note && tx.note.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (tx.methodOrAddress && tx.methodOrAddress.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (tx.type && tx.type.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (tx.id && tx.id.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (tx.txHash && tx.txHash.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesFilter && matchesSearch;
   });
 
   const handleCopy = (text: string) => {
-    navigator.clipboard.writeText(text);
+    safeCopyText(text);
     setCopiedHash(true);
     setTimeout(() => setCopiedHash(false), 2000);
   };
 
   const handleExportCSV = () => {
-    const headers = ['ID', 'Type', 'Amount', 'Currency', 'Status', 'Date', 'Transaction Hash', 'Details'];
-    const rows = filteredTransactions.map(t => [
-      t.id,
-      t.type,
-      t.amount,
-      t.currency,
-      t.status,
-      `"${t.timestamp}"`,
-      `"${t.txHash}"`,
-      `"${t.note}"`
-    ]);
+    try {
+      const headers = ['ID', 'Type', 'Amount', 'Currency', 'Status', 'Date', 'Description', 'Method'];
+      const rows = filteredTransactions.map(t => [
+        sanitizeCsvField(t.id),
+        sanitizeCsvField(t.type),
+        sanitizeCsvField(t.amount),
+        sanitizeCsvField(t.currency || 'KES'),
+        sanitizeCsvField(t.status),
+        sanitizeCsvField(t.timestamp),
+        sanitizeCsvField(t.note || ''),
+        sanitizeCsvField(t.methodOrAddress || '')
+      ]);
 
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `Fortune_Investment_Ledger_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      const csvContent = 'data:text/csv;charset=utf-8,' + [headers.map(sanitizeCsvField).join(','), ...rows.map(e => e.join(','))].join('\n');
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      link.setAttribute('download', `Quantiq_Prime_Ledger_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch {
+      // gracefully handle in sandboxed environments
+    }
   };
 
   return (
@@ -75,76 +92,68 @@ export const TransactionHistoryView: React.FC<TransactionHistoryViewProps> = ({
       {/* View Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 font-heading">
-            Financial Ledger & Transaction History
+          <h1 className="text-2xl font-black text-white font-heading">
+            Financial Ledger & Settlement History (KES)
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Auditable, immutable ledger of all deposits, daily ROI settlements, and wallet payouts.
+          <p className="text-xs sm:text-sm text-slate-400 mt-1">
+            Auditable, cryptographic ledger of deposits, daily algorithmic ROI settlements, M-PESA paybills, and wallet payouts.
           </p>
         </div>
 
         <button
           id="export-csv-btn"
           onClick={handleExportCSV}
-          className="flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold px-4 py-2.5 rounded-xl border border-slate-200 shadow-2xs transition-colors cursor-pointer"
+          className="flex items-center justify-center gap-2 bg-[#0B0F17] hover:bg-[#151A29] text-amber-300 text-xs font-bold px-4 py-2.5 rounded-xl border border-amber-500/30 shadow-md transition-colors cursor-pointer"
         >
-          <Download className="w-4 h-4 text-sky-600" />
+          <Download className="w-4 h-4 text-amber-400" />
           <span>Export CSV Statement</span>
         </button>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white rounded-2xl p-4 border border-sky-100 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+      <div className="bg-[#0B0F17]/90 rounded-3xl p-4 border border-amber-500/20 shadow-xl flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 backdrop-blur-xl">
         
         {/* Type Filter Buttons */}
-        <div className="flex items-center gap-1 overflow-x-auto pb-1 md:pb-0 scrollbar-none text-xs font-bold">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none text-xs font-bold">
           <button
             onClick={() => setSelectedFilter('ALL')}
-            className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-all ${
-              selectedFilter === 'ALL' ? 'bg-sky-600 text-white shadow-2xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer ${
+              selectedFilter === 'ALL' ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-black' : 'bg-[#0E131F] text-slate-400 hover:text-white border border-slate-800'
             }`}
           >
-            All Ledger ({transactions.length})
+            All Entries ({transactions.length})
           </button>
           <button
-            onClick={() => setSelectedFilter('ROI_PAYOUT')}
-            className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-all ${
-              selectedFilter === 'ROI_PAYOUT' ? 'bg-emerald-600 text-white shadow-2xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            onClick={() => setSelectedFilter('yield')}
+            className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer ${
+              selectedFilter === 'yield' ? 'bg-amber-500 text-slate-950 font-black' : 'bg-[#0E131F] text-slate-400 hover:text-white border border-slate-800'
             }`}
           >
-            ROI Yields
+            Yields
           </button>
           <button
-            onClick={() => setSelectedFilter('DEPOSIT')}
-            className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-all ${
-              selectedFilter === 'DEPOSIT' ? 'bg-sky-600 text-white shadow-2xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            onClick={() => setSelectedFilter('deposit')}
+            className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer ${
+              selectedFilter === 'deposit' ? 'bg-emerald-500 text-slate-950 font-black' : 'bg-[#0E131F] text-slate-400 hover:text-white border border-slate-800'
             }`}
           >
             Deposits
           </button>
           <button
-            onClick={() => setSelectedFilter('WITHDRAWAL')}
-            className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-all ${
-              selectedFilter === 'WITHDRAWAL' ? 'bg-purple-600 text-white shadow-2xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            onClick={() => setSelectedFilter('withdrawal')}
+            className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer ${
+              selectedFilter === 'withdrawal' ? 'bg-rose-500 text-white font-black' : 'bg-[#0E131F] text-slate-400 hover:text-white border border-slate-800'
             }`}
           >
             Withdrawals
           </button>
           <button
-            onClick={() => setSelectedFilter('REFERRAL_BONUS')}
-            className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-all ${
-              selectedFilter === 'REFERRAL_BONUS' ? 'bg-amber-500 text-white shadow-2xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            onClick={() => setSelectedFilter('referral')}
+            className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer ${
+              selectedFilter === 'referral' ? 'bg-yellow-400 text-slate-950 font-black' : 'bg-[#0E131F] text-slate-400 hover:text-white border border-slate-800'
             }`}
           >
             Affiliate Bonuses
-          </button>
-          <button
-            onClick={() => setSelectedFilter('INVESTMENT')}
-            className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-all ${
-              selectedFilter === 'INVESTMENT' ? 'bg-slate-800 text-white shadow-2xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
-          >
-            Plan Locks
           </button>
         </div>
 
@@ -156,31 +165,30 @@ export const TransactionHistoryView: React.FC<TransactionHistoryViewProps> = ({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search hash, note, address..."
-            className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-colors"
+            placeholder="Search note, method, amount..."
+            className="w-full pl-9 pr-3 py-2 text-xs bg-[#0E131F] border border-slate-700/80 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-colors"
           />
         </div>
 
       </div>
 
       {/* Ledger Table Card */}
-      <div className="bg-white rounded-3xl p-6 border border-sky-100 shadow-xs overflow-hidden">
+      <div className="bg-[#0B0F17]/90 rounded-3xl p-6 border border-amber-500/20 shadow-2xl backdrop-blur-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-100">
+              <tr className="text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
                 <th className="pb-3 font-semibold">Transaction Details</th>
-                <th className="pb-3 font-semibold">Amount (USDT)</th>
+                <th className="pb-3 font-semibold">Amount (KES)</th>
                 <th className="pb-3 font-semibold">Status</th>
-                <th className="pb-3 font-semibold">Method / Network</th>
-                <th className="pb-3 font-semibold">Blockchain TxHash</th>
+                <th className="pb-3 font-semibold">Method / Rail</th>
                 <th className="pb-3 font-semibold text-right">Timestamp</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-800/80">
               {filteredTransactions.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-400 text-xs">
+                  <td colSpan={5} className="py-12 text-center text-slate-400 text-xs">
                     No transactions found matching your criteria.
                   </td>
                 </tr>
@@ -189,64 +197,50 @@ export const TransactionHistoryView: React.FC<TransactionHistoryViewProps> = ({
                   <tr 
                     key={tx.id} 
                     onClick={() => setSelectedTx(tx)}
-                    className="hover:bg-sky-50/40 transition-colors cursor-pointer group"
+                    className="hover:bg-slate-800/40 transition-colors cursor-pointer group"
                   >
-                    <td className="py-3.5 font-medium text-slate-900 flex items-center gap-3">
+                    <td className="py-3.5 font-medium text-white flex items-center gap-3">
                       <span className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
-                        tx.type === 'DEPOSIT' ? 'bg-sky-100 text-sky-700' :
-                        tx.type === 'ROI_PAYOUT' ? 'bg-emerald-100 text-emerald-700' :
-                        tx.type === 'REFERRAL_BONUS' ? 'bg-amber-100 text-amber-700' :
-                        tx.type === 'WITHDRAWAL' ? 'bg-purple-100 text-purple-700' :
-                        'bg-slate-100 text-slate-700'
+                        tx.type === 'DEPOSIT' ? 'bg-emerald-950 text-emerald-400 border border-emerald-500/30' :
+                        tx.type === 'ROI_PAYOUT' || tx.type === 'INVESTMENT' ? 'bg-amber-950 text-amber-400 border border-amber-500/30' :
+                        tx.type === 'REFERRAL_BONUS' ? 'bg-yellow-950 text-yellow-400 border border-yellow-500/30' :
+                        tx.type === 'WITHDRAWAL' ? 'bg-rose-950 text-rose-400 border border-rose-500/30' :
+                        'bg-slate-800 text-slate-300'
                       }`}>
-                        {tx.type === 'DEPOSIT' && <ArrowDownLeft className="w-4 h-4" />}
-                        {tx.type === 'ROI_PAYOUT' && <TrendingUp className="w-4 h-4" />}
-                        {tx.type === 'REFERRAL_BONUS' && <Sparkles className="w-4 h-4" />}
-                        {tx.type === 'WITHDRAWAL' && <ArrowUpRight className="w-4 h-4" />}
-                        {tx.type === 'INVESTMENT' && <Layers className="w-4 h-4" />}
+                        {tx.type === 'DEPOSIT' ? <ArrowDownLeft className="w-4 h-4" /> :
+                         tx.type === 'ROI_PAYOUT' ? <TrendingUp className="w-4 h-4" /> :
+                         tx.type === 'REFERRAL_BONUS' ? <Sparkles className="w-4 h-4" /> :
+                         tx.type === 'WITHDRAWAL' ? <ArrowUpRight className="w-4 h-4" /> :
+                         <Layers className="w-4 h-4" />}
                       </span>
                       <div>
-                        <div className="font-bold text-slate-900 group-hover:text-sky-700 transition-colors">
-                          {tx.type.replace('_', ' ')}
+                        <div className="font-bold text-white group-hover:text-amber-400 transition-colors">
+                          {tx.note || `${tx.type} Transaction`}
                         </div>
-                        <div className="text-[11px] text-slate-400 truncate max-w-xs">{tx.note}</div>
+                        <div className="text-[10px] text-slate-400 font-mono">
+                          ID: {tx.id}
+                        </div>
                       </div>
                     </td>
 
-                    <td className="py-3.5">
-                      <div className={`font-mono font-extrabold ${
-                        tx.type === 'WITHDRAWAL' || tx.type === 'INVESTMENT' ? 'text-slate-900' : 'text-emerald-600'
-                      }`}>
-                        {tx.type === 'WITHDRAWAL' ? '-' : '+'}${tx.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                      </div>
-                      <span className="text-[10px] text-slate-400 font-mono">{tx.currency}</span>
+                    <td className="py-3.5 font-mono font-bold">
+                      <span className={tx.type === 'WITHDRAWAL' ? 'text-rose-400' : 'text-emerald-400'}>
+                        {tx.type === 'WITHDRAWAL' ? '-' : '+'}Ksh {tx.amount.toLocaleString('en-KE', { minimumFractionDigits: 2 })}
+                      </span>
                     </td>
 
                     <td className="py-3.5">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                        tx.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-800' :
-                        tx.status === 'PROCESSING' ? 'bg-amber-100 text-amber-800' :
-                        'bg-slate-100 text-slate-700'
-                      }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${
-                          tx.status === 'COMPLETED' ? 'bg-emerald-500' : 'bg-amber-500'
-                        }`}></span>
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                        <CheckCircle2 className="w-3 h-3" />
                         {tx.status}
                       </span>
                     </td>
 
-                    <td className="py-3.5 text-slate-600 text-[11px]">
-                      <div className="font-medium text-slate-800 truncate max-w-[180px]">{tx.methodOrAddress}</div>
-                      <div className="text-[10px] text-slate-400">Zero Network Fee</div>
+                    <td className="py-3.5 text-slate-300 font-mono text-[11px]">
+                      {tx.methodOrAddress}
                     </td>
 
-                    <td className="py-3.5 font-mono text-[11px] text-slate-500">
-                      <span className="bg-slate-100 px-2 py-0.5 rounded text-slate-700">
-                        {tx.txHash.slice(0, 10)}...{tx.txHash.slice(-6)}
-                      </span>
-                    </td>
-
-                    <td className="py-3.5 text-right text-slate-500 text-[11px] whitespace-nowrap">
+                    <td className="py-3.5 text-right text-slate-400 font-mono text-[11px]">
                       {tx.timestamp}
                     </td>
                   </tr>
@@ -257,76 +251,57 @@ export const TransactionHistoryView: React.FC<TransactionHistoryViewProps> = ({
         </div>
       </div>
 
-      {/* Transaction Details Modal */}
+      {/* Transaction Detail Modal */}
       {selectedTx && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-sky-100 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <span className="w-8 h-8 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center font-bold">
-                  ✓
-                </span>
-                <div>
-                  <h3 className="font-bold text-base text-slate-900 font-heading">Transaction Certificate</h3>
-                  <span className="text-[11px] text-slate-400 font-mono">ID: {selectedTx.id}</span>
-                </div>
-              </div>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#0B0F17] border border-amber-500/30 rounded-3xl p-6 max-w-md w-full text-white shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <h3 className="text-base font-bold font-heading">Receipt & Audit Proof</h3>
               <button 
                 onClick={() => setSelectedTx(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                className="text-slate-400 hover:text-white p-1 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="my-5 space-y-3.5 text-xs">
-              <div className="p-4 bg-sky-50 rounded-2xl text-center">
-                <span className="text-xs text-sky-700 font-bold uppercase tracking-wider">Settled Amount</span>
-                <div className="text-3xl font-black text-slate-900 font-mono mt-1">
-                  ${selectedTx.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })} {selectedTx.currency}
-                </div>
-                <div className="text-[11px] text-emerald-600 font-bold mt-1">
-                  Status: {selectedTx.status} (12 Block Confirmations)
-                </div>
+            <div className="space-y-2.5 text-xs text-slate-300">
+              <div className="flex justify-between py-1 border-b border-slate-800">
+                <span className="text-slate-400">Transaction ID:</span>
+                <span className="font-mono text-white">{selectedTx.id}</span>
               </div>
-
-              <div className="space-y-2 text-slate-600">
-                <div className="flex justify-between py-1 border-b border-slate-100">
-                  <span>Type:</span>
-                  <span className="font-bold text-slate-900">{selectedTx.type.replace('_', ' ')}</span>
-                </div>
-                <div className="flex justify-between py-1 border-b border-slate-100">
-                  <span>Timestamp:</span>
-                  <span className="font-bold text-slate-900">{selectedTx.timestamp}</span>
-                </div>
-                <div className="flex justify-between py-1 border-b border-slate-100">
-                  <span>Method / Source:</span>
-                  <span className="font-bold text-slate-900">{selectedTx.methodOrAddress}</span>
-                </div>
-                <div className="flex justify-between py-1 border-b border-slate-100">
-                  <span>Note:</span>
-                  <span className="font-medium text-slate-900">{selectedTx.note}</span>
-                </div>
-                <div>
-                  <span className="block mb-1">Blockchain Transaction Hash:</span>
-                  <div className="flex items-center gap-2 bg-slate-100 p-2 rounded-xl font-mono text-[10px] break-all select-all">
-                    <span>{selectedTx.txHash}</span>
-                    <button
-                      onClick={() => handleCopy(selectedTx.txHash)}
-                      className="text-sky-600 hover:text-sky-800 shrink-0 font-bold"
-                    >
-                      {copiedHash ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                    </button>
-                  </div>
-                </div>
+              <div className="flex justify-between py-1 border-b border-slate-800">
+                <span className="text-slate-400">Type:</span>
+                <span className="font-bold text-amber-400 uppercase">{selectedTx.type}</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-slate-800">
+                <span className="text-slate-400">Amount:</span>
+                <span className="font-bold text-emerald-400 font-mono text-sm">Ksh {selectedTx.amount.toLocaleString('en-KE', { minimumFractionDigits: 2 })}</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-slate-800">
+                <span className="text-slate-400">Settlement Method:</span>
+                <span className="font-mono text-white">{selectedTx.methodOrAddress}</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-slate-800">
+                <span className="text-slate-400">Note:</span>
+                <span className="font-mono text-slate-200">{selectedTx.note}</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-slate-800">
+                <span className="text-slate-400">Status:</span>
+                <span className="text-emerald-400 font-bold uppercase">{selectedTx.status}</span>
+              </div>
+              <div className="flex justify-between py-1">
+                <span className="text-slate-400">Time:</span>
+                <span className="font-mono text-white">{selectedTx.timestamp}</span>
               </div>
             </div>
 
             <button
-              onClick={() => setSelectedTx(null)}
-              className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition-colors cursor-pointer"
+              onClick={() => handleCopy(JSON.stringify(selectedTx, null, 2))}
+              className="w-full bg-slate-800 hover:bg-slate-700 text-amber-300 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors"
             >
-              Close Receipt
+              {copiedHash ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+              <span>{copiedHash ? 'Copied Details!' : 'Copy Transaction Record'}</span>
             </button>
           </div>
         </div>

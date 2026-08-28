@@ -9,10 +9,11 @@ import {
   Sparkles, 
   AlertCircle,
   Coins,
-  CheckCircle2
+  CheckCircle2,
+  Smartphone
 } from 'lucide-react';
-import confetti from 'canvas-confetti';
-import { WalletState } from '../types';
+import { triggerConfetti } from '../utils/confetti';
+import { safeCopyText } from '../utils/storage';
 
 interface DepositModalProps {
   isOpen: boolean;
@@ -27,9 +28,8 @@ export const DepositModal: React.FC<DepositModalProps> = ({
   onConfirmDeposit,
   onOpenMpesa
 }) => {
-
-  const [selectedAsset, setSelectedAsset] = useState<'USDT_TRC20' | 'USDT_ERC20' | 'BTC' | 'ETH'>('USDT_TRC20');
-  const [depositAmount, setDepositAmount] = useState<number>(2500);
+  const [selectedAsset, setSelectedAsset] = useState<'KES_MPESA' | 'USDT_TRC20' | 'USDT_ERC20' | 'BTC' | 'ETH'>('KES_MPESA');
+  const [depositAmount, setDepositAmount] = useState<number>(10000);
   const [copiedAddress, setCopiedAddress] = useState(false);
   const [txHashInput, setTxHashInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -38,6 +38,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({
   if (!isOpen) return null;
 
   const depositAddresses = {
+    KES_MPESA: 'Paybill: 505031 | Acc: VIP-QP',
     USDT_TRC20: 'TY7Q6B92PqmK89vXZ01mNa4kVyTe6pQc99',
     USDT_ERC20: '0x89aF49321B008A2d319808389201a4e788bc5541',
     BTC: 'bc1q9p8200193892019384910293481290a1841e7',
@@ -47,7 +48,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({
   const activeAddress = depositAddresses[selectedAsset];
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(activeAddress);
+    safeCopyText(activeAddress);
     setCopiedAddress(true);
     setTimeout(() => setCopiedAddress(false), 2000);
   };
@@ -59,205 +60,145 @@ export const DepositModal: React.FC<DepositModalProps> = ({
     setTimeout(() => {
       setIsProcessing(false);
       setSuccessStep(true);
-      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+      triggerConfetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
+
+      const curr = selectedAsset === 'KES_MPESA' ? 'KES' : selectedAsset.includes('USDT') ? 'USDT' : selectedAsset === 'BTC' ? 'BTC' : 'ETH';
+      const mockHash = txHashInput.trim() || `MPX${Math.floor(10000000 + Math.random() * 90000000)}`;
       
-      const simulatedHash = txHashInput.trim() || `0x${Math.random().toString(16).substring(2)}${Math.random().toString(16).substring(2)}`;
-      const assetLabel = selectedAsset.startsWith('USDT') ? 'USDT' : selectedAsset as any;
-      const networkLabel = selectedAsset.replace('_', ' ');
+      onConfirmDeposit(depositAmount, curr as any, mockHash, selectedAsset === 'KES_MPESA' ? 'M-PESA Instant Deposit' : `Crypto Deposit (${selectedAsset})`);
 
       setTimeout(() => {
-        onConfirmDeposit(depositAmount, assetLabel, simulatedHash, `${networkLabel} Network Deposit`);
         setSuccessStep(false);
         onClose();
       }, 1400);
-    }, 1000);
+    }, 700);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
-      <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-sky-100 animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+      <div className="bg-[#0B0F17] border border-amber-500/30 rounded-3xl max-w-lg w-full text-white shadow-2xl overflow-hidden backdrop-blur-2xl">
         
-        {/* Modal Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-[#0E131F] via-[#151A29] to-[#0E131F] p-6 border-b border-amber-500/20 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/40 flex items-center justify-center">
               <ArrowDownLeft className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-black text-lg text-slate-900 font-heading">Deposit Capital</h3>
-              <p className="text-xs text-slate-500">Fund your Fortune Investment balance</p>
+              <h2 className="text-lg font-bold font-heading">Deposit Investment Capital</h2>
+              <p className="text-xs text-slate-400">Institutional instant settlement rails (KES)</p>
             </div>
           </div>
+
           <button 
             onClick={onClose}
-            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+            className="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {successStep ? (
-          <div className="py-10 text-center space-y-3">
-            <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto animate-bounce">
-              <CheckCircle2 className="w-10 h-10" />
-            </div>
-            <h4 className="text-xl font-black text-slate-900 font-heading">Deposit Confirmed!</h4>
-            <p className="text-xs text-slate-500 max-w-xs mx-auto">
-              ${depositAmount.toLocaleString()} USDT has been instantly credited to your available cash balance.
-            </p>
-          </div>
-        ) : (
-          <div className="my-5 space-y-4 text-xs">
-            
-            {/* M-PESA Fast Channel CTA Banner */}
-            {onOpenMpesa && (
-              <div className="p-3.5 bg-gradient-to-r from-emerald-50 to-emerald-100/60 border border-emerald-200 rounded-2xl flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white font-mono font-black text-xs flex items-center justify-center">
-                    KES
-                  </div>
-                  <div>
-                    <div className="font-bold text-xs text-emerald-950">Deposit via M-PESA (STK Push)</div>
-                    <div className="text-[10px] text-emerald-700">Pay directly with Safaricom in Kenyan Shillings</div>
-                  </div>
+        {/* Content */}
+        <div className="p-6 space-y-5 text-xs">
+          
+          {/* M-PESA Option Banner */}
+          {onOpenMpesa && (
+            <div className="p-3.5 bg-gradient-to-r from-emerald-950/80 to-teal-950/80 border border-emerald-500/40 rounded-2xl flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <Smartphone className="w-5 h-5 text-emerald-400" />
+                <div>
+                  <div className="font-bold text-white">Kenya Lipa Na M-PESA Direct STK</div>
+                  <div className="text-[11px] text-emerald-300">Paybill 505031 • Instant Auto Crediting</div>
                 </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onOpenMpesa();
+                }}
+                className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-3.5 py-1.5 rounded-xl cursor-pointer"
+              >
+                M-PESA Menu
+              </button>
+            </div>
+          )}
+
+          {/* Network Selector */}
+          <div>
+            <label className="block font-bold text-slate-300 mb-2">Select Payment Channel</label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {[
+                { id: 'KES_MPESA', label: 'M-PESA (KES)', fee: 'Instant Auto' },
+                { id: 'USDT_TRC20', label: 'USDT TRC20', fee: 'Zero Fee' },
+                { id: 'USDT_ERC20', label: 'USDT ERC20', fee: 'Standard' },
+                { id: 'BTC', label: 'Bitcoin (BTC)', fee: 'Native' },
+                { id: 'ETH', label: 'Ethereum (ETH)', fee: 'Native' }
+              ].map((coin) => (
                 <button
+                  key={coin.id}
                   type="button"
-                  onClick={() => {
-                    onClose();
-                    onOpenMpesa();
-                  }}
-                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-2xs transition-colors shrink-0 cursor-pointer"
+                  onClick={() => setSelectedAsset(coin.id as any)}
+                  className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
+                    selectedAsset === coin.id
+                      ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-black border-amber-400 shadow-md'
+                      : 'bg-[#0E131F] text-slate-300 border-slate-800 hover:bg-slate-800'
+                  }`}
                 >
-                  Use M-PESA
+                  <div className="font-bold truncate">{coin.label}</div>
+                  <div className="text-[10px] opacity-80">{coin.fee}</div>
                 </button>
-              </div>
-            )}
-
-            {/* Asset Selector */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                1. Select Blockchain Payment Method
-              </label>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {[
-                  { id: 'USDT_TRC20', label: 'USDT', sub: 'TRC-20 (Fastest)' },
-                  { id: 'USDT_ERC20', label: 'USDT', sub: 'ERC-20' },
-                  { id: 'BTC', label: 'Bitcoin', sub: 'BTC Network' },
-                  { id: 'ETH', label: 'Ethereum', sub: 'ERC-20' },
-                ].map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => setSelectedAsset(item.id as any)}
-                    className={`p-2 rounded-xl border text-left transition-all cursor-pointer ${
-                      selectedAsset === item.id
-                        ? 'bg-sky-50 border-sky-500 text-sky-900 font-bold ring-2 ring-sky-500/20'
-                        : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-                    }`}
-                  >
-                    <div className="font-bold text-xs">{item.label}</div>
-                    <div className="text-[10px] text-slate-500 mt-0.5">{item.sub}</div>
-                  </button>
-                ))}
-              </div>
+              ))}
             </div>
+          </div>
 
-            {/* Amount Selection */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                2. Deposit Amount (USDT equivalent)
-              </label>
-              <div className="relative mb-2">
-                <span className="text-slate-400 font-bold absolute left-3 top-2.5">$</span>
-                <input
-                  type="number"
-                  min="50"
-                  step="50"
-                  value={depositAmount}
-                  onChange={(e) => setDepositAmount(Math.max(10, Number(e.target.value)))}
-                  className="w-full pl-8 pr-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
-                />
-              </div>
-
-              {/* Quick Amount Buttons */}
-              <div className="flex gap-2">
-                {[500, 1000, 2500, 5000, 10000].map((amt) => (
-                  <button
-                    key={amt}
-                    type="button"
-                    onClick={() => setDepositAmount(amt)}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-colors ${
-                      depositAmount === amt
-                        ? 'bg-sky-600 text-white border-sky-600'
-                        : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
-                    }`}
-                  >
-                    ${amt >= 1000 ? `${amt / 1000}k` : amt}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Payment Address & QR Box */}
-            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
-              <div className="flex items-center justify-between text-xs text-slate-600">
-                <span className="font-bold text-slate-900">Official Deposit Destination:</span>
-                <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
-                  Network Active
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2 bg-white p-2.5 rounded-xl border border-slate-200 font-mono text-[11px] text-slate-800 break-all select-all">
-                <span>{activeAddress}</span>
-                <button
-                  type="button"
-                  onClick={handleCopy}
-                  className="p-1 text-sky-600 hover:text-sky-800 shrink-0 font-bold cursor-pointer"
-                >
-                  {copiedAddress ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
-                </button>
-              </div>
-
-              <p className="text-[11px] text-slate-500">
-                Send only <b>{selectedAsset.replace('_', ' ')}</b> to this address. Credits automatically after 1 network confirmation.
-              </p>
-            </div>
-
-            {/* Optional Tx Hash input */}
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                Transaction Hash / Reference (Optional for manual confirmation)
-              </label>
+          {/* Amount Field */}
+          <div>
+            <label className="block font-bold text-slate-300 mb-1">Deposit Amount (KES)</label>
+            <div className="relative">
+              <span className="text-xs font-bold text-amber-400 absolute left-3 top-3 font-mono">KES</span>
               <input
-                type="text"
-                value={txHashInput}
-                onChange={(e) => setTxHashInput(e.target.value)}
-                placeholder="e.g. 0x8f72a1b94e3390fa41e78453..."
-                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl font-mono focus:bg-white focus:outline-none"
+                type="number"
+                min={500}
+                value={depositAmount}
+                onChange={(e) => setDepositAmount(Number(e.target.value))}
+                className="w-full pl-12 pr-3 py-2.5 bg-[#07090E] border border-slate-700 rounded-xl text-white font-mono font-bold text-sm focus:outline-none focus:border-amber-500"
               />
             </div>
+          </div>
 
-            {/* Confirm CTA */}
+          {/* Deposit Address Box */}
+          <div>
+            <label className="block font-bold text-slate-300 mb-1">Payment Reference / Vault Destination</label>
+            <div className="flex items-center gap-2 bg-[#07090E] border border-slate-700 p-2 rounded-xl">
+              <span className="font-mono text-amber-300 text-[11px] truncate flex-1 pl-2">
+                {activeAddress}
+              </span>
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 cursor-pointer shrink-0"
+              >
+                {copiedAddress ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copiedAddress ? 'Copied' : 'Copy'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Action Button */}
+          <div className="pt-2">
             <button
-              id="confirm-deposit-action-btn"
               type="button"
               disabled={isProcessing}
               onClick={handleExecuteDeposit}
-              className="w-full py-3 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70 active:scale-98"
+              className="w-full bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black py-3 rounded-xl shadow-lg transition-all cursor-pointer uppercase tracking-wider text-xs flex items-center justify-center gap-2"
             >
-              {isProcessing ? (
-                <span>Confirming Blockchain Receipt...</span>
-              ) : (
-                <>
-                  <Coins className="w-4 h-4" />
-                  <span>Simulate Instant Deposit Credit (${depositAmount.toLocaleString()})</span>
-                </>
-              )}
+              <Coins className="w-4 h-4" />
+              <span>{isProcessing ? 'Verifying Deposit Ingress...' : `Confirm Deposit of Ksh ${depositAmount.toLocaleString()}`}</span>
             </button>
-
           </div>
-        )}
+
+        </div>
 
       </div>
     </div>
