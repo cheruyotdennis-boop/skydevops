@@ -17,7 +17,8 @@ import {
   Smartphone,
   UserPlus,
   Users,
-  Coins
+  Coins,
+  MessageSquare
 } from 'lucide-react';
 import { triggerConfetti } from '../utils/confetti';
 import { UserProfile, ProfileCreationData, InvestmentPlan } from '../types';
@@ -33,6 +34,7 @@ interface AuthScreenProps {
   initialMode?: 'register' | 'login';
   selectedPlan?: InvestmentPlan | null;
   onBrowsePublic?: () => void;
+  onOpenContacts?: () => void;
 }
 
 const AVATAR_PRESETS = [
@@ -50,7 +52,8 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   savedProfiles = [],
   initialMode = 'register',
   selectedPlan = null,
-  onBrowsePublic
+  onBrowsePublic,
+  onOpenContacts
 }) => {
   const [authMode, setAuthMode] = useState<'register' | 'login'>(initialMode);
   const [showPassword, setShowPassword] = useState(false);
@@ -701,6 +704,21 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
             <span className="text-slate-300">Lipa Na M-PESA KES</span>
           </div>
         </div>
+
+        {/* Contact Support Button at Bottom */}
+        {onOpenContacts && (
+          <div className="mt-6 text-center">
+            <button
+              id="auth-bottom-contact-btn"
+              type="button"
+              onClick={onOpenContacts}
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#0E131F] hover:bg-slate-800 border border-slate-700/80 hover:border-emerald-500/50 text-slate-300 hover:text-white rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer active:scale-95"
+            >
+              <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Contact Nairobi Support Desk & WhatsApp (+17712502005)</span>
+            </button>
+          </div>
+        )}
 
       </div>
     </div>

@@ -296,27 +296,39 @@ export const ReferralAffiliateView: React.FC<ReferralAffiliateViewProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/80">
-              {displayedMembers.map((m) => (
-                <tr key={m.id} className="hover:bg-slate-800/40 transition-colors">
-                  <td className="py-3.5 font-medium text-white flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-slate-800 border border-slate-700 text-amber-400 font-bold flex items-center justify-center text-xs">
-                      {m.username.charAt(0).toUpperCase()}
+              {displayedMembers.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-8 text-center text-slate-400">
+                    <div className="flex flex-col items-center justify-center">
+                      <Users className="w-8 h-8 text-slate-600 mb-2" />
+                      <p className="font-semibold text-white">No Referrals in Tier {selectedTierTab} Yet</p>
+                      <p className="text-xs text-slate-400 mt-1">Share your link #{user.referralCode} to earn instant direct commissions on referee deposits.</p>
                     </div>
-                    <div>
-                      <div className="font-bold text-white">@{m.username}</div>
-                      <div className="text-[10px] text-slate-400 font-mono">Referee ID: #{m.id}</div>
-                    </div>
-                  </td>
-                  <td className="py-3.5 text-slate-400 font-mono">{m.joinedDate}</td>
-                  <td className="py-3.5 font-bold font-mono text-white">Ksh {m.activeDeposits.toLocaleString()}</td>
-                  <td className="py-3.5 font-bold font-mono text-emerald-400">+Ksh {m.commissionEarned.toLocaleString()}</td>
-                  <td className="py-3.5 text-right">
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-500/30">
-                      {m.status}
-                    </span>
                   </td>
                 </tr>
-              ))}
+              ) : (
+                displayedMembers.map((m) => (
+                  <tr key={m.id} className="hover:bg-slate-800/40 transition-colors">
+                    <td className="py-3.5 font-medium text-white flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-slate-800 border border-slate-700 text-amber-400 font-bold flex items-center justify-center text-xs">
+                        {m.username.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <div className="font-bold text-white">@{m.username}</div>
+                        <div className="text-[10px] text-slate-400 font-mono">Referee ID: #{m.id}</div>
+                      </div>
+                    </td>
+                    <td className="py-3.5 text-slate-400 font-mono">{m.joinedDate}</td>
+                    <td className="py-3.5 font-bold font-mono text-white">Ksh {m.activeDeposits.toLocaleString()}</td>
+                    <td className="py-3.5 font-bold font-mono text-emerald-400">+Ksh {m.commissionEarned.toLocaleString()}</td>
+                    <td className="py-3.5 text-right">
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                        {m.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

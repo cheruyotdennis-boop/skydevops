@@ -37,7 +37,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({
   contacts,
   user
 }) => {
-  const [selectedAsset, setSelectedAsset] = useState<'KES_MPESA' | 'USDT_TRC20' | 'USDT_ERC20' | 'BTC' | 'ETH'>('USDT_TRC20');
+  const [selectedAsset, setSelectedAsset] = useState<'KES_MPESA' | 'USDT_BEP20' | 'BTC'>('USDT_BEP20');
   const [depositAmountKES, setDepositAmountKES] = useState<number>(13000);
   const [senderWalletAddress, setSenderWalletAddress] = useState<string>('');
   const [txHashInput, setTxHashInput] = useState<string>('');
@@ -50,33 +50,24 @@ export const DepositModal: React.FC<DepositModalProps> = ({
 
   const exchangeRate = contacts?.kesUsdExchangeRate || 130.00; // 1 USD = 130 KES
   const btcRateKES = 12480000;
-  const ethRateKES = 428500;
 
-  // Receiving Deposit Addresses (supports owner personal wallet configuration)
+  // Receiving Deposit Addresses (Two official customer deposit addresses: USDT BEP-20 and BTC)
   const depositAddresses: Record<string, { address: string; network: string; memo?: string }> = {
     KES_MPESA: {
       address: `Paybill: ${contacts?.mpesaPaybill || '505031'} | Acc: VIP-QP`,
       network: 'Safaricom M-PESA'
     },
-    USDT_TRC20: {
-      address: contacts?.cryptoDepositWallets?.usdtTrc20 || 'TY7Q6B92PqmK89vXZ01mNa4kVyTe6pQc99',
-      network: 'TRON (TRC-20)'
-    },
-    USDT_ERC20: {
-      address: contacts?.cryptoDepositWallets?.usdtErc20 || '0x89aF49321B008A2d319808389201a4e788bc5541',
-      network: 'Ethereum (ERC-20)'
+    USDT_BEP20: {
+      address: contacts?.cryptoDepositWallets?.usdtBep20 || '0xbcf65f39cd5868e8ac571c6d929255dd587f9bff',
+      network: 'BNB Smart Chain (BEP-20)'
     },
     BTC: {
-      address: contacts?.cryptoDepositWallets?.btc || 'bc1q9p8200193892019384910293481290a1841e7',
-      network: 'Bitcoin Native (SegWit)'
-    },
-    ETH: {
-      address: contacts?.cryptoDepositWallets?.eth || '0x4428019389201938920193849102934812903491',
-      network: 'Ethereum Native'
+      address: contacts?.cryptoDepositWallets?.btc || '1KSxkSS6XQsyYfefsTK7xSMrnFxDfGwsGU',
+      network: 'Bitcoin Native (BTC)'
     }
   };
 
-  const activeAssetInfo = depositAddresses[selectedAsset] || depositAddresses.USDT_TRC20;
+  const activeAssetInfo = depositAddresses[selectedAsset] || depositAddresses.USDT_BEP20;
   const activeAddress = activeAssetInfo.address;
 
   // Calculate crypto equivalent
@@ -88,10 +79,6 @@ export const DepositModal: React.FC<DepositModalProps> = ({
     if (selectedAsset === 'BTC') {
       const btc = depositAmountKES / btcRateKES;
       return `${btc.toFixed(6)} BTC`;
-    }
-    if (selectedAsset === 'ETH') {
-      const eth = depositAmountKES / ethRateKES;
-      return `${eth.toFixed(5)} ETH`;
     }
     return `Ksh ${depositAmountKES.toLocaleString()}`;
   };
@@ -191,13 +178,11 @@ export const DepositModal: React.FC<DepositModalProps> = ({
           {/* Network Selector */}
           <div>
             <label className="block font-bold text-slate-300 mb-2">Select Payment Rail</label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               {[
-                { id: 'USDT_TRC20', label: 'USDT (TRC-20)', sub: 'Zero Fee • Fast', icon: '⚡' },
-                { id: 'USDT_ERC20', label: 'USDT (ERC-20)', sub: 'Ethereum', icon: '💎' },
-                { id: 'BTC', label: 'Bitcoin (BTC)', sub: 'Native SegWit', icon: '₿' },
-                { id: 'ETH', label: 'Ethereum (ETH)', sub: 'Native ETH', icon: 'Ξ' },
-                { id: 'KES_MPESA', label: 'M-PESA (KES)', sub: 'Paybill 505031', icon: '📱' }
+                { id: 'USDT_BEP20', label: 'USDT (BEP-20)', sub: 'BNB Smart Chain • Low Fee', icon: '⚡' },
+                { id: 'BTC', label: 'Bitcoin (BTC)', sub: 'Native Bitcoin Network', icon: '₿' },
+                { id: 'KES_MPESA', label: 'M-PESA (KES)', sub: 'Paybill 505031 Instant', icon: '📱' }
               ].map((coin) => (
                 <button
                   key={coin.id}

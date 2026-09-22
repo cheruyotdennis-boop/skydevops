@@ -33,10 +33,11 @@ export interface PlatformContacts {
   telegramSupport: string;
   kesUsdExchangeRate: number; // e.g. 130 KES per 1 USD
   cryptoDepositWallets?: {
-    usdtTrc20: string;
-    usdtErc20: string;
+    usdtBep20: string;
     btc: string;
-    eth: string;
+    usdtTrc20?: string;
+    usdtErc20?: string;
+    eth?: string;
   };
 }
 

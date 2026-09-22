@@ -41,7 +41,7 @@ import { LoginModal } from './components/LoginModal';
 import { Device2faModal } from './components/Device2faModal';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { AdminCustomerDatabase } from './components/AdminCustomerDatabase';
-import { Lock } from 'lucide-react';
+import { Lock, PhoneCall, MessageSquare } from 'lucide-react';
 import { safeGetItem, safeSetItem } from './utils/storage';
 import { roundCurrency } from './utils/security';
 import { isDeviceRecognized, registerCurrentDevice, generateDevice2faOtp } from './utils/deviceSecurity';
@@ -104,7 +104,12 @@ export default function App() {
   });
 
   const [wallet, setWallet] = useState<WalletState>(() => {
-    return safeGetItem<WalletState>('quantiq_wallet', INITIAL_WALLET);
+    const loaded = safeGetItem<WalletState>('quantiq_wallet', INITIAL_WALLET);
+    // Purge old simulated figures (84850 or 70000 activeInvested)
+    if (loaded && (loaded.totalBalance === 84850 || loaded.activeInvested === 70000)) {
+      return INITIAL_WALLET;
+    }
+    return loaded || INITIAL_WALLET;
   });
 
   const [contacts, setContacts] = useState<PlatformContacts>(() => {
@@ -123,15 +128,28 @@ export default function App() {
   });
 
   const [activeInvestments, setActiveInvestments] = useState<ActiveInvestment[]>(() => {
-    return safeGetItem<ActiveInvestment[]>('quantiq_investments', INITIAL_ACTIVE_INVESTMENTS);
+    const loaded = safeGetItem<ActiveInvestment[]>('quantiq_investments', INITIAL_ACTIVE_INVESTMENTS);
+    if (Array.isArray(loaded)) {
+      return loaded.filter(inv => inv.id !== 'inv_9041' && inv.id !== 'inv_8820');
+    }
+    return [];
   });
 
   const [transactions, setTransactions] = useState<Transaction[]>(() => {
-    return safeGetItem<Transaction[]>('quantiq_txs', INITIAL_TRANSACTIONS);
+    const loaded = safeGetItem<Transaction[]>('quantiq_txs', INITIAL_TRANSACTIONS);
+    if (Array.isArray(loaded)) {
+      const simulatedIds = ['tx_98124', 'tx_98012', 'tx_97645', 'tx_96411', 'tx_95209', 'tx_94301'];
+      return loaded.filter(tx => !simulatedIds.includes(tx.id));
+    }
+    return [];
   });
 
   const [notifications, setNotifications] = useState<NotificationItem[]>(() => {
-    return safeGetItem<NotificationItem[]>('quantiq_notifications', INITIAL_NOTIFICATIONS);
+    const loaded = safeGetItem<NotificationItem[]>('quantiq_notifications', INITIAL_NOTIFICATIONS);
+    if (Array.isArray(loaded)) {
+      return loaded.filter(n => n.id !== 'n2' && n.id !== 'n3' && !n.title.includes('Daily 7.5% ROI Credited'));
+    }
+    return INITIAL_NOTIFICATIONS;
   });
 
   // Navigation & Modals
@@ -179,7 +197,10 @@ export default function App() {
 
   useEffect(() => {
     safeSetItem('quantiq_wallet', wallet);
-  }, [wallet]);
+    if (user?.email) {
+      safeSetItem(`quantiq_wallet_${user.email.toLowerCase()}`, wallet);
+    }
+  }, [wallet, user?.email]);
 
   useEffect(() => {
     safeSetItem('quantiq_contacts', contacts);
@@ -187,11 +208,17 @@ export default function App() {
 
   useEffect(() => {
     safeSetItem('quantiq_investments', activeInvestments);
-  }, [activeInvestments]);
+    if (user?.email) {
+      safeSetItem(`quantiq_investments_${user.email.toLowerCase()}`, activeInvestments);
+    }
+  }, [activeInvestments, user?.email]);
 
   useEffect(() => {
     safeSetItem('quantiq_txs', transactions);
-  }, [transactions]);
+    if (user?.email) {
+      safeSetItem(`quantiq_txs_${user.email.toLowerCase()}`, transactions);
+    }
+  }, [transactions, user?.email]);
 
   useEffect(() => {
     safeSetItem('quantiq_notifications', notifications);
@@ -262,18 +289,43 @@ export default function App() {
 
     setUser(fullUser);
 
-    // If initial deposit is supplied for a brand new profile
-    if (initialDeposit !== undefined && initialDeposit > 0) {
-      setWallet({
-        totalBalance: initialDeposit,
-        availableCash: initialDeposit,
+    // Customer-specific actual figures loader
+    const userEmailKey = (fullUser.email || 'investor@quantiqprime.com').toLowerCase();
+    const savedUserWallet = safeGetItem<WalletState | null>(`quantiq_wallet_${userEmailKey}`, null);
+    const savedUserInvestments = safeGetItem<ActiveInvestment[] | null>(`quantiq_investments_${userEmailKey}`, null);
+    const savedUserTxs = safeGetItem<Transaction[] | null>(`quantiq_txs_${userEmailKey}`, null);
+
+    if (savedUserWallet && savedUserWallet.totalBalance !== 84850 && savedUserWallet.activeInvested !== 70000) {
+      // Customer has existing actual wallet on this device
+      setWallet(savedUserWallet);
+      setActiveInvestments(savedUserInvestments ? savedUserInvestments.filter(i => i.id !== 'inv_9041' && i.id !== 'inv_8820') : []);
+      setTransactions(savedUserTxs ? savedUserTxs.filter(t => !['tx_98124', 'tx_98012', 'tx_97645', 'tx_96411', 'tx_95209', 'tx_94301'].includes(t.id)) : []);
+    } else {
+      // New or uninitialized customer account: actual figures start from 0 (or actual starter deposit if provided)
+      const startingCash = (initialDeposit !== undefined && initialDeposit > 0) ? initialDeposit : 0;
+      const cleanWallet: WalletState = {
+        totalBalance: startingCash,
+        availableCash: startingCash,
         activeInvested: 0,
         totalEarnings: 0,
         todayYield: 0,
         referralEarnings: 0,
         pendingWithdrawals: 0
-      });
+      };
+      setWallet(cleanWallet);
       setActiveInvestments([]);
+      setTransactions(startingCash > 0 ? [{
+        id: `tx_${Date.now()}`,
+        type: 'DEPOSIT',
+        amount: startingCash,
+        currency: 'KES',
+        fee: 0,
+        status: 'COMPLETED',
+        timestamp: `${new Date().toISOString().split('T')[0]} ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} EAT`,
+        txHash: `0x${Math.random().toString(16).substring(2)}`,
+        methodOrAddress: 'Starter Deposit',
+        note: `Initial account funding for ${fullUser.fullName}`
+      }] : []);
     }
 
     // Add to saved profiles registry if not already present
@@ -312,12 +364,12 @@ export default function App() {
       joinedDate: new Date().toISOString().split('T')[0],
       tier: (data.initialDepositUSD || 0) >= 10000 || (data.initialDepositKES || 0) >= 200000 ? 'Platinum (VIP)' : (data.initialDepositUSD || 0) >= 2500 || (data.initialDepositKES || 0) >= 100000 ? 'Gold' : (data.initialDepositUSD || 0) >= 500 || (data.initialDepositKES || 0) >= 30000 ? 'Silver' : 'Bronze',
       kycStatus: 'Verified',
-      avatar: data.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250',
+      avatar: data.avatar || 'luxury',
       twoFactorEnabled: true,
-      walletAddressUSDT: data.walletAddressUSDT || 'TXq7j8kP39LmNxR8w92Z0A1m4kVyTe6pQc'
+      walletAddressUSDT: data.walletAddressUSDT || ''
     };
 
-    const depositAmount = data.initialDepositKES || data.initialDepositUSD || 50000;
+    const depositAmount = data.initialDepositKES || data.initialDepositUSD || 0;
     const newWallet: WalletState = {
       totalBalance: depositAmount,
       availableCash: depositAmount,
@@ -332,8 +384,8 @@ export default function App() {
     setWallet(newWallet);
     setActiveInvestments([]);
 
-    // Add initial welcome deposit transaction
-    const welcomeTx: Transaction = {
+    // Add initial welcome deposit transaction only if a deposit was actually made
+    const initialTxs: Transaction[] = depositAmount > 0 ? [{
       id: `tx_${Date.now().toString().slice(-5)}`,
       type: 'DEPOSIT',
       amount: depositAmount,
@@ -344,14 +396,16 @@ export default function App() {
       txHash: `0x${Math.random().toString(16).substring(2)}`,
       methodOrAddress: `Starter Deposit (M-PESA / Bank)`,
       note: `Welcome account funding for ${data.fullName}`
-    };
-    setTransactions([welcomeTx]);
+    }] : [];
+    setTransactions(initialTxs);
 
     // Add welcome notification
     const welcomeNotif: NotificationItem = {
       id: `notif_${Date.now()}`,
       title: `Welcome to Fortune Investment, ${data.fullName.split(' ')[0]}!`,
-      message: `Your profile has been created and credited with Ksh ${depositAmount.toLocaleString('en-KE')}. You can now subscribe to yield plans or deposit via M-PESA.`,
+      message: depositAmount > 0 
+        ? `Your profile has been created and credited with Ksh ${depositAmount.toLocaleString('en-KE')}. You can now subscribe to yield plans or deposit via M-PESA.`
+        : `Your profile has been created. You can now fund your account via Lipa Na M-PESA or subscribe to a high-yield investment package.`,
       timestamp: 'Just now',
       read: false,
       type: 'deposit'
@@ -697,7 +751,7 @@ export default function App() {
   // If unauthenticated and not browsing as guest
   if (!isAuthenticated && !isGuestBrowsing) {
     return (
-      <div className="min-h-screen bg-[#07090E] flex flex-col font-sans selection:bg-amber-500 selection:text-black">
+      <div className="min-h-screen bg-[#07090E] flex flex-col font-sans selection:bg-amber-500 selection:text-black relative">
         <AuthScreen 
           onLoginSuccess={(userData, initialDep) => {
             handleLoginAttempt(userData, initialDep);
@@ -711,6 +765,15 @@ export default function App() {
             setIsAuthenticated(false);
             setActiveTab('investments');
           }}
+          onOpenContacts={() => setIsContactsOpen(true)}
+        />
+        <ContactSupportModal
+          isOpen={isContactsOpen}
+          onClose={() => setIsContactsOpen(false)}
+          contacts={contacts}
+          user={user}
+          onUpdateContacts={(updated) => setContacts(updated)}
+          onUpdateUser={(updated) => setUser(prev => ({ ...prev, ...updated }))}
         />
       </div>
     );
@@ -864,6 +927,7 @@ export default function App() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         onOpenMpesa={() => setIsMpesaOpen(true)}
+        onOpenContacts={() => setIsContactsOpen(true)}
       />
 
       {/* Footer */}
@@ -884,10 +948,12 @@ export default function App() {
             </button>
             <span>•</span>
             <button
+              id="footer-contact-desk-btn"
               onClick={() => setIsContactsOpen(true)}
-              className="text-amber-400 hover:text-amber-300 font-bold cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/50 text-emerald-300 font-bold rounded-xl cursor-pointer transition-colors shadow-sm"
             >
-              Kenya Contacts Desk
+              <PhoneCall className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Contact Support Desk</span>
             </button>
             <span>•</span>
             <button
@@ -920,6 +986,22 @@ export default function App() {
 
       {/* Main Responsive Dashboard Content */}
       {renderDashboardContent()}
+
+      {/* Persistent Floating Bottom Contact Support Button */}
+      <aside aria-label="Support Desk" className="fixed bottom-20 md:bottom-6 right-4 sm:right-6 z-40">
+        <button
+          id="floating-bottom-contact-button"
+          onClick={() => setIsContactsOpen(true)}
+          className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:from-emerald-500 hover:to-teal-400 text-slate-950 font-black text-xs px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-full shadow-2xl shadow-emerald-950/80 border-2 border-emerald-300/50 hover:scale-105 active:scale-95 transition-all cursor-pointer group"
+          title="Contact VIP Support Desk & WhatsApp (+17712502005)"
+        >
+          <div className="relative flex items-center justify-center">
+            <PhoneCall className="w-4 h-4 text-slate-950 fill-slate-950 group-hover:rotate-12 transition-transform" />
+            <span className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-300 rounded-full animate-ping"></span>
+          </div>
+          <span className="font-heading uppercase tracking-wider text-[11px] sm:text-xs">Contact</span>
+        </button>
+      </aside>
 
       {/* Modals */}
       <DepositModal

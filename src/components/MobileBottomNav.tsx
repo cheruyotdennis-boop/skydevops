@@ -2,9 +2,8 @@ import React from 'react';
 import { 
   LayoutDashboard, 
   TrendingUp, 
-  Smartphone, 
   Users, 
-  ShieldCheck,
+  PhoneCall,
   Zap
 } from 'lucide-react';
 
@@ -12,12 +11,14 @@ interface MobileBottomNavProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   onOpenMpesa: () => void;
+  onOpenContacts?: () => void;
 }
 
 export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   activeTab,
   setActiveTab,
-  onOpenMpesa
+  onOpenMpesa,
+  onOpenContacts
 }) => {
   return (
     <nav 
@@ -82,20 +83,14 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           )}
         </button>
 
-        {/* Security & KYC */}
+        {/* Contact Support */}
         <button
-          onClick={() => setActiveTab('security')}
-          className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all cursor-pointer ${
-            activeTab === 'security'
-              ? 'text-amber-400 font-bold scale-105'
-              : 'text-slate-400 hover:text-slate-200'
-          }`}
+          id="mobile-bottom-contact-btn"
+          onClick={onOpenContacts}
+          className="flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all cursor-pointer text-slate-400 hover:text-emerald-300 active:scale-95"
         >
-          <ShieldCheck className="w-5 h-5 mb-1" />
-          <span className="text-[10px] tracking-tight">KYC & 2FA</span>
-          {activeTab === 'security' && (
-            <span className="w-1 h-1 rounded-full bg-amber-400 mt-0.5"></span>
-          )}
+          <PhoneCall className="w-5 h-5 mb-1 text-emerald-400" />
+          <span className="text-[10px] tracking-tight font-bold text-emerald-400">Contact</span>
         </button>
       </div>
     </nav>

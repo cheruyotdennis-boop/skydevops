@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   TrendingUp, 
   Wallet, 
@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { triggerConfetti } from '../utils/confetti';
 import { safeCopyText } from '../utils/storage';
-import { UserProfile, WalletState, ActiveInvestment, Transaction } from '../types';
+import { UserProfile, WalletState, ActiveInvestment, Transaction, ChartDataPoint } from '../types';
 import { ProfileAvatar } from './ProfileAvatar';
 import { HISTORICAL_GROWTH_DATA } from '../data/mockData';
 import { api, BackendHealthResponse } from '../services/api';
@@ -63,15 +63,56 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   const [copiedLink, setCopiedLink] = useState(false);
   const [liveYieldCounter, setLiveYieldCounter] = useState(wallet.todayYield);
 
-  // Live real-time sub-cent ticking yield effect
+  // Live real-time sub-cent ticking yield effect - only active when user has actual positive yield
   useEffect(() => {
-    const interval = setInterval(() => {
-      setLiveYieldCounter(prev => +(prev + 0.15).toFixed(2));
-    }, 2000);
-    return () => clearInterval(interval);
-  }, []);
+    setLiveYieldCounter(wallet.todayYield);
+    if (wallet.todayYield <= 0) return;
 
-  const chartData = HISTORICAL_GROWTH_DATA[timeframe] || HISTORICAL_GROWTH_DATA['7D'];
+    const interval = setInterval(() => {
+      setLiveYieldCounter(prev => +(prev + 0.05).toFixed(2));
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [wallet.todayYield]);
+
+  // Actual customer portfolio & profit growth trajectory based on actual customer figures
+  const chartData = useMemo(() => {
+    const pointsCount = timeframe === '7D' ? 7 : timeframe === '1M' ? 7 : timeframe === '3M' ? 6 : 6;
+    const daysBack = timeframe === '7D' ? 7 : timeframe === '1M' ? 30 : timeframe === '3M' ? 90 : 365;
+    const now = new Date();
+    const result: ChartDataPoint[] = [];
+
+    const currentBal = wallet.totalBalance;
+    const currentProfit = wallet.totalEarnings;
+    const currentInvested = wallet.activeInvested;
+
+    for (let i = 0; i < pointsCount; i++) {
+      const pointDate = new Date(now.getTime() - ((pointsCount - 1 - i) * (daysBack / (pointsCount - 1))) * 86400000);
+      const dateStr = pointDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+      if (currentBal === 0 && currentProfit === 0 && currentInvested === 0) {
+        result.push({
+          date: dateStr,
+          portfolioValue: 0,
+          investedCapital: 0,
+          totalProfit: 0,
+          dailyEarnings: 0
+        });
+      } else {
+        const ratio = (i + 1) / pointsCount;
+        const interpProfit = Number((currentProfit * ratio).toFixed(2));
+        const interpVal = Number((currentInvested + (wallet.availableCash * ratio) + interpProfit).toFixed(2));
+        result.push({
+          date: dateStr,
+          portfolioValue: interpVal,
+          investedCapital: currentInvested,
+          totalProfit: interpProfit,
+          dailyEarnings: wallet.todayYield
+        });
+      }
+    }
+    return result;
+  }, [timeframe, wallet.totalBalance, wallet.totalEarnings, wallet.activeInvested, wallet.availableCash, wallet.todayYield]);
+
   const referralUrl = `https://quantiqprime.com/register?ref=${user.referralCode}`;
 
   const handleCopyLink = () => {
@@ -113,16 +154,41 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
     onClaimDailyYield();
   };
 
-  const pieData = [
-    { name: 'Silver (7.5%)', value: 50000, color: '#F59E0B' },
-    { name: 'Bronze (7.5%)', value: 20000, color: '#CD7F32' },
-    { name: 'Available Capital', value: wallet.availableCash, color: '#10B981' }
-  ];
+  // Dynamically compute pieData from actual user active investments and available capital
+  const pieData = useMemo(() => {
+    const items: { name: string; value: number; color: string }[] = [];
+    const colors = ['#F59E0B', '#6366F1', '#EC4899', '#3B82F6', '#14B8A6'];
+
+    const planMap = new Map<string, number>();
+    activeInvestments.forEach(inv => {
+      planMap.set(inv.planName, (planMap.get(inv.planName) || 0) + inv.investedAmount);
+    });
+
+    let colorIdx = 0;
+    planMap.forEach((amount, planName) => {
+      items.push({
+        name: planName,
+        value: amount,
+        color: colors[colorIdx % colors.length]
+      });
+      colorIdx++;
+    });
+
+    if (wallet.availableCash > 0 || items.length === 0) {
+      items.push({
+        name: 'Available Capital',
+        value: wallet.availableCash,
+        color: '#10B981'
+      });
+    }
+
+    return items;
+  }, [activeInvestments, wallet.availableCash]);
 
   const totalAllocation = pieData.reduce((acc, curr) => acc + curr.value, 0);
 
   // SVG Area Chart calculations
-  const maxVal = Math.max(...chartData.map(d => Math.max(d.portfolioValue, d.totalProfit * 1.5)), 100000);
+  const maxVal = Math.max(...chartData.map(d => Math.max(d.portfolioValue, d.totalProfit * 1.5)), 1000);
   const minVal = 0;
   const svgWidth = 600;
   const svgHeight = 220;
@@ -612,11 +678,20 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             {/* Custom SVG Donut Chart */}
             <div className="h-48 w-full mt-2 flex items-center justify-center relative">
               <svg viewBox="0 0 160 160" className="w-40 h-40 transform -rotate-90">
-                {(() => {
+                {totalAllocation <= 0 ? (
+                  <circle
+                    cx="80"
+                    cy="80"
+                    r="55"
+                    fill="transparent"
+                    stroke="#1E293B"
+                    strokeWidth="16"
+                  />
+                ) : (() => {
                   let accumulatedPercent = 0;
                   const circumference = 2 * Math.PI * 55;
                   return pieData.map((item, idx) => {
-                    const percent = item.value / totalAllocation;
+                    const percent = item.value / (totalAllocation || 1);
                     const strokeDasharray = `${percent * circumference} ${circumference}`;
                     const strokeDashoffset = -accumulatedPercent * circumference;
                     accumulatedPercent += percent;
@@ -641,7 +716,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
                 <span className="text-[10px] text-slate-400 uppercase font-semibold">Total Capital</span>
                 <span className="text-xs font-black text-amber-300 font-mono">
-                  Ksh {totalAllocation >= 1000 ? `${(totalAllocation/1000).toFixed(0)}k` : totalAllocation}
+                  Ksh {totalAllocation >= 1000 ? `${(totalAllocation/1000).toFixed(0)}k` : totalAllocation.toLocaleString('en-KE')}
                 </span>
               </div>
             </div>
@@ -767,51 +842,69 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           </div>
 
           <div className="mt-4 space-y-3">
-            {activeInvestments.map((inv) => (
-              <div
-                key={inv.id}
-                className="p-4 rounded-2xl bg-[#0E131F] border border-slate-800/80 hover:border-amber-500/30 transition-colors"
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="font-bold text-xs text-white flex items-center gap-2">
-                      <span>{inv.planName}</span>
-                      <span className="text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full">
-                        +{inv.dailyRoi}% / day
-                      </span>
-                    </div>
-                    <div className="text-[11px] text-slate-400 mt-0.5 flex flex-wrap items-center gap-2">
-                      <span>Locked Principal: <b className="text-amber-300 font-mono">Ksh {inv.investedAmount.toLocaleString()}</b></span>
-                      <span>•</span>
-                      <span>Earned: <b className="text-emerald-400 font-mono">Ksh {inv.totalEarned.toLocaleString()}</b></span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xs font-black text-emerald-400 font-mono">
-                      +Ksh {inv.dailyYieldAmount.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/day
-                    </div>
-                    <div className="text-[10px] text-amber-300 flex items-center justify-end gap-1 font-bold">
-                      <Lock className="w-2.5 h-2.5" />
-                      <span>Day {inv.daysPassed} of {inv.totalDays}</span>
-                    </div>
-                  </div>
+            {activeInvestments.length === 0 ? (
+              <div className="p-8 rounded-2xl bg-[#0E131F]/60 border border-dashed border-slate-800 text-center flex flex-col items-center justify-center">
+                <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mb-3">
+                  <Coins className="w-6 h-6" />
                 </div>
-
-                {/* Progress bar */}
-                <div className="mt-3">
-                  <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                    <div
-                      className="bg-gradient-to-r from-amber-500 to-yellow-400 h-full rounded-full"
-                      style={{ width: `${Math.min(100, (inv.daysPassed / inv.totalDays) * 100)}%` }}
-                    ></div>
-                  </div>
-                  <div className="flex items-center justify-between text-[10px] text-slate-400 mt-1 font-mono">
-                    <span>Started: {inv.startDate}</span>
-                    <span className="text-amber-400 font-bold">🔒 Locked until: {inv.maturityDate}</span>
-                  </div>
-                </div>
+                <h4 className="text-sm font-bold text-white mb-1">No Active Contracts</h4>
+                <p className="text-xs text-slate-400 max-w-sm mb-4">
+                  You do not have any running yield plans. Choose an investment package to start receiving daily dividends.
+                </p>
+                <button
+                  onClick={onOpenInvest}
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-black text-xs hover:brightness-110 transition-all cursor-pointer shadow-md"
+                >
+                  Explore Investment Packages
+                </button>
               </div>
-            ))}
+            ) : (
+              activeInvestments.map((inv) => (
+                <div
+                  key={inv.id}
+                  className="p-4 rounded-2xl bg-[#0E131F] border border-slate-800/80 hover:border-amber-500/30 transition-colors"
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="font-bold text-xs text-white flex items-center gap-2">
+                        <span>{inv.planName}</span>
+                        <span className="text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full">
+                          +{inv.dailyRoi}% / day
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-slate-400 mt-0.5 flex flex-wrap items-center gap-2">
+                        <span>Locked Principal: <b className="text-amber-300 font-mono">Ksh {inv.investedAmount.toLocaleString()}</b></span>
+                        <span>•</span>
+                        <span>Earned: <b className="text-emerald-400 font-mono">Ksh {inv.totalEarned.toLocaleString()}</b></span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xs font-black text-emerald-400 font-mono">
+                        +Ksh {inv.dailyYieldAmount.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/day
+                      </div>
+                      <div className="text-[10px] text-amber-300 flex items-center justify-end gap-1 font-bold">
+                        <Lock className="w-2.5 h-2.5" />
+                        <span>Day {inv.daysPassed} of {inv.totalDays}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="mt-3">
+                    <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                      <div
+                        className="bg-gradient-to-r from-amber-500 to-yellow-400 h-full rounded-full"
+                        style={{ width: `${Math.min(100, (inv.daysPassed / inv.totalDays) * 100)}%` }}
+                      ></div>
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] text-slate-400 mt-1 font-mono">
+                      <span>Started: {inv.startDate}</span>
+                      <span className="text-amber-400 font-bold">🔒 Locked until: {inv.maturityDate}</span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
@@ -834,43 +927,55 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           </div>
 
           <div className="mt-4 space-y-2.5">
-            {transactions.slice(0, 5).map((tx) => (
-              <div
-                key={tx.id}
-                className="p-3 rounded-2xl bg-[#0E131F] border border-slate-800/80 flex items-center justify-between hover:bg-slate-800/40 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
-                    tx.type === 'DEPOSIT'
-                      ? 'bg-emerald-950 text-emerald-400 border border-emerald-500/30' 
-                      : tx.type === 'ROI_PAYOUT'
-                      ? 'bg-amber-950 text-amber-400 border border-amber-500/30'
-                      : tx.type === 'WITHDRAWAL'
-                      ? 'bg-rose-950 text-rose-400 border border-rose-500/30'
-                      : 'bg-yellow-950 text-yellow-400 border border-yellow-500/30'
-                  }`}>
-                    {tx.type === 'DEPOSIT' ? <ArrowDownLeft className="w-4 h-4" /> :
-                     tx.type === 'WITHDRAWAL' ? <ArrowUpRight className="w-4 h-4" /> :
-                     tx.type === 'ROI_PAYOUT' ? <Coins className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-white">{tx.note || tx.type}</div>
-                    <div className="text-[10px] text-slate-400 font-mono">{tx.timestamp} • {tx.methodOrAddress || 'Quantiq Core'}</div>
-                  </div>
+            {transactions.length === 0 ? (
+              <div className="p-8 rounded-2xl bg-[#0E131F]/60 border border-dashed border-slate-800 text-center flex flex-col items-center justify-center">
+                <div className="w-12 h-12 rounded-2xl bg-slate-800/80 border border-slate-700 text-slate-400 flex items-center justify-center mb-3">
+                  <Coins className="w-6 h-6" />
                 </div>
-
-                <div className="text-right">
-                  <div className={`text-xs font-black font-mono ${
-                    tx.type === 'WITHDRAWAL' ? 'text-rose-400' : 'text-emerald-400'
-                  }`}>
-                    {tx.type === 'WITHDRAWAL' ? '-' : '+'}Ksh {tx.amount.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </div>
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-950/80 px-1.5 py-0.2 rounded border border-emerald-500/30">
-                    {tx.status}
-                  </span>
-                </div>
+                <h4 className="text-sm font-bold text-white mb-1">No Transactions Yet</h4>
+                <p className="text-xs text-slate-400 max-w-sm">
+                  Your deposits, payouts, and automated dividend logs will appear here in real time.
+                </p>
               </div>
-            ))}
+            ) : (
+              transactions.slice(0, 5).map((tx) => (
+                <div
+                  key={tx.id}
+                  className="p-3 rounded-2xl bg-[#0E131F] border border-slate-800/80 flex items-center justify-between hover:bg-slate-800/40 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                      tx.type === 'DEPOSIT'
+                        ? 'bg-emerald-950 text-emerald-400 border border-emerald-500/30' 
+                        : tx.type === 'ROI_PAYOUT'
+                        ? 'bg-amber-950 text-amber-400 border border-amber-500/30'
+                        : tx.type === 'WITHDRAWAL'
+                        ? 'bg-rose-950 text-rose-400 border border-rose-500/30'
+                        : 'bg-yellow-950 text-yellow-400 border border-yellow-500/30'
+                    }`}>
+                      {tx.type === 'DEPOSIT' ? <ArrowDownLeft className="w-4 h-4" /> :
+                       tx.type === 'WITHDRAWAL' ? <ArrowUpRight className="w-4 h-4" /> :
+                       tx.type === 'ROI_PAYOUT' ? <Coins className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-white">{tx.note || tx.type}</div>
+                      <div className="text-[10px] text-slate-400 font-mono">{tx.timestamp} • {tx.methodOrAddress || 'Quantiq Core'}</div>
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <div className={`text-xs font-black font-mono ${
+                      tx.type === 'WITHDRAWAL' ? 'text-rose-400' : 'text-emerald-400'
+                    }`}>
+                      {tx.type === 'WITHDRAWAL' ? '-' : '+'}Ksh {tx.amount.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </div>
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-950/80 px-1.5 py-0.2 rounded border border-emerald-500/30">
+                      {tx.status}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
 

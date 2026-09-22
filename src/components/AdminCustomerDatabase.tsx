@@ -89,23 +89,19 @@ export const AdminCustomerDatabase: React.FC<AdminCustomerDatabaseProps> = ({
   const [editSuccessMsg, setEditSuccessMsg] = useState<string>('');
 
   // Owner Personal Crypto Vault Addresses
-  const [ownerUsdtTrc20, setOwnerUsdtTrc20] = useState<string>(
-    contacts?.cryptoDepositWallets?.usdtTrc20 || 'TY7Q6B92PqmK89vXZ01mNa4kVyTe6pQc99'
-  );
-  const [ownerUsdtErc20, setOwnerUsdtErc20] = useState<string>(
-    contacts?.cryptoDepositWallets?.usdtErc20 || '0x89aF49321B008A2d319808389201a4e788bc5541'
+  const [ownerUsdtBep20, setOwnerUsdtBep20] = useState<string>(
+    contacts?.cryptoDepositWallets?.usdtBep20 || '0xbcf65f39cd5868e8ac571c6d929255dd587f9bff'
   );
   const [ownerBtc, setOwnerBtc] = useState<string>(
-    contacts?.cryptoDepositWallets?.btc || 'bc1q9p8200193892019384910293481290a1841e7'
+    contacts?.cryptoDepositWallets?.btc || '1KSxkSS6XQsyYfefsTK7xSMrnFxDfGwsGU'
   );
   const [copiedCryptoAddress, setCopiedCryptoAddress] = useState<string | null>(null);
 
   // Synchronize when contacts prop changes
   useEffect(() => {
     if (contacts?.cryptoDepositWallets) {
-      setOwnerUsdtTrc20(contacts.cryptoDepositWallets.usdtTrc20 || '');
-      setOwnerUsdtErc20(contacts.cryptoDepositWallets.usdtErc20 || '');
-      setOwnerBtc(contacts.cryptoDepositWallets.btc || '');
+      setOwnerUsdtBep20(contacts.cryptoDepositWallets.usdtBep20 || '0xbcf65f39cd5868e8ac571c6d929255dd587f9bff');
+      setOwnerBtc(contacts.cryptoDepositWallets.btc || '1KSxkSS6XQsyYfefsTK7xSMrnFxDfGwsGU');
     }
   }, [contacts]);
 
@@ -115,10 +111,8 @@ export const AdminCustomerDatabase: React.FC<AdminCustomerDatabaseProps> = ({
       const updated: PlatformContacts = {
         ...contacts,
         cryptoDepositWallets: {
-          usdtTrc20: ownerUsdtTrc20.trim(),
-          usdtErc20: ownerUsdtErc20.trim(),
-          btc: ownerBtc.trim(),
-          eth: contacts.cryptoDepositWallets?.eth || '0x4428019389201938920193849102934812903491'
+          usdtBep20: ownerUsdtBep20.trim(),
+          btc: ownerBtc.trim()
         }
       };
       onUpdateContacts(updated);
@@ -1000,71 +994,39 @@ export const AdminCustomerDatabase: React.FC<AdminCustomerDatabaseProps> = ({
                   </div>
 
                   <form onSubmit={handleSaveCryptoVaults} className="space-y-4 text-xs">
-                    {/* USDT TRC-20 */}
+                    {/* USDT BEP-20 */}
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
                         <label className="font-bold text-slate-300 flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                          <span>USDT (TRC-20) Personal Wallet Address</span>
+                          <span className="w-2 h-2 rounded-full bg-yellow-400"></span>
+                          <span>USDT (BEP-20) Personal Wallet Address</span>
                         </label>
-                        <span className="text-[10px] text-emerald-400 font-mono">Recommended (Lowest fees ~$1)</span>
+                        <span className="text-[10px] text-yellow-400 font-mono">BNB Smart Chain Network</span>
                       </div>
                       <div className="flex gap-2">
                         <input
                           type="text"
-                          value={ownerUsdtTrc20}
-                          onChange={(e) => setOwnerUsdtTrc20(e.target.value)}
-                          placeholder="Enter your personal TRC20 address (e.g. TY7Q6B92P...)"
+                          value={ownerUsdtBep20}
+                          onChange={(e) => setOwnerUsdtBep20(e.target.value)}
+                          placeholder="Enter your personal BEP-20 address (0x...)"
                           className="flex-1 px-3 py-2.5 bg-[#07090F] border border-slate-700 rounded-xl font-mono text-amber-300 text-xs focus:outline-none focus:border-amber-500"
                         />
                         <button
                           type="button"
                           onClick={() => {
-                            safeCopyText(ownerUsdtTrc20);
-                            setCopiedCryptoAddress('trc20');
+                            safeCopyText(ownerUsdtBep20);
+                            setCopiedCryptoAddress('bep20');
                             setTimeout(() => setCopiedCryptoAddress(null), 2000);
                           }}
                           className="px-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl flex items-center gap-1 cursor-pointer transition-colors"
                           title="Copy address"
                         >
-                          {copiedCryptoAddress === 'trc20' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                          {copiedCryptoAddress === 'bep20' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                         </button>
                       </div>
                       <span className="text-[10px] text-slate-500 mt-1 block">
-                        Clients selecting USDT TRC20 in Deposit Modal will receive this address and automated QR code.
+                        Clients depositing USDT will receive this exact BEP-20 address.
                       </span>
-                    </div>
-
-                    {/* USDT ERC-20 */}
-                    <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <label className="font-bold text-slate-300 flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-indigo-400"></span>
-                          <span>USDT (ERC-20) Personal Wallet Address</span>
-                        </label>
-                        <span className="text-[10px] text-indigo-400 font-mono">Ethereum Network</span>
-                      </div>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={ownerUsdtErc20}
-                          onChange={(e) => setOwnerUsdtErc20(e.target.value)}
-                          placeholder="Enter your personal ERC20 address (0x...)"
-                          className="flex-1 px-3 py-2.5 bg-[#07090F] border border-slate-700 rounded-xl font-mono text-amber-300 text-xs focus:outline-none focus:border-amber-500"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            safeCopyText(ownerUsdtErc20);
-                            setCopiedCryptoAddress('erc20');
-                            setTimeout(() => setCopiedCryptoAddress(null), 2000);
-                          }}
-                          className="px-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl flex items-center gap-1 cursor-pointer transition-colors"
-                          title="Copy address"
-                        >
-                          {copiedCryptoAddress === 'erc20' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                        </button>
-                      </div>
                     </div>
 
                     {/* Bitcoin BTC */}
@@ -1074,14 +1036,14 @@ export const AdminCustomerDatabase: React.FC<AdminCustomerDatabaseProps> = ({
                           <span className="w-2 h-2 rounded-full bg-amber-400"></span>
                           <span>Bitcoin (BTC) Personal Wallet Address</span>
                         </label>
-                        <span className="text-[10px] text-amber-400 font-mono">Native BTC SegWit / Legacy</span>
+                        <span className="text-[10px] text-amber-400 font-mono">Native Bitcoin Network</span>
                       </div>
                       <div className="flex gap-2">
                         <input
                           type="text"
                           value={ownerBtc}
                           onChange={(e) => setOwnerBtc(e.target.value)}
-                          placeholder="Enter your personal Bitcoin address (bc1q...)"
+                          placeholder="Enter your personal Bitcoin address (e.g. 1...)"
                           className="flex-1 px-3 py-2.5 bg-[#07090F] border border-slate-700 rounded-xl font-mono text-amber-300 text-xs focus:outline-none focus:border-amber-500"
                         />
                         <button
@@ -1097,6 +1059,9 @@ export const AdminCustomerDatabase: React.FC<AdminCustomerDatabaseProps> = ({
                           {copiedCryptoAddress === 'btc' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                         </button>
                       </div>
+                      <span className="text-[10px] text-slate-500 mt-1 block">
+                        Clients depositing Bitcoin will receive this exact BTC address.
+                      </span>
                     </div>
 
                     <div className="pt-2">
@@ -1150,12 +1115,12 @@ export const AdminCustomerDatabase: React.FC<AdminCustomerDatabaseProps> = ({
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div className="bg-[#07090F] p-2 rounded-xl border border-slate-800 flex items-center justify-between">
-                        <span className="text-slate-300 text-[11px]">TRON (TRC20)</span>
-                        <span className="text-emerald-400 font-mono text-[10px] font-bold">~1.2s • Online</span>
+                        <span className="text-slate-300 text-[11px]">BNB (BEP-20)</span>
+                        <span className="text-emerald-400 font-mono text-[10px] font-bold">~0.8s • Active</span>
                       </div>
                       <div className="bg-[#07090F] p-2 rounded-xl border border-slate-800 flex items-center justify-between">
-                        <span className="text-slate-300 text-[11px]">Ethereum (ERC20)</span>
-                        <span className="text-emerald-400 font-mono text-[10px] font-bold">12s block • Online</span>
+                        <span className="text-slate-300 text-[11px]">Bitcoin (BTC)</span>
+                        <span className="text-emerald-400 font-mono text-[10px] font-bold">Native • Active</span>
                       </div>
                     </div>
                   </div>
