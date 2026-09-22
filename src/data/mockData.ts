@@ -6,7 +6,7 @@ export const DEFAULT_CONTACTS: PlatformContacts = {
   supportPhone: '+254 700 505 031',
   supportEmail: 'support@quantiqprime.com',
   officeLocation: 'Delta Corner Towers, 7th Floor, Westlands, Nairobi, Kenya',
-  whatsappSupport: '+254 700 505 031',
+  whatsappSupport: '+17712502005',
   telegramSupport: '@QuantiqPrimeOfficial',
   kesUsdExchangeRate: 130.00, // 1 USD = 130 KES
   cryptoDepositWallets: {

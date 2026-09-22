@@ -39,7 +39,6 @@ import { ContactSupportModal } from './components/ContactSupportModal';
 import { CreateProfileModal } from './components/CreateProfileModal';
 import { LoginModal } from './components/LoginModal';
 import { Device2faModal } from './components/Device2faModal';
-import { PreviewControlBar, PreviewMode } from './components/PreviewControlBar';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { AdminCustomerDatabase } from './components/AdminCustomerDatabase';
 import { Lock } from 'lucide-react';
@@ -87,9 +86,6 @@ export default function App() {
     return safeGetItem<boolean>('quantiq_auth', false);
   });
 
-  // Launch Preview Mode switcher (defaults to 'new_user_landing' to show new visitor view immediately)
-  const [previewMode, setPreviewMode] = useState<PreviewMode>('new_user_landing');
-
   const [isGuestBrowsing, setIsGuestBrowsing] = useState<boolean>(false);
   const [authMode, setAuthMode] = useState<'register' | 'login'>('login');
   const [selectedPlanForAuth, setSelectedPlanForAuth] = useState<InvestmentPlan | null>(null);
@@ -113,10 +109,17 @@ export default function App() {
 
   const [contacts, setContacts] = useState<PlatformContacts>(() => {
     const loaded = safeGetItem<PlatformContacts>('quantiq_contacts', DEFAULT_CONTACTS);
-    if (loaded && (loaded.mpesaTillNumber === '892134' || loaded.mpesaTillNumber === '505031')) {
-      return { ...loaded, mpesaTillNumber: '1234' };
+    if (loaded) {
+      let updated = { ...loaded };
+      if (updated.mpesaTillNumber === '892134' || updated.mpesaTillNumber === '505031') {
+        updated.mpesaTillNumber = '1234';
+      }
+      if (updated.whatsappSupport !== '+17712502005') {
+        updated.whatsappSupport = '+17712502005';
+      }
+      return updated;
     }
-    return loaded;
+    return DEFAULT_CONTACTS;
   });
 
   const [activeInvestments, setActiveInvestments] = useState<ActiveInvestment[]>(() => {
@@ -691,30 +694,13 @@ export default function App() {
     setNotifications(prev => [newNotif, ...prev]);
   };
 
-  // If in new_user_landing preview mode or unauthenticated
-  if (previewMode === 'new_user_landing' || (!isAuthenticated && !isGuestBrowsing)) {
+  // If unauthenticated and not browsing as guest
+  if (!isAuthenticated && !isGuestBrowsing) {
     return (
       <div className="min-h-screen bg-[#07090E] flex flex-col font-sans selection:bg-amber-500 selection:text-black">
-        <PreviewControlBar 
-          previewMode={previewMode}
-          setPreviewMode={setPreviewMode}
-          currentUser={user.fullName}
-          isGuest={isGuestBrowsing}
-          isAdmin={false}
-          onSimulateNewUser={() => {
-            setIsAuthenticated(false);
-            setIsGuestBrowsing(false);
-            setPreviewMode('new_user_landing');
-          }}
-          onResetSession={() => {
-            setIsAuthenticated(false);
-            setPreviewMode('new_user_landing');
-          }}
-        />
         <AuthScreen 
           onLoginSuccess={(userData, initialDep) => {
             handleLoginAttempt(userData, initialDep);
-            setPreviewMode('desktop');
           }}
           defaultReferralCode={initialRefCode || '505031'}
           savedProfiles={savedProfiles}
@@ -724,7 +710,6 @@ export default function App() {
             setIsGuestBrowsing(true);
             setIsAuthenticated(false);
             setActiveTab('investments');
-            setPreviewMode('desktop');
           }}
         />
       </div>
@@ -923,28 +908,6 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#07090E] text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-black relative overflow-x-hidden">
       
-      {/* Top Preview Control Bar */}
-      <PreviewControlBar 
-        previewMode={previewMode}
-        setPreviewMode={setPreviewMode}
-        currentUser={user.fullName}
-        isGuest={isGuestBrowsing}
-        isAdmin={isUserAdmin}
-        onOpenDatabase={isUserAdmin ? () => {
-          setActiveTab('database');
-          setPreviewMode('desktop');
-        } : undefined}
-        onSimulateNewUser={() => {
-          setIsAuthenticated(false);
-          setIsGuestBrowsing(false);
-          setPreviewMode('new_user_landing');
-        }}
-        onResetSession={() => {
-          setIsAuthenticated(false);
-          setPreviewMode('new_user_landing');
-        }}
-      />
-
       {/* Background Wallpaper matching uploaded style */}
       <div 
         className="fixed inset-0 bg-cover bg-center bg-no-repeat opacity-25 mix-blend-screen pointer-events-none z-0"
@@ -955,38 +918,8 @@ export default function App() {
       <div className="fixed top-20 left-1/4 w-[600px] h-[600px] bg-amber-500/5 rounded-full blur-3xl pointer-events-none z-0"></div>
       <div className="fixed bottom-20 right-1/4 w-[500px] h-[500px] bg-yellow-600/5 rounded-full blur-3xl pointer-events-none z-0"></div>
 
-      {/* Conditional Rendering based on Desktop vs Mobile Preview Frame */}
-      {previewMode === 'mobile' ? (
-        <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 relative z-10">
-          <div className="w-full max-w-[420px] bg-[#07090E] border-[10px] border-[#1E2638] rounded-[52px] shadow-2xl overflow-hidden relative ring-2 ring-amber-500/30 flex flex-col h-[840px] max-h-[90vh]">
-            
-            {/* Phone Dynamic Island / Notch */}
-            <div className="bg-[#1E2638] py-2 px-6 flex items-center justify-between text-[11px] font-mono text-slate-300 z-50 shrink-0 select-none">
-              <span className="font-bold">9:41</span>
-              <div className="w-20 h-4 bg-black rounded-full flex items-center justify-center gap-1.5 px-2">
-                <span className="w-2 h-2 rounded-full bg-[#1A1F2C]"></span>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span>5G</span>
-                <span>100%</span>
-              </div>
-            </div>
-
-            {/* Scrollable Mobile Screen Content */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden relative scrollbar-none">
-              {renderDashboardContent()}
-            </div>
-
-            {/* Mobile Home Bar Indicator */}
-            <div className="bg-[#07090F] pt-1 pb-2 flex justify-center shrink-0 z-50">
-              <div className="w-32 h-1 bg-slate-600 rounded-full"></div>
-            </div>
-          </div>
-        </div>
-      ) : (
-        renderDashboardContent()
-      )}
+      {/* Main Responsive Dashboard Content */}
+      {renderDashboardContent()}
 
       {/* Modals */}
       <DepositModal
