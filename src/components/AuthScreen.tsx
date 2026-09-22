@@ -359,7 +359,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                       required
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      placeholder="Dennis Cheruiyot"
+                      placeholder="e.g. Alex Kimani"
                       className="w-full pl-9 pr-3 py-2.5 text-xs bg-[#0E131F] border border-slate-700/80 rounded-xl text-slate-100 focus:bg-[#131929] focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 font-medium"
                     />
                   </div>
@@ -377,7 +377,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                       required
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
-                      placeholder="DennisPrime"
+                      placeholder="e.g. AlexK"
                       className="w-full pl-8 pr-3 py-2.5 text-xs bg-[#0E131F] border border-slate-700/80 rounded-xl text-slate-100 focus:bg-[#131929] focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 font-medium"
                     />
                   </div>
@@ -398,7 +398,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="cheruyot.dennis@student.moringaschool.com"
+                      placeholder="e.g. investor@example.com"
                       className="w-full pl-9 pr-3 py-2.5 text-xs bg-[#0E131F] border border-slate-700/80 rounded-xl text-slate-100 focus:bg-[#131929] focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 font-medium"
                     />
                   </div>
@@ -624,7 +624,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                       required
                       value={loginIdentifier}
                       onChange={(e) => setLoginIdentifier(e.target.value)}
-                      placeholder="cheruyot.dennis@student.moringaschool.com or DennisPrime"
+                      placeholder="e.g. investor@example.com or username"
                       className="w-full pl-9 pr-3 py-2.5 text-xs bg-[#0E131F] border border-slate-700/80 rounded-xl text-slate-100 focus:bg-[#131929] focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 font-medium"
                     />
                   </div>
@@ -680,34 +680,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                   )}
                 </button>
               </form>
-
-              {/* Quick Launch Dennis VIP Profile Demo */}
-              <div className="pt-2 text-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    onLoginSuccess({
-                      fullName: 'Dennis Cheruiyot',
-                      username: 'DennisPrime',
-                      email: 'cheruyot.dennis@student.moringaschool.com',
-                      phone: '+254 712 345 678',
-                      mpesaNumber: '0712345678',
-                      country: 'Kenya',
-                      referralCode: '505031',
-                      referredBy: 'Quantiq_VIP (505031)',
-                      joinedDate: '2025-11-14',
-                      tier: 'Gold',
-                      kycStatus: 'Verified',
-                      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250',
-                      walletAddressUSDT: 'TXq7j8kP39LmNxR8w92Z0A1m4kVyTe6pQc'
-                    });
-                  }}
-                  className="w-full py-2.5 px-4 bg-amber-950/20 hover:bg-amber-950/40 text-amber-300 text-xs font-bold rounded-2xl border border-amber-500/30 transition-colors flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
-                  <span>Launch Dennis Cheruiyot Profile (Ksh 4,530,597.50 Balance)</span>
-                </button>
-              </div>
 
             </div>
           )}

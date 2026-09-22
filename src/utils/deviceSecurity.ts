@@ -115,10 +115,10 @@ export function maskPhone(phone?: string): string {
 }
 
 /**
- * Mask sensitive email (e.g. dennis@student.moringaschool.com -> d***s@student.moringaschool.com)
+ * Mask sensitive email (e.g. investor@example.com -> i***r@example.com)
  */
 export function maskEmail(email?: string): string {
-  if (!email || !email.includes('@')) return 'c***@quantiqprime.com';
+  if (!email || !email.includes('@')) return 'i***@quantiqprime.com';
   const [local, domain] = email.split('@');
   if (local.length <= 2) return `${local.charAt(0)}***@${domain}`;
   return `${local.charAt(0)}***${local.slice(-1)}@${domain}`;

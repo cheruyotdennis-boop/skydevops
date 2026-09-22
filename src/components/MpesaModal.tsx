@@ -354,7 +354,7 @@ export const MpesaModal: React.FC<MpesaModalProps> = ({
                   >
                     <div className="font-bold flex items-center gap-1.5">
                       <Coins className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>Paybill / Till Pay</span>
+                      <span>Paybill Manual Pay</span>
                     </div>
                     <div className="text-[10px] text-slate-400 mt-0.5">Enter code manually</div>
                   </button>

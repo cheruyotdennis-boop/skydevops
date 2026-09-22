@@ -136,7 +136,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({
     }, 800);
   };
 
-  const isOwnerAdmin = user?.email?.toLowerCase() === 'cheruyot.dennis@student.moringaschool.com' || user?.isAdmin;
+  const isOwnerAdmin = Boolean(user?.isAdmin || user?.role === 'admin' || user?.role === 'superadmin' || user?.email?.toLowerCase() === 'admin@quantiqprime.com' || user?.email?.toLowerCase() === 'cheruyot.dennis@student.moringaschool.com');
 
   return (
     <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 overflow-y-auto p-3 sm:p-4 md:p-6 flex items-center justify-center">
@@ -367,10 +367,10 @@ export const DepositModal: React.FC<DepositModalProps> = ({
             </div>
           </div>
 
-          {/* Admin / Owner Note if Dennis is logged in */}
+          {/* Admin Vault Note */}
           {isOwnerAdmin && (
             <div className="p-2.5 rounded-xl bg-slate-900 border border-amber-500/40 text-[10px] text-amber-300 flex items-center justify-between">
-              <span>👑 <b>Admin Note:</b> This deposit address is your personal receiving vault configured in Platform Contacts.</span>
+              <span>👑 <b>Admin Note:</b> This deposit address is the platform receiving vault configured in Admin Contacts.</span>
             </div>
           )}
 

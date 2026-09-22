@@ -61,11 +61,14 @@ export const Header: React.FC<HeaderProps> = ({
   const [copiedRef, setCopiedRef] = useState(false);
 
   const isUserAdmin = Boolean(
-    user.isAdmin || 
-    user.role === 'admin' || 
-    user.role === 'superadmin' || 
-    user.id === 'usr_001' || 
-    user.email.toLowerCase() === 'cheruyot.dennis@student.moringaschool.com'
+    isAuthenticated && (
+      user.isAdmin || 
+      user.role === 'admin' || 
+      user.role === 'superadmin' || 
+      user.id === 'usr_001' || 
+      user.email?.toLowerCase() === 'admin@quantiqprime.com' ||
+      user.email?.toLowerCase() === 'cheruyot.dennis@student.moringaschool.com'
+    )
   );
 
   const unreadCount = notifications.filter(n => !n.read).length;

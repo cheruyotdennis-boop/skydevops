@@ -220,7 +220,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   required
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder="e.g. cheruyot.dennis@student.moringaschool.com"
+                  placeholder="e.g. investor@example.com or username"
                   className="w-full pl-9 pr-3 py-2 bg-[#07090E] border border-slate-700 rounded-xl text-white text-xs focus:outline-none focus:border-amber-500"
                 />
               </div>

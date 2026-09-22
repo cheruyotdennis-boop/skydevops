@@ -16,7 +16,7 @@ export interface ProfileAvatarProps {
 
 export const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
   src,
-  name = 'Dennis Cheruiyot',
+  name = 'VIP Investor',
   tier = 'Gold',
   size = 'md',
   showOnlineStatus = true,

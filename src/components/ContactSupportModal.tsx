@@ -42,9 +42,9 @@ export const ContactSupportModal: React.FC<ContactSupportModalProps> = ({
   
   // Edit Form State
   const [formData, setFormData] = useState<PlatformContacts>({ ...contacts });
-  const [userPhone, setUserPhone] = useState(user.phone || '+254 712 345 678');
-  const [userMpesa, setUserMpesa] = useState(user.mpesaNumber || '0712345678');
-  const [userEmail, setUserEmail] = useState(user.email || 'cheruyot.dennis@student.moringaschool.com');
+  const [userPhone, setUserPhone] = useState(user.phone || '');
+  const [userMpesa, setUserMpesa] = useState(user.mpesaNumber || '');
+  const [userEmail, setUserEmail] = useState(user.email || '');
   const [userCountry, setUserCountry] = useState(user.country || 'Kenya');
 
   const [savedSuccess, setSavedSuccess] = useState(false);
@@ -184,10 +184,8 @@ export const ContactSupportModal: React.FC<ContactSupportModalProps> = ({
                   <span>M-PESA Buy Goods Till:</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="font-mono font-bold text-emerald-400">{contacts.mpesaTillNumber}</span>
-                  <button onClick={() => handleCopy(contacts.mpesaTillNumber, 'till')} className="text-slate-400 hover:text-white cursor-pointer">
-                    {copiedItem === 'till' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                  </button>
+                  <span className="font-mono font-bold text-slate-400">{contacts.mpesaTillNumber || '1234'}</span>
+                  <span className="text-[10px] text-slate-500 font-mono italic">(Placeholder 1234)</span>
                 </div>
               </div>
 
@@ -306,9 +304,10 @@ export const ContactSupportModal: React.FC<ContactSupportModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-slate-300 font-bold mb-1">M-PESA Till Number</label>
+                <label className="block text-slate-300 font-bold mb-1">M-PESA Till Number (Placeholder: 1234)</label>
                 <input
                   type="text"
+                  placeholder="1234"
                   value={formData.mpesaTillNumber}
                   onChange={(e) => setFormData({ ...formData, mpesaTillNumber: e.target.value })}
                   className="w-full px-3 py-2 bg-[#07090E] border border-slate-700 rounded-xl text-white font-mono focus:outline-none focus:border-amber-500"

@@ -34,7 +34,7 @@ interface CreateProfileModalProps {
 
 const AVATAR_OPTIONS = [
   { id: 'luxury', url: luxuryAvatarImg, label: 'VIP Gold Crest', isLuxury: true },
-  { id: '1', url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250', label: 'Dennis / Executive' },
+  { id: '1', url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250', label: 'Executive Partner' },
   { id: '2', url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=250', label: 'Investor Pro' },
   { id: '3', url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=250', label: 'Wealth Strategist' },
   { id: '4', url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=250', label: 'Capital Analyst' },
@@ -244,7 +244,7 @@ export const CreateProfileModal: React.FC<CreateProfileModalProps> = ({
                   required
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="e.g. Dennis Mwangi"
+                  placeholder="e.g. Alex Kimani"
                   className="w-full pl-9 pr-3 py-2 bg-[#07090E] border border-slate-700 rounded-xl text-white focus:outline-none focus:border-amber-500"
                 />
               </div>
@@ -256,7 +256,7 @@ export const CreateProfileModal: React.FC<CreateProfileModalProps> = ({
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="e.g. dennism"
+                placeholder="e.g. alexk"
                 className="w-full px-3 py-2 bg-[#07090E] border border-slate-700 rounded-xl text-white focus:outline-none focus:border-amber-500"
               />
             </div>

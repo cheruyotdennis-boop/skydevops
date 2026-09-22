@@ -42,6 +42,7 @@ import { Device2faModal } from './components/Device2faModal';
 import { PreviewControlBar, PreviewMode } from './components/PreviewControlBar';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { AdminCustomerDatabase } from './components/AdminCustomerDatabase';
+import { Lock } from 'lucide-react';
 import { safeGetItem, safeSetItem } from './utils/storage';
 import { roundCurrency } from './utils/security';
 import { isDeviceRecognized, registerCurrentDevice, generateDevice2faOtp } from './utils/deviceSecurity';
@@ -67,7 +68,18 @@ export default function App() {
 
   // Saved Profiles List for multi-profile switching
   const [savedProfiles, setSavedProfiles] = useState<UserProfile[]>(() => {
-    return safeGetItem<UserProfile[]>('quantiq_saved_profiles', [INITIAL_USER]);
+    const loaded = safeGetItem<UserProfile[]>('quantiq_saved_profiles', [INITIAL_USER]);
+    return loaded.map(p => {
+      if (p.email?.toLowerCase() === 'cheruyot.dennis@student.moringaschool.com') {
+        return {
+          ...p,
+          fullName: 'Executive Member',
+          username: 'VIPInvestor',
+          email: 'investor@quantiqprime.com'
+        };
+      }
+      return p;
+    });
   });
 
   // State with LocalStorage persistence - default to false for new public visitors on first load
@@ -83,7 +95,16 @@ export default function App() {
   const [selectedPlanForAuth, setSelectedPlanForAuth] = useState<InvestmentPlan | null>(null);
 
   const [user, setUser] = useState<UserProfile>(() => {
-    return safeGetItem<UserProfile>('quantiq_user', INITIAL_USER);
+    const loaded = safeGetItem<UserProfile>('quantiq_user', INITIAL_USER);
+    if (loaded.email?.toLowerCase() === 'cheruyot.dennis@student.moringaschool.com') {
+      return {
+        ...loaded,
+        fullName: 'Executive Member',
+        username: 'VIPInvestor',
+        email: 'investor@quantiqprime.com'
+      };
+    }
+    return loaded;
   });
 
   const [wallet, setWallet] = useState<WalletState>(() => {
@@ -91,7 +112,11 @@ export default function App() {
   });
 
   const [contacts, setContacts] = useState<PlatformContacts>(() => {
-    return safeGetItem<PlatformContacts>('quantiq_contacts', DEFAULT_CONTACTS);
+    const loaded = safeGetItem<PlatformContacts>('quantiq_contacts', DEFAULT_CONTACTS);
+    if (loaded && (loaded.mpesaTillNumber === '892134' || loaded.mpesaTillNumber === '505031')) {
+      return { ...loaded, mpesaTillNumber: '1234' };
+    }
+    return loaded;
   });
 
   const [activeInvestments, setActiveInvestments] = useState<ActiveInvestment[]>(() => {
@@ -108,6 +133,18 @@ export default function App() {
 
   // Navigation & Modals
   const [activeTab, setActiveTab] = useState<string>('overview');
+
+  // Global Admin Access Verification
+  const isUserAdmin = Boolean(
+    isAuthenticated && (
+      user.isAdmin || 
+      user.role === 'admin' || 
+      user.role === 'superadmin' || 
+      user.id === 'usr_001' || 
+      user.email?.toLowerCase() === 'admin@quantiqprime.com' ||
+      user.email?.toLowerCase() === 'cheruyot.dennis@student.moringaschool.com'
+    )
+  );
   const [isDepositOpen, setIsDepositOpen] = useState<boolean>(false);
   const [isWithdrawOpen, setIsWithdrawOpen] = useState<boolean>(false);
   const [isInvestOpen, setIsInvestOpen] = useState<boolean>(false);
@@ -192,14 +229,16 @@ export default function App() {
     }
 
     const isMasterAdmin = 
+      userData.email?.toLowerCase() === 'admin@quantiqprime.com' ||
       userData.email?.toLowerCase() === 'cheruyot.dennis@student.moringaschool.com' || 
-      userData.id === 'usr_001';
+      userData.id === 'usr_001' ||
+      userData.role === 'superadmin';
 
     const fullUser: UserProfile = {
       id: userData.id || `usr_${Date.now()}`,
       fullName: userData.fullName || 'Investor Member',
-      username: userData.username || 'FortuneMember',
-      email: userData.email || 'investor@fortune-investment.com',
+      username: userData.username || 'VIPInvestor',
+      email: userData.email || 'investor@quantiqprime.com',
       phone: userData.phone || '+254 712 345 678',
       mpesaNumber: userData.mpesaNumber || '0712345678',
       country: userData.country || 'Kenya',
@@ -661,11 +700,7 @@ export default function App() {
           setPreviewMode={setPreviewMode}
           currentUser={user.fullName}
           isGuest={isGuestBrowsing}
-          onOpenDatabase={() => {
-            setIsAuthenticated(true);
-            setActiveTab('database');
-            setPreviewMode('desktop');
-          }}
+          isAdmin={false}
           onSimulateNewUser={() => {
             setIsAuthenticated(false);
             setIsGuestBrowsing(false);
@@ -805,18 +840,36 @@ export default function App() {
         )}
 
         {activeTab === 'database' && (
-          <AdminCustomerDatabase
-            savedProfiles={savedProfiles}
-            contacts={contacts}
-            onUpdateContacts={(updated) => setContacts(updated)}
-            onUpdateProfiles={(newProfiles) => {
-              setSavedProfiles(newProfiles);
-              const me = newProfiles.find(p => p.email.toLowerCase() === user.email.toLowerCase());
-              if (me) {
-                setUser(me);
-              }
-            }}
-          />
+          isUserAdmin ? (
+            <AdminCustomerDatabase
+              savedProfiles={savedProfiles}
+              contacts={contacts}
+              onUpdateContacts={(updated) => setContacts(updated)}
+              onUpdateProfiles={(newProfiles) => {
+                setSavedProfiles(newProfiles);
+                const me = newProfiles.find(p => p.email.toLowerCase() === user.email.toLowerCase());
+                if (me) {
+                  setUser(me);
+                }
+              }}
+            />
+          ) : (
+            <div className="p-8 text-center max-w-md mx-auto my-16 bg-[#0C101A] border border-rose-500/30 rounded-3xl text-slate-300 shadow-2xl">
+              <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-rose-500/20 text-rose-400 border border-rose-500/40 flex items-center justify-center">
+                <Lock className="w-7 h-7" />
+              </div>
+              <h3 className="text-lg font-bold text-white mb-2">Restricted Access</h3>
+              <p className="text-xs text-slate-400 mb-6 leading-relaxed">
+                The Customer Database is strictly reserved for authenticated Platform Administrators. Please sign in with an Administrator account to manage client records.
+              </p>
+              <button
+                onClick={() => setActiveTab('overview')}
+                className="bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 font-bold px-6 py-2.5 rounded-xl text-xs cursor-pointer shadow-lg active:scale-95 transition-all"
+              >
+                Return to Dashboard
+              </button>
+            </div>
+          )
         )}
 
       </main>
@@ -876,11 +929,11 @@ export default function App() {
         setPreviewMode={setPreviewMode}
         currentUser={user.fullName}
         isGuest={isGuestBrowsing}
-        onOpenDatabase={() => {
-          setIsAuthenticated(true);
+        isAdmin={isUserAdmin}
+        onOpenDatabase={isUserAdmin ? () => {
           setActiveTab('database');
           setPreviewMode('desktop');
-        }}
+        } : undefined}
         onSimulateNewUser={() => {
           setIsAuthenticated(false);
           setIsGuestBrowsing(false);

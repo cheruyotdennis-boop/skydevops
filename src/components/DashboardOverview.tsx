@@ -724,7 +724,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               </div>
               <div className="space-y-1.5 text-[11px]">
                 <div className="flex items-center justify-between text-slate-300">
-                  <span>M-Pesa STK (Till 505031):</span>
+                  <span>M-Pesa STK (Paybill 505031):</span>
                   <span className="font-mono text-emerald-400 font-bold">CONNECTED</span>
                 </div>
                 <div className="flex items-center justify-between text-slate-300">

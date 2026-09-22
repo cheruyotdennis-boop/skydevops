@@ -2,7 +2,7 @@ import { UserProfile, WalletState, InvestmentPlan, ActiveInvestment, Transaction
 
 export const DEFAULT_CONTACTS: PlatformContacts = {
   mpesaPaybill: '505031',
-  mpesaTillNumber: '892134',
+  mpesaTillNumber: '1234',
   supportPhone: '+254 700 505 031',
   supportEmail: 'support@quantiqprime.com',
   officeLocation: 'Delta Corner Towers, 7th Floor, Westlands, Nairobi, Kenya',
@@ -19,20 +19,22 @@ export const DEFAULT_CONTACTS: PlatformContacts = {
 
 export const INITIAL_USER: UserProfile = {
   id: 'usr_89213',
-  fullName: 'Dennis Cheruiyot',
-  username: 'DennisPrime',
-  email: 'cheruyot.dennis@student.moringaschool.com',
+  fullName: 'Executive Member',
+  username: 'VIPInvestor',
+  email: 'investor@quantiqprime.com',
   phone: '+254 712 345 678',
   mpesaNumber: '0712345678',
   country: 'Kenya',
   referralCode: '505031',
-  referredBy: 'Quantiq_VIP (505031)',
-  joinedDate: '2025-11-14',
+  referredBy: 'Quantiq Partner #505031',
+  joinedDate: '2026-01-15',
   tier: 'Gold',
   kycStatus: 'Verified',
   avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250',
   twoFactorEnabled: true,
-  walletAddressUSDT: 'TXq7j8kP39LmNxR8w92Z0A1m4kVyTe6pQc'
+  walletAddressUSDT: 'TXq7j8kP39LmNxR8w92Z0A1m4kVyTe6pQc',
+  isAdmin: false,
+  role: 'user'
 };
 
 
@@ -222,7 +224,7 @@ export const INITIAL_TRANSACTIONS: Transaction[] = [
     timestamp: '2026-08-25 11:20 EAT',
     txHash: 'SKL491823M',
     methodOrAddress: 'M-PESA B2C Payout (254712345678)',
-    note: 'Instant M-PESA withdrawal Ksh 32,500 to Dennis Cheruiyot',
+    note: 'Instant M-PESA withdrawal Ksh 32,500 to Verified Account',
     mpesaReceiptNumber: 'SKL491823M'
   },
   {

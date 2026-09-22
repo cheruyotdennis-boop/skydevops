@@ -247,7 +247,7 @@ export const AdminCustomerDatabase: React.FC<AdminCustomerDatabaseProps> = ({
         mpesaNumber: '0722890123',
         country: 'Kenya',
         referralCode: '619283',
-        referredBy: 'Dennis Cheruiyot (#505031)',
+        referredBy: 'Executive Sponsor (#505031)',
         joinedDate: '2026-02-14',
         tier: 'Gold VIP',
         kycStatus: 'Verified',
@@ -270,7 +270,7 @@ export const AdminCustomerDatabase: React.FC<AdminCustomerDatabaseProps> = ({
         mpesaNumber: '0733456789',
         country: 'Kenya',
         referralCode: '482019',
-        referredBy: 'Dennis Cheruiyot (#505031)',
+        referredBy: 'Executive Sponsor (#505031)',
         joinedDate: '2026-02-18',
         tier: 'Platinum VIP',
         kycStatus: 'Verified',
@@ -293,7 +293,7 @@ export const AdminCustomerDatabase: React.FC<AdminCustomerDatabaseProps> = ({
         mpesaNumber: '0718234567',
         country: 'Kenya',
         referralCode: '391084',
-        referredBy: 'Dennis Cheruiyot (#505031)',
+        referredBy: 'Executive Sponsor (#505031)',
         joinedDate: '2026-02-22',
         tier: 'Silver',
         kycStatus: 'Verified',
@@ -317,18 +317,18 @@ export const AdminCustomerDatabase: React.FC<AdminCustomerDatabaseProps> = ({
         merchantRequestId: 'REQ_9012',
         phoneNumber: '254712345678',
         amountKES: 100000,
-        tillNumber: '505031',
+        tillNumber: '1234',
         status: 'COMPLETED',
         mpesaReceiptNumber: 'QK982KL091',
         timestamp: '2026-02-28 09:42:15',
-        customerName: 'Dennis Cheruiyot'
+        customerName: 'Executive Sponsor'
       },
       {
         checkoutId: 'ws_CO_17723902',
         merchantRequestId: 'REQ_9013',
         phoneNumber: '254722890123',
         amountKES: 100000,
-        tillNumber: '505031',
+        tillNumber: '1234',
         status: 'COMPLETED',
         mpesaReceiptNumber: 'QK817MN420',
         timestamp: '2026-02-28 10:15:30',
@@ -339,7 +339,7 @@ export const AdminCustomerDatabase: React.FC<AdminCustomerDatabaseProps> = ({
         merchantRequestId: 'REQ_9014',
         phoneNumber: '254733456789',
         amountKES: 250000,
-        tillNumber: '505031',
+        tillNumber: '1234',
         status: 'COMPLETED',
         mpesaReceiptNumber: 'QK726XY991',
         timestamp: '2026-02-28 11:30:00',
@@ -354,7 +354,7 @@ export const AdminCustomerDatabase: React.FC<AdminCustomerDatabaseProps> = ({
 
   const handleUnlock = (e: React.FormEvent) => {
     e.preventDefault();
-    if (pinInput.trim() === '505031' || pinInput.trim() === '1234' || pinInput.trim().toLowerCase() === 'dennis') {
+    if (pinInput.trim() === '505031' || pinInput.trim() === '1234') {
       setIsAdminUnlocked(true);
       setPinError('');
     } else {
@@ -406,7 +406,7 @@ export const AdminCustomerDatabase: React.FC<AdminCustomerDatabaseProps> = ({
 
   // Toggle Admin Access for any registered user
   const handleToggleAdmin = async (cust: ServerCustomerRecord) => {
-    const isMasterSuperAdmin = cust.email.toLowerCase() === 'cheruyot.dennis@student.moringaschool.com' || cust.id === 'usr_001';
+    const isMasterSuperAdmin = cust.role === 'superadmin' || cust.email.toLowerCase() === 'admin@quantiqprime.com' || cust.email.toLowerCase() === 'cheruyot.dennis@student.moringaschool.com' || cust.id === 'usr_001';
     if (isMasterSuperAdmin && cust.isAdmin) {
       setEditSuccessMsg('⚠️ Cannot revoke permissions from Platform Master Super Admin (Root Access)');
       setTimeout(() => setEditSuccessMsg(''), 3500);
@@ -733,8 +733,8 @@ export const AdminCustomerDatabase: React.FC<AdminCustomerDatabaseProps> = ({
                     <tbody className="divide-y divide-slate-800/60">
                       {filteredCustomers.map((cust) => {
                         const dailyEarnings = calculateDailyReturn(cust.activeInvestedKES, cust.tier);
-                        const isDennisSuperAdmin = cust.email.toLowerCase() === 'cheruyot.dennis@student.moringaschool.com' || cust.id === 'usr_001';
-                        const isCustAdmin = isDennisSuperAdmin || Boolean(cust.isAdmin || cust.role === 'admin' || cust.role === 'superadmin');
+                        const isSuperAdmin = cust.role === 'superadmin' || cust.email.toLowerCase() === 'admin@quantiqprime.com' || cust.email.toLowerCase() === 'cheruyot.dennis@student.moringaschool.com' || cust.id === 'usr_001';
+                        const isCustAdmin = isSuperAdmin || Boolean(cust.isAdmin || cust.role === 'admin' || cust.role === 'superadmin');
 
                         return (
                           <tr 
@@ -751,7 +751,7 @@ export const AdminCustomerDatabase: React.FC<AdminCustomerDatabaseProps> = ({
                                 <div>
                                   <div className="font-bold text-white flex items-center gap-1.5">
                                     <span>{cust.fullName}</span>
-                                    {isDennisSuperAdmin && (
+                                    {isSuperAdmin && (
                                       <span className="text-[9px] bg-amber-500/20 text-amber-300 px-1.5 py-0.2 rounded border border-amber-500/30">
                                         MASTER ADMIN
                                       </span>
@@ -766,7 +766,7 @@ export const AdminCustomerDatabase: React.FC<AdminCustomerDatabaseProps> = ({
 
                             {/* Access Role Badge */}
                             <td className="py-3.5 px-4">
-                              {isDennisSuperAdmin ? (
+                              {isSuperAdmin ? (
                                 <span className="inline-flex items-center gap-1 text-[10px] font-black bg-gradient-to-r from-amber-500/20 to-yellow-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full">
                                   <Crown className="w-3 h-3 text-amber-400" />
                                   <span>SUPER ADMIN</span>
@@ -850,7 +850,7 @@ export const AdminCustomerDatabase: React.FC<AdminCustomerDatabaseProps> = ({
 
                             {/* Admin Action Button */}
                             <td className="py-3.5 px-4 text-right">
-                              {isDennisSuperAdmin ? (
+                              {isSuperAdmin ? (
                                 <span className="text-[10px] text-amber-400 font-black tracking-wider uppercase">
                                   Owner
                                 </span>
@@ -899,7 +899,7 @@ export const AdminCustomerDatabase: React.FC<AdminCustomerDatabaseProps> = ({
                     <span>Live Daraja STK Push Settlement Stream</span>
                   </h3>
                   <p className="text-xs text-slate-400">
-                    Lipa Na M-PESA Buy Goods Till: <strong className="text-amber-400">505031</strong>
+                    Lipa Na M-PESA Official Paybill: <strong className="text-amber-400">505031</strong> (Till Placeholder: 1234)
                   </p>
                 </div>
                 <span className="text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-1 rounded-full font-mono">
@@ -933,7 +933,7 @@ export const AdminCustomerDatabase: React.FC<AdminCustomerDatabaseProps> = ({
                           {tx.phoneNumber}
                         </td>
                         <td className="py-3.5 px-4 font-mono text-slate-400">
-                          Till {tx.tillNumber || '505031'}
+                          Till {tx.tillNumber || '1234'}
                         </td>
                         <td className="py-3.5 px-4 font-mono font-bold text-emerald-400 text-sm">
                           KES {tx.amountKES.toLocaleString()}
@@ -987,7 +987,7 @@ export const AdminCustomerDatabase: React.FC<AdminCustomerDatabaseProps> = ({
               {/* Grid: Master Personal Receiving Vault (Left) & Network Live Status (Right) */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 
-                {/* Left Column: Platform Deposit Ingress (Dennis Personal Wallets) */}
+                {/* Left Column: Platform Deposit Ingress (Master Receiving Vaults) */}
                 <div className="lg:col-span-7 bg-[#0C101A] border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
                   <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                     <div className="flex items-center gap-2">
@@ -1200,7 +1200,7 @@ export const AdminCustomerDatabase: React.FC<AdminCustomerDatabaseProps> = ({
                           <tr key={cust.id} className="hover:bg-slate-900/40 transition-colors">
                             <td className="py-3 px-4 font-sans font-bold text-white flex items-center gap-2">
                               <span>{cust.fullName}</span>
-                              {cust.email.toLowerCase() === 'cheruyot.dennis@student.moringaschool.com' && (
+                              {(cust.role === 'superadmin' || cust.email.toLowerCase() === 'admin@quantiqprime.com' || cust.email.toLowerCase() === 'cheruyot.dennis@student.moringaschool.com' || cust.id === 'usr_001') && (
                                 <span className="bg-amber-500/20 text-amber-300 text-[9px] px-1.5 py-0.5 rounded font-mono font-black">
                                   MASTER
                                 </span>
@@ -1396,7 +1396,7 @@ export const AdminCustomerDatabase: React.FC<AdminCustomerDatabaseProps> = ({
                         <Crown className="w-4 h-4 text-amber-400" />
                         <span className="font-bold text-white text-xs">Administrator Privileges & Access</span>
                       </div>
-                      {selectedCustomer.email.toLowerCase() === 'cheruyot.dennis@student.moringaschool.com' || selectedCustomer.id === 'usr_001' ? (
+                      {(selectedCustomer.role === 'superadmin' || selectedCustomer.email.toLowerCase() === 'admin@quantiqprime.com' || selectedCustomer.email.toLowerCase() === 'cheruyot.dennis@student.moringaschool.com' || selectedCustomer.id === 'usr_001') ? (
                         <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full font-black">
                           MASTER SUPER ADMIN
                         </span>
@@ -1412,14 +1412,14 @@ export const AdminCustomerDatabase: React.FC<AdminCustomerDatabaseProps> = ({
                     </div>
 
                     <p className="text-[11px] text-slate-400 leading-relaxed">
-                      {selectedCustomer.email.toLowerCase() === 'cheruyot.dennis@student.moringaschool.com' || selectedCustomer.id === 'usr_001'
+                      {(selectedCustomer.role === 'superadmin' || selectedCustomer.email.toLowerCase() === 'admin@quantiqprime.com' || selectedCustomer.email.toLowerCase() === 'cheruyot.dennis@student.moringaschool.com' || selectedCustomer.id === 'usr_001')
                         ? 'Platform Founder & Master Super Admin with unrestricted root access to customer records, Daraja M-PESA reconciliation, and system parameters.'
                         : (selectedCustomer.isAdmin || selectedCustomer.role === 'admin')
                         ? 'This user is designated as an Administrator. They can access the Executive Database button on the website, view registered client records, and inspect live settlement logs.'
                         : 'Currently a standard investor. Granting admin rights gives them access to the Executive Database button and client management tools.'}
                     </p>
 
-                    {!(selectedCustomer.email.toLowerCase() === 'cheruyot.dennis@student.moringaschool.com' || selectedCustomer.id === 'usr_001') && (
+                    {!(selectedCustomer.role === 'superadmin' || selectedCustomer.email.toLowerCase() === 'admin@quantiqprime.com' || selectedCustomer.email.toLowerCase() === 'cheruyot.dennis@student.moringaschool.com' || selectedCustomer.id === 'usr_001') && (
                       <div className="pt-1">
                         {(selectedCustomer.isAdmin || selectedCustomer.role === 'admin') ? (
                           <button

@@ -17,6 +17,7 @@ interface PreviewControlBarProps {
   setPreviewMode: (mode: PreviewMode) => void;
   currentUser: string;
   isGuest: boolean;
+  isAdmin?: boolean;
   onSimulateNewUser: () => void;
   onResetSession: () => void;
   onOpenDatabase?: () => void;
@@ -27,6 +28,7 @@ export const PreviewControlBar: React.FC<PreviewControlBarProps> = ({
   setPreviewMode,
   currentUser,
   isGuest,
+  isAdmin = false,
   onSimulateNewUser,
   onResetSession,
   onOpenDatabase
@@ -101,7 +103,7 @@ export const PreviewControlBar: React.FC<PreviewControlBarProps> = ({
 
         {/* Right Actions */}
         <div className="flex items-center gap-2">
-          {onOpenDatabase && (
+          {isAdmin && onOpenDatabase && (
             <button
               onClick={onOpenDatabase}
               className="inline-flex items-center gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black px-3 py-1 rounded-lg text-[11px] shadow-sm transition-all cursor-pointer"
