@@ -1,0 +1,164 @@
+import { UserProfile, ProfileCreationData, InvestmentPlan } from '../types';
+
+export interface BackendHealthResponse {
+  status: string;
+  system: string;
+  version: string;
+  uptimeSeconds: number;
+  services: Record<string, string>;
+}
+
+export interface StkPushResponse {
+  ResponseCode: string;
+  ResponseDescription: string;
+  MerchantRequestID: string;
+  CheckoutRequestID: string;
+  CustomerMessage: string;
+  receipt?: string;
+  till?: string;
+}
+
+export const api = {
+  // Check backend server health
+  async checkHealth(): Promise<BackendHealthResponse | null> {
+    try {
+      const res = await fetch('/api/health');
+      if (!res.ok) return null;
+      return await res.json();
+    } catch {
+      return null;
+    }
+  },
+
+  // Auth: Login
+  async login(identifier: string, password?: string): Promise<{ success: boolean; user?: Partial<UserProfile>; error?: string }> {
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier, password })
+      });
+      return await res.json();
+    } catch (err: any) {
+      return { success: false, error: err?.message || 'Network error' };
+    }
+  },
+
+  // Auth: Register new profile
+  async registerProfile(data: ProfileCreationData): Promise<{ success: boolean; user?: Partial<UserProfile>; error?: string }> {
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: data.fullName,
+          username: data.username,
+          email: data.email,
+          phone: data.phone,
+          mpesaNumber: data.mpesaNumber,
+          country: data.country,
+          password: data.password,
+          referralCode: data.referralCode,
+          avatar: data.avatar || data.avatarUrl,
+          walletAddressUSDT: data.walletAddressUSDT,
+          initialDepositKES: data.initialDepositKES || data.initialDeposit
+        })
+      });
+      return await res.json();
+    } catch (err: any) {
+      return { success: false, error: err?.message || 'Network error' };
+    }
+  },
+
+  // Fetch all registered profiles on server
+  async getProfiles(): Promise<UserProfile[]> {
+    try {
+      const res = await fetch('/api/auth/profiles');
+      if (!res.ok) return [];
+      const data = await res.json();
+      return data.profiles || [];
+    } catch {
+      return [];
+    }
+  },
+
+  // M-Pesa STK Push
+  async sendStkPush(phoneNumber: string, amount: number, customerName?: string): Promise<StkPushResponse | null> {
+    try {
+      const res = await fetch('/api/mpesa/stkpush', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phoneNumber,
+          amount,
+          accountReference: '505031',
+          customerName
+        })
+      });
+      return await res.json();
+    } catch {
+      return null;
+    }
+  },
+
+  // AI Quant Market Insights
+  async getAiInsights(capitalKES: number, userTier: string, riskTolerance = 'Moderate'): Promise<string> {
+    try {
+      const res = await fetch('/api/market/ai-insights', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ capitalKES, userTier, riskTolerance })
+      });
+      const data = await res.json();
+      return data.analysis || '';
+    } catch {
+      return '';
+    }
+  },
+
+  // Market Quotes Oracle
+  async getQuotes(): Promise<any[]> {
+    try {
+      const res = await fetch('/api/market/quotes');
+      const data = await res.json();
+      return data.quotes || [];
+    } catch {
+      return [];
+    }
+  },
+
+  // Lock Investment Contract
+  async createInvestment(params: {
+    userId: string;
+    planId: string;
+    planName: string;
+    amountKES: number;
+    dailyRoi: number;
+    durationDays: number;
+  }) {
+    try {
+      const res = await fetch('/api/investments/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params)
+      });
+      return await res.json();
+    } catch {
+      return null;
+    }
+  },
+
+  // Toggle Admin Privileges
+  async toggleAdmin(email: string, isAdmin: boolean, role = 'admin'): Promise<{ success: boolean; message: string; customer?: any }> {
+    try {
+      const res = await fetch('/api/admin/customers/toggle-admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, isAdmin, role })
+      });
+      return await res.json();
+    } catch {
+      return { success: false, message: 'Network error communicating with server' };
+    }
+  }
+};

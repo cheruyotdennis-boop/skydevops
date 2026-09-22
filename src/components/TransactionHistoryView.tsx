@@ -253,9 +253,9 @@ export const TransactionHistoryView: React.FC<TransactionHistoryViewProps> = ({
 
       {/* Transaction Detail Modal */}
       {selectedTx && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#0B0F17] border border-amber-500/30 rounded-3xl p-6 max-w-md w-full text-white shadow-2xl space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 overflow-y-auto p-3 sm:p-4 flex items-center justify-center">
+          <div className="bg-[#0B0F17] border border-amber-500/30 rounded-3xl p-5 sm:p-6 max-w-md w-full text-white shadow-2xl space-y-4 my-auto max-h-[92vh] flex flex-col overflow-hidden">
+            <div className="shrink-0 flex items-center justify-between pb-3 border-b border-slate-800">
               <h3 className="text-base font-bold font-heading">Receipt & Audit Proof</h3>
               <button 
                 onClick={() => setSelectedTx(null)}
@@ -265,7 +265,7 @@ export const TransactionHistoryView: React.FC<TransactionHistoryViewProps> = ({
               </button>
             </div>
 
-            <div className="space-y-2.5 text-xs text-slate-300">
+            <div className="space-y-2.5 text-xs text-slate-300 overflow-y-auto flex-1 overscroll-contain pr-1">
               <div className="flex justify-between py-1 border-b border-slate-800">
                 <span className="text-slate-400">Transaction ID:</span>
                 <span className="font-mono text-white">{selectedTx.id}</span>
@@ -298,7 +298,7 @@ export const TransactionHistoryView: React.FC<TransactionHistoryViewProps> = ({
 
             <button
               onClick={() => handleCopy(JSON.stringify(selectedTx, null, 2))}
-              className="w-full bg-slate-800 hover:bg-slate-700 text-amber-300 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors"
+              className="shrink-0 w-full bg-slate-800 hover:bg-slate-700 text-amber-300 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors"
             >
               {copiedHash ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
               <span>{copiedHash ? 'Copied Details!' : 'Copy Transaction Record'}</span>

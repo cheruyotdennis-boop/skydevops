@@ -37,7 +37,7 @@ export const InvestmentsView: React.FC<InvestmentsViewProps> = ({
   onReleaseMaturedContract
 }) => {
   // Calculator state
-  const [selectedPlanId, setSelectedPlanId] = useState<string>('plan_growth');
+  const [selectedPlanId, setSelectedPlanId] = useState<string>('plan_silver');
   const [calcAmount, setCalcAmount] = useState<number>(30000);
   const [isCompounding, setIsCompounding] = useState<boolean>(false);
 
@@ -233,7 +233,7 @@ export const InvestmentsView: React.FC<InvestmentsViewProps> = ({
           <div className="lg:col-span-7 space-y-5">
             <div className="flex items-center gap-2 text-amber-400 text-xs font-bold uppercase tracking-wider">
               <Calculator className="w-4 h-4" />
-              <span>Institutional ROI Yield Simulator (KES)</span>
+              <span>Institutional ROI Yield Calculator (KES)</span>
             </div>
 
             <h2 className="text-xl sm:text-2xl font-extrabold font-heading text-white">
@@ -354,9 +354,9 @@ export const InvestmentsView: React.FC<InvestmentsViewProps> = ({
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-400">Referral Bonus on Referee (20%):</span>
+                <span className="text-xs text-slate-400">Referral Bonus on Referee (10%):</span>
                 <span className="text-sm font-bold text-amber-300 font-mono">
-                  +Ksh {(calcAmount * 0.20).toLocaleString('en-KE', { minimumFractionDigits: 2 })}
+                  +Ksh {(calcAmount * 0.10).toLocaleString('en-KE', { minimumFractionDigits: 2 })}
                 </span>
               </div>
 
@@ -438,13 +438,13 @@ export const InvestmentsView: React.FC<InvestmentsViewProps> = ({
 
               {/* Rate Highlight */}
               <div className="mt-4 p-4 rounded-2xl bg-[#07090E] border border-amber-500/30">
-                <div className="text-3xl font-black text-amber-400 font-heading">
+                <div className="text-3xl font-black text-amber-400 font-mono">
                   {plan.dailyRoi}%
                   <span className="text-xs font-bold text-slate-400 ml-1">/ daily</span>
                 </div>
                 <div className="text-[11px] text-slate-300 mt-1 font-medium flex items-center justify-between">
-                  <span>Total Yield: <b className="text-emerald-400">{(plan.dailyRoi * plan.durationDays).toFixed(0)}% Net</b></span>
-                  <span className="text-amber-400 font-bold">🔒 Locked {plan.durationDays}d</span>
+                  <span>Total Yield: <b className="text-emerald-400 font-mono">{(plan.dailyRoi * plan.durationDays).toFixed(0)}% Net</b></span>
+                  <span className="text-amber-400 font-bold font-mono">🔒 Locked {plan.durationDays}d</span>
                 </div>
               </div>
 

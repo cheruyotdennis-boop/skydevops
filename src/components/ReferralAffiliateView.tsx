@@ -102,10 +102,10 @@ export const ReferralAffiliateView: React.FC<ReferralAffiliateViewProps> = ({
             </div>
 
             <h2 className="text-2xl sm:text-3xl font-black font-heading text-white">
-              Share Quantiq Prime & Earn <span className="text-amber-400">20% Direct Bonus</span> on Referee Stake
+              Share Quantiq Prime & Earn <span className="text-amber-400">10% Direct Bonus</span> on Referee Stake
             </h2>
             <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-xl">
-              Every investor who registers using your sponsor code <span className="text-amber-400 font-mono font-bold">#{user.referralCode}</span> yields an instant <b className="text-emerald-400">20% commission on their total invested stake (KES)</b>, credited automatically to your available balance.
+              Every investor who registers using your sponsor code <span className="text-amber-400 font-mono font-bold">#{user.referralCode}</span> yields an instant <b className="text-emerald-400">10% commission on their total invested stake (KES)</b>, credited automatically to your available balance.
             </p>
 
             {/* Link Box */}
@@ -197,7 +197,7 @@ export const ReferralAffiliateView: React.FC<ReferralAffiliateViewProps> = ({
                   {copiedCode ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </button>
               </div>
-              <div className="text-[10px] text-emerald-400 font-bold mt-1">20% Direct Commission</div>
+              <div className="text-[10px] text-emerald-400 font-bold mt-1">10% Direct Commission</div>
             </div>
           </div>
 
@@ -208,14 +208,14 @@ export const ReferralAffiliateView: React.FC<ReferralAffiliateViewProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-[#0B0F17]/90 rounded-3xl p-5 border border-amber-500/20 shadow-xl backdrop-blur-xl">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">Tier 1 Direct (20% Stake Bonus)</span>
+            <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">Tier 1 Direct (10% Stake Bonus)</span>
             <Award className="w-4 h-4 text-amber-400" />
           </div>
-          <div className="text-2xl font-black text-white mt-2 font-heading">
+          <div className="text-2xl font-black text-white mt-2 font-mono">
             {tier1Members.length} Members
           </div>
-          <div className="text-xs text-slate-400 mt-1">
-            Active Stake: Ksh {tier1Members.reduce((s, m) => s + m.activeDeposits, 0).toLocaleString()} • Bonus: +Ksh {tier1Members.reduce((s, m) => s + m.commissionEarned, 0).toLocaleString()}
+          <div className="text-xs text-slate-400 mt-1 font-mono">
+            Active Stake: <span className="text-white">Ksh {tier1Members.reduce((s, m) => s + m.activeDeposits, 0).toLocaleString()}</span> • Bonus: <span className="text-emerald-400">+Ksh {tier1Members.reduce((s, m) => s + m.commissionEarned, 0).toLocaleString()}</span>
           </div>
         </div>
 
@@ -224,11 +224,11 @@ export const ReferralAffiliateView: React.FC<ReferralAffiliateViewProps> = ({
             <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">Tier 2 Network (5%)</span>
             <Users className="w-4 h-4 text-slate-400" />
           </div>
-          <div className="text-2xl font-black text-white mt-2 font-heading">
+          <div className="text-2xl font-black text-white mt-2 font-mono">
             {tier2Members.length} Members
           </div>
-          <div className="text-xs text-slate-400 mt-1">
-            Active Stake: Ksh {tier2Members.reduce((s, m) => s + m.activeDeposits, 0).toLocaleString()}
+          <div className="text-xs text-slate-400 mt-1 font-mono">
+            Active Stake: <span className="text-white">Ksh {tier2Members.reduce((s, m) => s + m.activeDeposits, 0).toLocaleString()}</span>
           </div>
         </div>
 
@@ -237,11 +237,11 @@ export const ReferralAffiliateView: React.FC<ReferralAffiliateViewProps> = ({
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Tier 3 Extended (2%)</span>
             <Layers className="w-4 h-4 text-slate-400" />
           </div>
-          <div className="text-2xl font-black text-white mt-2 font-heading">
+          <div className="text-2xl font-black text-white mt-2 font-mono">
             {tier3Members.length} Members
           </div>
-          <div className="text-xs text-slate-400 mt-1">
-            Active Stake: Ksh {tier3Members.reduce((s, m) => s + m.activeDeposits, 0).toLocaleString()}
+          <div className="text-xs text-slate-400 mt-1 font-mono">
+            Active Stake: <span className="text-white">Ksh {tier3Members.reduce((s, m) => s + m.activeDeposits, 0).toLocaleString()}</span>
           </div>
         </div>
       </div>
@@ -263,7 +263,7 @@ export const ReferralAffiliateView: React.FC<ReferralAffiliateViewProps> = ({
                 selectedTierTab === 1 ? 'bg-amber-500 text-slate-950 font-black' : 'text-slate-400'
               }`}
             >
-              Tier 1 (20% Direct)
+              Tier 1 (10% Direct)
             </button>
             <button
               onClick={() => setSelectedTierTab(2)}
@@ -291,7 +291,7 @@ export const ReferralAffiliateView: React.FC<ReferralAffiliateViewProps> = ({
                 <th className="pb-3 font-semibold">Referee Profile</th>
                 <th className="pb-3 font-semibold">Join Date</th>
                 <th className="pb-3 font-semibold">Referee Stake</th>
-                <th className="pb-3 font-semibold">20% Bonus Paid</th>
+                <th className="pb-3 font-semibold">10% Bonus Paid</th>
                 <th className="pb-3 font-semibold text-right">Status</th>
               </tr>
             </thead>

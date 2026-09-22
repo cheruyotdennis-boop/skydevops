@@ -37,8 +37,14 @@ import { InvestModal } from './components/InvestModal';
 import { MpesaModal } from './components/MpesaModal';
 import { ContactSupportModal } from './components/ContactSupportModal';
 import { CreateProfileModal } from './components/CreateProfileModal';
+import { LoginModal } from './components/LoginModal';
+import { Device2faModal } from './components/Device2faModal';
+import { PreviewControlBar, PreviewMode } from './components/PreviewControlBar';
+import { MobileBottomNav } from './components/MobileBottomNav';
+import { AdminCustomerDatabase } from './components/AdminCustomerDatabase';
 import { safeGetItem, safeSetItem } from './utils/storage';
 import { roundCurrency } from './utils/security';
+import { isDeviceRecognized, registerCurrentDevice, generateDevice2faOtp } from './utils/deviceSecurity';
 
 import bgWallpaper from './assets/images/quantiq_prime_bg_1787826829164.jpg';
 
@@ -64,10 +70,13 @@ export default function App() {
     return safeGetItem<UserProfile[]>('quantiq_saved_profiles', [INITIAL_USER]);
   });
 
-  // State with LocalStorage persistence
+  // State with LocalStorage persistence - default to false for new public visitors on first load
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return safeGetItem<boolean>('quantiq_auth', true);
+    return safeGetItem<boolean>('quantiq_auth', false);
   });
+
+  // Launch Preview Mode switcher (defaults to 'new_user_landing' to show new visitor view immediately)
+  const [previewMode, setPreviewMode] = useState<PreviewMode>('new_user_landing');
 
   const [isGuestBrowsing, setIsGuestBrowsing] = useState<boolean>(false);
   const [authMode, setAuthMode] = useState<'register' | 'login'>('login');
@@ -105,7 +114,15 @@ export default function App() {
   const [isMpesaOpen, setIsMpesaOpen] = useState<boolean>(false);
   const [isContactsOpen, setIsContactsOpen] = useState<boolean>(false);
   const [isCreateProfileOpen, setIsCreateProfileOpen] = useState<boolean>(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
   const [selectedPlanForInvest, setSelectedPlanForInvest] = useState<InvestmentPlan | null>(null);
+
+  // Device 2FA verification state for unrecognized devices
+  const [pending2faUser, setPending2faUser] = useState<{
+    user: Partial<UserProfile>;
+    initialDeposit?: number;
+    expectedCode: string;
+  } | null>(null);
 
   // Sync to localStorage
   useEffect(() => {
@@ -141,7 +158,43 @@ export default function App() {
   }, [notifications]);
 
   // Handlers
-  const handleLoginSuccess = (userData: Partial<UserProfile>, initialDeposit?: number) => {
+  const handleLoginAttempt = (userData: Partial<UserProfile>, initialDeposit?: number) => {
+    // Check if current device is recognized for this user profile
+    const recognized = isDeviceRecognized(userData);
+
+    if (!recognized) {
+      // Unrecognized / new device detected! Generate 2FA OTP and prompt Device2faModal
+      const otp = generateDevice2faOtp();
+      setPending2faUser({
+        user: userData,
+        initialDeposit,
+        expectedCode: otp
+      });
+      setIsLoginModalOpen(false);
+      return;
+    }
+
+    // Device recognized - proceed directly to login
+    completeLogin(userData, initialDeposit, false);
+  };
+
+  const handle2faSuccess = (trustedDevice: boolean) => {
+    if (!pending2faUser) return;
+    const { user: u, initialDeposit } = pending2faUser;
+    completeLogin(u, initialDeposit, trustedDevice);
+    setPending2faUser(null);
+  };
+
+  const completeLogin = (userData: Partial<UserProfile>, initialDeposit?: number, trustedDevice = false) => {
+    let updatedDevices = userData.knownDeviceIds || [];
+    if (trustedDevice) {
+      updatedDevices = registerCurrentDevice(userData);
+    }
+
+    const isMasterAdmin = 
+      userData.email?.toLowerCase() === 'cheruyot.dennis@student.moringaschool.com' || 
+      userData.id === 'usr_001';
+
     const fullUser: UserProfile = {
       id: userData.id || `usr_${Date.now()}`,
       fullName: userData.fullName || 'Investor Member',
@@ -155,9 +208,14 @@ export default function App() {
       joinedDate: userData.joinedDate || new Date().toISOString().split('T')[0],
       tier: userData.tier || 'Gold VIP',
       kycStatus: userData.kycStatus || 'Verified',
-      avatar: userData.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250',
+      avatar: userData.avatar || 'luxury',
       twoFactorEnabled: userData.twoFactorEnabled ?? true,
-      walletAddressUSDT: userData.walletAddressUSDT || 'TXq7j8kP39LmNxR8w92Z0A1m4kVyTe6pQc'
+      walletAddressUSDT: userData.walletAddressUSDT || 'TXq7j8kP39LmNxR8w92Z0A1m4kVyTe6pQc',
+      isAdmin: isMasterAdmin ? true : Boolean(userData.isAdmin),
+      role: isMasterAdmin ? 'superadmin' : (userData.role || (userData.isAdmin ? 'admin' : 'user')),
+      knownDeviceIds: updatedDevices,
+      lastLoginDevice: navigator.userAgent.slice(0, 80),
+      lastLoginDate: new Date().toISOString()
     };
 
     setUser(fullUser);
@@ -210,7 +268,7 @@ export default function App() {
       referralCode: data.referralCode || '505031',
       referredBy: `Sponsor #${data.referralCode || '505031'}`,
       joinedDate: new Date().toISOString().split('T')[0],
-      tier: (data.initialDepositUSD || 0) >= 10000 ? 'Platinum Sovereign' : (data.initialDepositUSD || 0) >= 2500 ? 'Gold VIP' : 'Silver VIP',
+      tier: (data.initialDepositUSD || 0) >= 10000 || (data.initialDepositKES || 0) >= 200000 ? 'Platinum (VIP)' : (data.initialDepositUSD || 0) >= 2500 || (data.initialDepositKES || 0) >= 100000 ? 'Gold' : (data.initialDepositUSD || 0) >= 500 || (data.initialDepositKES || 0) >= 30000 ? 'Silver' : 'Bronze',
       kycStatus: 'Verified',
       avatar: data.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250',
       twoFactorEnabled: true,
@@ -273,15 +331,23 @@ export default function App() {
   };
 
   const handleOpenLogin = () => {
-    setAuthMode('login');
-    setIsGuestBrowsing(false);
-    setIsAuthenticated(false);
+    if (isAuthenticated) {
+      setIsLoginModalOpen(true);
+    } else {
+      setAuthMode('login');
+      setIsGuestBrowsing(false);
+      setIsAuthenticated(false);
+    }
   };
 
   const handleOpenRegister = () => {
-    setAuthMode('register');
-    setIsGuestBrowsing(false);
-    setIsAuthenticated(false);
+    if (isAuthenticated) {
+      setIsCreateProfileOpen(true);
+    } else {
+      setAuthMode('register');
+      setIsGuestBrowsing(false);
+      setIsAuthenticated(false);
+    }
   };
 
   const handleRedirectToAuth = (plan: InvestmentPlan) => {
@@ -586,36 +652,52 @@ export default function App() {
     setNotifications(prev => [newNotif, ...prev]);
   };
 
-  // If unauthenticated and not explicitly in guest browsing mode, show full AuthScreen
-  if (!isAuthenticated && !isGuestBrowsing) {
+  // If in new_user_landing preview mode or unauthenticated
+  if (previewMode === 'new_user_landing' || (!isAuthenticated && !isGuestBrowsing)) {
     return (
-      <AuthScreen 
-        onLoginSuccess={handleLoginSuccess}
-        defaultReferralCode={initialRefCode}
-        savedProfiles={savedProfiles}
-        initialMode={authMode}
-        selectedPlan={selectedPlanForAuth}
-        onBrowsePublic={() => {
-          setIsGuestBrowsing(true);
-          setActiveTab('investments');
-        }}
-      />
+      <div className="min-h-screen bg-[#07090E] flex flex-col font-sans selection:bg-amber-500 selection:text-black">
+        <PreviewControlBar 
+          previewMode={previewMode}
+          setPreviewMode={setPreviewMode}
+          currentUser={user.fullName}
+          isGuest={isGuestBrowsing}
+          onOpenDatabase={() => {
+            setIsAuthenticated(true);
+            setActiveTab('database');
+            setPreviewMode('desktop');
+          }}
+          onSimulateNewUser={() => {
+            setIsAuthenticated(false);
+            setIsGuestBrowsing(false);
+            setPreviewMode('new_user_landing');
+          }}
+          onResetSession={() => {
+            setIsAuthenticated(false);
+            setPreviewMode('new_user_landing');
+          }}
+        />
+        <AuthScreen 
+          onLoginSuccess={(userData, initialDep) => {
+            handleLoginAttempt(userData, initialDep);
+            setPreviewMode('desktop');
+          }}
+          defaultReferralCode={initialRefCode || '505031'}
+          savedProfiles={savedProfiles}
+          initialMode={authMode}
+          selectedPlan={selectedPlanForAuth}
+          onBrowsePublic={() => {
+            setIsGuestBrowsing(true);
+            setIsAuthenticated(false);
+            setActiveTab('investments');
+            setPreviewMode('desktop');
+          }}
+        />
+      </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-[#07090E] text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-black relative overflow-x-hidden">
-      
-      {/* Background Wallpaper matching uploaded style */}
-      <div 
-        className="fixed inset-0 bg-cover bg-center bg-no-repeat opacity-25 mix-blend-screen pointer-events-none z-0"
-        style={{ backgroundImage: `url(${bgWallpaper})` }}
-      ></div>
-
-      {/* Luxury Golden Ambient Glows */}
-      <div className="fixed top-20 left-1/4 w-[600px] h-[600px] bg-amber-500/5 rounded-full blur-3xl pointer-events-none z-0"></div>
-      <div className="fixed bottom-20 right-1/4 w-[500px] h-[500px] bg-yellow-600/5 rounded-full blur-3xl pointer-events-none z-0"></div>
-
+  const renderDashboardContent = () => (
+    <>
       {/* App Header with conditional Log In / Register / Account buttons */}
       <div className="relative z-10">
         <Header
@@ -661,7 +743,7 @@ export default function App() {
       )}
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 relative z-10">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 relative z-10 pb-24 md:pb-8">
         
         {activeTab === 'overview' && (
           <DashboardOverview
@@ -722,62 +804,32 @@ export default function App() {
           />
         )}
 
+        {activeTab === 'database' && (
+          <AdminCustomerDatabase
+            savedProfiles={savedProfiles}
+            contacts={contacts}
+            onUpdateContacts={(updated) => setContacts(updated)}
+            onUpdateProfiles={(newProfiles) => {
+              setSavedProfiles(newProfiles);
+              const me = newProfiles.find(p => p.email.toLowerCase() === user.email.toLowerCase());
+              if (me) {
+                setUser(me);
+              }
+            }}
+          />
+        )}
+
       </main>
 
-      {/* Modals */}
-      <DepositModal
-        isOpen={isDepositOpen}
-        onClose={() => setIsDepositOpen(false)}
-        onConfirmDeposit={handleConfirmDeposit}
+      {/* Mobile Bottom Navigation for Phone Viewports */}
+      <MobileBottomNav
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
         onOpenMpesa={() => setIsMpesaOpen(true)}
-      />
-
-      <WithdrawModal
-        isOpen={isWithdrawOpen}
-        onClose={() => setIsWithdrawOpen(false)}
-        wallet={wallet}
-        user={user}
-        onConfirmWithdrawal={handleConfirmWithdrawal}
-        onOpenMpesa={() => setIsMpesaOpen(true)}
-      />
-
-      <InvestModal
-        isOpen={isInvestOpen}
-        onClose={() => setIsInvestOpen(false)}
-        plan={selectedPlanForInvest}
-        wallet={wallet}
-        onConfirmInvest={handleConfirmInvest}
-        onOpenDeposit={() => setIsDepositOpen(true)}
-      />
-
-      <MpesaModal
-        isOpen={isMpesaOpen}
-        onClose={() => setIsMpesaOpen(false)}
-        user={user}
-        wallet={wallet}
-        contacts={contacts}
-        onConfirmMpesaDeposit={handleConfirmMpesaDeposit}
-        onConfirmMpesaWithdrawal={handleConfirmMpesaWithdrawal}
-      />
-
-      <ContactSupportModal
-        isOpen={isContactsOpen}
-        onClose={() => setIsContactsOpen(false)}
-        contacts={contacts}
-        user={user}
-        onUpdateContacts={(updated) => setContacts(updated)}
-        onUpdateUser={(updated) => setUser(prev => ({ ...prev, ...updated }))}
-      />
-
-      <CreateProfileModal
-        isOpen={isCreateProfileOpen}
-        onClose={() => setIsCreateProfileOpen(false)}
-        onCreateProfile={handleCreateProfile}
-        defaultReferralCode={user.referralCode || '505031'}
       />
 
       {/* Footer */}
-      <footer className="mt-16 border-t border-amber-500/20 bg-[#06080E]/95 py-8 text-xs text-slate-400 relative z-10">
+      <footer className="mt-8 border-t border-amber-500/20 bg-[#06080E]/95 py-8 text-xs text-slate-400 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
             <span className="font-black text-amber-400 uppercase tracking-wider font-heading">QUANTIQ PRIME</span>
@@ -812,6 +864,157 @@ export default function App() {
           </div>
         </div>
       </footer>
+    </>
+  );
+
+  return (
+    <div className="min-h-screen bg-[#07090E] text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-black relative overflow-x-hidden">
+      
+      {/* Top Preview Control Bar */}
+      <PreviewControlBar 
+        previewMode={previewMode}
+        setPreviewMode={setPreviewMode}
+        currentUser={user.fullName}
+        isGuest={isGuestBrowsing}
+        onOpenDatabase={() => {
+          setIsAuthenticated(true);
+          setActiveTab('database');
+          setPreviewMode('desktop');
+        }}
+        onSimulateNewUser={() => {
+          setIsAuthenticated(false);
+          setIsGuestBrowsing(false);
+          setPreviewMode('new_user_landing');
+        }}
+        onResetSession={() => {
+          setIsAuthenticated(false);
+          setPreviewMode('new_user_landing');
+        }}
+      />
+
+      {/* Background Wallpaper matching uploaded style */}
+      <div 
+        className="fixed inset-0 bg-cover bg-center bg-no-repeat opacity-25 mix-blend-screen pointer-events-none z-0"
+        style={{ backgroundImage: `url(${bgWallpaper})` }}
+      ></div>
+
+      {/* Luxury Golden Ambient Glows */}
+      <div className="fixed top-20 left-1/4 w-[600px] h-[600px] bg-amber-500/5 rounded-full blur-3xl pointer-events-none z-0"></div>
+      <div className="fixed bottom-20 right-1/4 w-[500px] h-[500px] bg-yellow-600/5 rounded-full blur-3xl pointer-events-none z-0"></div>
+
+      {/* Conditional Rendering based on Desktop vs Mobile Preview Frame */}
+      {previewMode === 'mobile' ? (
+        <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 relative z-10">
+          <div className="w-full max-w-[420px] bg-[#07090E] border-[10px] border-[#1E2638] rounded-[52px] shadow-2xl overflow-hidden relative ring-2 ring-amber-500/30 flex flex-col h-[840px] max-h-[90vh]">
+            
+            {/* Phone Dynamic Island / Notch */}
+            <div className="bg-[#1E2638] py-2 px-6 flex items-center justify-between text-[11px] font-mono text-slate-300 z-50 shrink-0 select-none">
+              <span className="font-bold">9:41</span>
+              <div className="w-20 h-4 bg-black rounded-full flex items-center justify-center gap-1.5 px-2">
+                <span className="w-2 h-2 rounded-full bg-[#1A1F2C]"></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span>5G</span>
+                <span>100%</span>
+              </div>
+            </div>
+
+            {/* Scrollable Mobile Screen Content */}
+            <div className="flex-1 overflow-y-auto overflow-x-hidden relative scrollbar-none">
+              {renderDashboardContent()}
+            </div>
+
+            {/* Mobile Home Bar Indicator */}
+            <div className="bg-[#07090F] pt-1 pb-2 flex justify-center shrink-0 z-50">
+              <div className="w-32 h-1 bg-slate-600 rounded-full"></div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        renderDashboardContent()
+      )}
+
+      {/* Modals */}
+      <DepositModal
+        isOpen={isDepositOpen}
+        onClose={() => setIsDepositOpen(false)}
+        onConfirmDeposit={handleConfirmDeposit}
+        onOpenMpesa={() => setIsMpesaOpen(true)}
+        contacts={contacts}
+        user={user}
+      />
+
+      <WithdrawModal
+        isOpen={isWithdrawOpen}
+        onClose={() => setIsWithdrawOpen(false)}
+        wallet={wallet}
+        user={user}
+        contacts={contacts}
+        onConfirmWithdrawal={handleConfirmWithdrawal}
+        onOpenMpesa={() => setIsMpesaOpen(true)}
+        onUpdateUser={(updated) => setUser(prev => ({ ...prev, ...updated }))}
+      />
+
+      <InvestModal
+        isOpen={isInvestOpen}
+        onClose={() => setIsInvestOpen(false)}
+        plan={selectedPlanForInvest}
+        wallet={wallet}
+        onConfirmInvest={handleConfirmInvest}
+        onOpenDeposit={() => setIsDepositOpen(true)}
+      />
+
+      <MpesaModal
+        isOpen={isMpesaOpen}
+        onClose={() => setIsMpesaOpen(false)}
+        user={user}
+        wallet={wallet}
+        contacts={contacts}
+        onConfirmMpesaDeposit={handleConfirmMpesaDeposit}
+        onConfirmMpesaWithdrawal={handleConfirmMpesaWithdrawal}
+      />
+
+      <ContactSupportModal
+        isOpen={isContactsOpen}
+        onClose={() => setIsContactsOpen(false)}
+        contacts={contacts}
+        user={user}
+        onUpdateContacts={(updated) => setContacts(updated)}
+        onUpdateUser={(updated) => setUser(prev => ({ ...prev, ...updated }))}
+      />
+
+      <CreateProfileModal
+        isOpen={isCreateProfileOpen}
+        onClose={() => setIsCreateProfileOpen(false)}
+        onCreateProfile={handleCreateProfile}
+        onOpenLogin={() => setIsLoginModalOpen(true)}
+        defaultReferralCode={user.referralCode || '505031'}
+      />
+
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onLoginSuccess={handleLoginAttempt}
+        onOpenCreateProfile={() => setIsCreateProfileOpen(true)}
+        savedProfiles={savedProfiles}
+      />
+
+      {/* 2FA Verification Modal for Unrecognized Devices */}
+      {pending2faUser && (
+        <Device2faModal
+          isOpen={Boolean(pending2faUser)}
+          user={pending2faUser.user}
+          expectedCode={pending2faUser.expectedCode}
+          onSuccess={handle2faSuccess}
+          onCancel={() => setPending2faUser(null)}
+          onResendCode={() => {
+            const newOtp = generateDevice2faOtp();
+            setPending2faUser(prev => prev ? { ...prev, expectedCode: newOtp } : null);
+            return newOtp;
+          }}
+        />
+      )}
 
     </div>
   );

@@ -71,11 +71,11 @@ export const ContactSupportModal: React.FC<ContactSupportModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
-      <div className="bg-[#0B0F17] border border-amber-500/30 rounded-3xl max-w-xl w-full p-6 shadow-2xl text-white my-8 backdrop-blur-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 bg-black/85 backdrop-blur-md overflow-y-auto">
+      <div className="bg-[#0B0F17] border border-amber-500/30 rounded-3xl max-w-xl w-full text-white shadow-2xl my-auto max-h-[92vh] flex flex-col backdrop-blur-2xl overflow-hidden">
         
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+        <div className="shrink-0 p-5 sm:p-6 flex items-center justify-between border-b border-slate-800 bg-[#0E131F]">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center font-bold">
               <Building2 className="w-6 h-6" />
@@ -93,8 +93,11 @@ export const ContactSupportModal: React.FC<ContactSupportModalProps> = ({
           </button>
         </div>
 
+        {/* Scrollable Body */}
+        <div className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1 overscroll-contain text-xs">
+
         {/* Tab switcher */}
-        <div className="flex bg-[#07090E] p-1 rounded-2xl border border-slate-800 mt-4 text-xs font-bold">
+        <div className="flex bg-[#07090E] p-1 rounded-2xl border border-slate-800 text-xs font-bold">
           <button
             type="button"
             onClick={() => setActiveTab('official_contacts')}
@@ -226,6 +229,61 @@ export const ContactSupportModal: React.FC<ContactSupportModalProps> = ({
 
             </div>
 
+            {/* Official Crypto Deposit Receiving Vaults */}
+            <div className="space-y-2 bg-[#07090E] p-4 rounded-2xl border border-amber-500/20">
+              <div className="font-bold text-amber-400 text-xs flex items-center justify-between">
+                <span>Crypto Deposit Receiving Vaults</span>
+                <span className="text-[10px] text-slate-400 font-mono">1 USD = {contacts.kesUsdExchangeRate || 130} KES</span>
+              </div>
+
+              <div className="space-y-2 pt-1 text-[11px]">
+                <div className="flex items-center justify-between pb-1.5 border-b border-slate-800">
+                  <span className="text-slate-400">USDT (TRC-20):</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-mono text-amber-300 text-[10px] truncate max-w-[170px]">
+                      {contacts.cryptoDepositWallets?.usdtTrc20 || 'TY7Q6B92PqmK89vXZ01mNa4kVyTe6pQc99'}
+                    </span>
+                    <button 
+                      onClick={() => handleCopy(contacts.cryptoDepositWallets?.usdtTrc20 || 'TY7Q6B92PqmK89vXZ01mNa4kVyTe6pQc99', 'usdt_trc20')} 
+                      className="text-slate-400 hover:text-white cursor-pointer"
+                    >
+                      {copiedItem === 'usdt_trc20' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pb-1.5 border-b border-slate-800">
+                  <span className="text-slate-400">USDT (ERC-20):</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-mono text-amber-300 text-[10px] truncate max-w-[170px]">
+                      {contacts.cryptoDepositWallets?.usdtErc20 || '0x89aF49321B008A2d319808389201a4e788bc5541'}
+                    </span>
+                    <button 
+                      onClick={() => handleCopy(contacts.cryptoDepositWallets?.usdtErc20 || '0x89aF49321B008A2d319808389201a4e788bc5541', 'usdt_erc20')} 
+                      className="text-slate-400 hover:text-white cursor-pointer"
+                    >
+                      {copiedItem === 'usdt_erc20' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">Bitcoin (BTC):</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-mono text-amber-300 text-[10px] truncate max-w-[170px]">
+                      {contacts.cryptoDepositWallets?.btc || 'bc1q9p8200193892019384910293481290a1841e7'}
+                    </span>
+                    <button 
+                      onClick={() => handleCopy(contacts.cryptoDepositWallets?.btc || 'bc1q9p8200193892019384910293481290a1841e7', 'btc')} 
+                      className="text-slate-400 hover:text-white cursor-pointer"
+                    >
+                      {copiedItem === 'btc' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div className="p-3 bg-[#07090E] rounded-2xl border border-slate-800 flex items-center gap-2 text-[11px] text-slate-400">
               <Clock className="w-4 h-4 text-amber-400 shrink-0" />
               <span>Desk Hours: <b>24/7 Priority Support</b> (Automated trading 24/7/365)</span>
@@ -300,6 +358,80 @@ export const ContactSupportModal: React.FC<ContactSupportModalProps> = ({
               />
             </div>
 
+            {/* Platform Crypto Deposit Receiving Wallets (Owner Personal Address) */}
+            <div className="p-3.5 bg-[#07090E] border border-amber-500/30 rounded-2xl space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-amber-400">Receiving Crypto Deposit Wallets (Owner Vault)</span>
+                <span className="text-[10px] text-slate-400">Client deposits route here</span>
+              </div>
+
+              <div>
+                <label className="block text-slate-400 text-[11px] mb-1">USDT (TRC-20) Receiving Wallet</label>
+                <input
+                  type="text"
+                  value={formData.cryptoDepositWallets?.usdtTrc20 || ''}
+                  placeholder="e.g. TY7Q6B92PqmK89vXZ01mNa4kVyTe6pQc99"
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    cryptoDepositWallets: {
+                      ...(formData.cryptoDepositWallets || { usdtTrc20: '', usdtErc20: '', btc: '', eth: '' }),
+                      usdtTrc20: e.target.value
+                    }
+                  })}
+                  className="w-full px-3 py-2 bg-[#0E131F] border border-slate-700 rounded-xl text-amber-300 font-mono text-[11px] focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-400 text-[11px] mb-1">USDT (ERC-20) Receiving Wallet</label>
+                <input
+                  type="text"
+                  value={formData.cryptoDepositWallets?.usdtErc20 || ''}
+                  placeholder="e.g. 0x89aF49321B008A2d319808389201a4e788bc5541"
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    cryptoDepositWallets: {
+                      ...(formData.cryptoDepositWallets || { usdtTrc20: '', usdtErc20: '', btc: '', eth: '' }),
+                      usdtErc20: e.target.value
+                    }
+                  })}
+                  className="w-full px-3 py-2 bg-[#0E131F] border border-slate-700 rounded-xl text-amber-300 font-mono text-[11px] focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-slate-400 text-[11px] mb-1">Bitcoin (BTC) Receiving Wallet</label>
+                  <input
+                    type="text"
+                    value={formData.cryptoDepositWallets?.btc || ''}
+                    placeholder="e.g. bc1q9p8200..."
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      cryptoDepositWallets: {
+                        ...(formData.cryptoDepositWallets || { usdtTrc20: '', usdtErc20: '', btc: '', eth: '' }),
+                        btc: e.target.value
+                      }
+                    })}
+                    className="w-full px-3 py-2 bg-[#0E131F] border border-slate-700 rounded-xl text-amber-300 font-mono text-[11px] focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-400 text-[11px] mb-1">USD / KES Exchange Rate</label>
+                  <input
+                    type="number"
+                    value={formData.kesUsdExchangeRate || 130}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      kesUsdExchangeRate: Number(e.target.value) || 130
+                    })}
+                    className="w-full px-3 py-2 bg-[#0E131F] border border-slate-700 rounded-xl text-white font-mono text-[11px] focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+              </div>
+            </div>
+
             <button
               type="submit"
               className="w-full py-3 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer uppercase tracking-wider text-xs"
@@ -309,6 +441,8 @@ export const ContactSupportModal: React.FC<ContactSupportModalProps> = ({
             </button>
           </form>
         )}
+
+        </div>
 
       </div>
     </div>

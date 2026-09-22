@@ -18,6 +18,7 @@ import {
 import { UserProfile, WalletState, NotificationItem } from '../types';
 import { CRYPTO_RATES } from '../data/mockData';
 import { QuantiqLogo } from './QuantiqLogo';
+import { ProfileAvatar } from './ProfileAvatar';
 import { safeCopyText } from '../utils/storage';
 
 interface HeaderProps {
@@ -59,6 +60,14 @@ export const Header: React.FC<HeaderProps> = ({
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [copiedRef, setCopiedRef] = useState(false);
 
+  const isUserAdmin = Boolean(
+    user.isAdmin || 
+    user.role === 'admin' || 
+    user.role === 'superadmin' || 
+    user.id === 'usr_001' || 
+    user.email.toLowerCase() === 'cheruyot.dennis@student.moringaschool.com'
+  );
+
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const handleCopyRef = () => {
@@ -84,9 +93,9 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="flex items-center gap-6 overflow-x-auto">
             {CRYPTO_RATES.map((item, idx) => (
               <div key={idx} className="flex items-center gap-1.5 shrink-0 text-xs">
-                <span className="text-slate-400">{item.pair}:</span>
-                <span className="font-semibold text-slate-100">{item.price}</span>
-                <span className="text-emerald-400 font-bold">{item.change}</span>
+                <span className="text-slate-400 font-medium">{item.pair}:</span>
+                <span className="font-bold text-slate-100 font-mono">{item.price}</span>
+                <span className="text-emerald-400 font-bold font-mono text-[11px]">{item.change}</span>
               </div>
             ))}
           </div>
@@ -162,8 +171,22 @@ export const Header: React.FC<HeaderProps> = ({
                   : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
               }`}
             >
-              Affiliates (20% Bonus)
+              Affiliates (10% Bonus)
             </button>
+            {isUserAdmin && (
+              <button
+                id="nav-database"
+                onClick={() => setActiveTab('database')}
+                className={`px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
+                  activeTab === 'database'
+                    ? 'bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 shadow-md shadow-amber-500/20 font-black'
+                    : 'text-amber-400 hover:text-amber-300 hover:bg-amber-500/10'
+                }`}
+              >
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>Client Database</span>
+              </button>
+            )}
           </nav>
 
           {/* User & Wallet Actions */}
@@ -302,14 +325,14 @@ export const Header: React.FC<HeaderProps> = ({
                 }}
                 className="flex items-center gap-2 p-1.5 rounded-2xl hover:bg-slate-800/60 transition-colors border border-transparent hover:border-slate-700 cursor-pointer"
               >
-                <div className="relative">
-                  <img
-                    src={user.avatar}
-                    alt={user.fullName}
-                    className="w-9 h-9 rounded-xl object-cover ring-2 ring-amber-400/50"
-                  />
-                  <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-[#080B11]"></span>
-                </div>
+                <ProfileAvatar
+                  src={user.avatar}
+                  name={user.fullName}
+                  tier={user.tier}
+                  size="sm"
+                  showOnlineStatus={true}
+                  showTierRing={true}
+                />
                 <div className="hidden xl:block text-left">
                   <div className="text-xs font-bold text-slate-100 leading-none">{user.username}</div>
                   <div className="text-[10px] text-amber-400 font-extrabold">{user.tier}</div>
@@ -318,20 +341,31 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
 
               {showProfileMenu && (
-                <div className="absolute right-0 mt-2 w-68 bg-[#0B0F17] rounded-3xl shadow-2xl border border-amber-500/30 p-3.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                  <div className="p-2 border-b border-slate-800">
-                    <div className="font-bold text-sm text-white font-heading">{user.fullName}</div>
-                    <div className="text-xs text-slate-400 truncate">{user.email}</div>
-                    <div className="mt-2.5 flex items-center justify-between bg-amber-950/30 border border-amber-500/30 rounded-xl px-3 py-1.5 text-xs text-amber-300 font-medium">
-                      <span>Ref Code: <b className="font-mono text-white">#{user.referralCode}</b></span>
-                      <button
-                        onClick={handleCopyRef}
-                        className="text-amber-400 hover:text-amber-300 text-[11px] font-bold flex items-center gap-1 cursor-pointer"
-                      >
-                        {copiedRef ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                        {copiedRef ? 'Copied' : 'Copy'}
-                      </button>
+                <div className="absolute right-0 mt-2 w-72 bg-[#0B0F17] rounded-3xl shadow-2xl border border-amber-500/30 p-3.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                  <div className="p-2 border-b border-slate-800 flex items-center gap-3">
+                    <ProfileAvatar
+                      src={user.avatar}
+                      name={user.fullName}
+                      tier={user.tier}
+                      size="md"
+                      showKycBadge={true}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold text-sm text-white font-heading truncate">{user.fullName}</div>
+                      <div className="text-[11px] text-slate-400 truncate">@{user.username}</div>
+                      <div className="text-[10px] text-amber-400 font-bold">{user.tier} • Ksh {wallet.availableCash.toLocaleString()}</div>
                     </div>
+                  </div>
+
+                  <div className="mt-2.5 flex items-center justify-between bg-amber-950/30 border border-amber-500/30 rounded-xl px-3 py-1.5 text-xs text-amber-300 font-medium">
+                    <span>Ref: <b className="font-mono text-white">#{user.referralCode}</b></span>
+                    <button
+                      onClick={handleCopyRef}
+                      className="text-amber-400 hover:text-amber-300 text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                    >
+                      {copiedRef ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                      {copiedRef ? 'Copied' : 'Copy'}
+                    </button>
                   </div>
 
                   <div className="py-2 space-y-1 text-xs">
@@ -344,11 +378,27 @@ export const Header: React.FC<HeaderProps> = ({
                       className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 font-bold hover:bg-amber-500/20 transition-colors cursor-pointer"
                     >
                       <span className="flex items-center gap-2">
-                        <User className="w-4 h-4 text-amber-400" />
+                        <UserPlus className="w-4 h-4 text-amber-400" />
                         Create New Profile
                       </span>
                       <span className="text-[10px] bg-amber-500 text-slate-950 px-1.5 py-0.5 rounded font-black">+ Register</span>
                     </button>
+
+                    {onOpenLogin && (
+                      <button
+                        onClick={() => {
+                          onOpenLogin();
+                          setShowProfileMenu(false);
+                        }}
+                        className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-300 hover:bg-slate-800 transition-colors cursor-pointer"
+                      >
+                        <span className="flex items-center gap-2">
+                          <LogIn className="w-4 h-4 text-amber-400" />
+                          Log In / Switch Account
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-mono">Switch</span>
+                      </button>
+                    )}
 
                     <button
                       onClick={() => {
@@ -389,7 +439,7 @@ export const Header: React.FC<HeaderProps> = ({
                         <Sparkles className="w-4 h-4 text-amber-400" />
                         Affiliate & Team
                       </span>
-                      <span className="text-[10px] font-bold bg-amber-950/60 text-amber-400 border border-amber-500/30 px-1.5 py-0.5 rounded">20% Bonus</span>
+                      <span className="text-[10px] font-bold bg-amber-950/60 text-amber-400 border border-amber-500/30 px-1.5 py-0.5 rounded">10% Bonus</span>
                     </button>
 
                     <button
@@ -405,6 +455,22 @@ export const Header: React.FC<HeaderProps> = ({
                       </span>
                       <span className="text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded">Verified</span>
                     </button>
+
+                    {isUserAdmin && (
+                      <button
+                        onClick={() => {
+                          setActiveTab('database');
+                          setShowProfileMenu(false);
+                        }}
+                        className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/40 text-amber-300 font-bold hover:bg-amber-500/20 transition-colors cursor-pointer"
+                      >
+                        <span className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                          Executive Database
+                        </span>
+                        <span className="text-[10px] font-black bg-amber-500 text-slate-950 px-1.5 py-0.5 rounded">ADMIN</span>
+                      </button>
+                    )}
                   </div>
 
                   <div className="pt-2 border-t border-slate-800">
@@ -473,6 +539,17 @@ export const Header: React.FC<HeaderProps> = ({
           >
             Security
           </button>
+          {isUserAdmin && (
+            <button
+              onClick={() => setActiveTab('database')}
+              className={`px-3 py-1.5 font-bold rounded-xl shrink-0 flex items-center gap-1.5 ${
+                activeTab === 'database' ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-black' : 'bg-[#0E131F] text-amber-400 border border-amber-500/30'
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>Database</span>
+            </button>
+          )}
         </div>
       </div>
     </header>

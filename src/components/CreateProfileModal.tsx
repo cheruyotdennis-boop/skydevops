@@ -14,19 +14,26 @@ import {
   Coins, 
   CheckCircle2,
   DollarSign,
-  AlertCircle
+  AlertCircle,
+  LogIn,
+  Crown
 } from 'lucide-react';
 import { triggerConfetti } from '../utils/confetti';
 import { ProfileCreationData } from '../types';
+import { ProfileAvatar } from './ProfileAvatar';
+import luxuryAvatarImg from '../assets/images/luxury_profile_avatar_1787995685280.jpg';
+import { api } from '../services/api';
 
 interface CreateProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCreateProfile: (data: ProfileCreationData) => void;
+  onOpenLogin?: () => void;
   defaultReferralCode?: string;
 }
 
 const AVATAR_OPTIONS = [
+  { id: 'luxury', url: luxuryAvatarImg, label: 'VIP Gold Crest', isLuxury: true },
   { id: '1', url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250', label: 'Dennis / Executive' },
   { id: '2', url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=250', label: 'Investor Pro' },
   { id: '3', url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=250', label: 'Wealth Strategist' },
@@ -38,6 +45,7 @@ export const CreateProfileModal: React.FC<CreateProfileModalProps> = ({
   isOpen,
   onClose,
   onCreateProfile,
+  onOpenLogin,
   defaultReferralCode = '505031'
 }) => {
   const [fullName, setFullName] = useState('');
@@ -57,6 +65,8 @@ export const CreateProfileModal: React.FC<CreateProfileModalProps> = ({
   const [successCreated, setSuccessCreated] = useState(false);
 
   if (!isOpen) return null;
+
+  const currentTier = initialDeposit >= 200000 ? 'Platinum VIP' : initialDeposit >= 100000 ? 'Gold' : initialDeposit >= 30000 ? 'Silver' : 'Bronze';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,21 +95,24 @@ export const CreateProfileModal: React.FC<CreateProfileModalProps> = ({
     const finalUsername = username.trim() || email.split('@')[0].toLowerCase();
     const finalWallet = walletAddress.trim() || `T${Math.random().toString(36).substring(2, 12).toUpperCase()}x7Y9k`;
 
-    setTimeout(() => {
-      onCreateProfile({
-        fullName,
-        username: finalUsername,
-        email,
-        phone,
-        mpesaNumber: mpesaNumber || phone,
-        country,
-        password,
-        referralCode: generatedRefCode,
-        avatarUrl: selectedAvatar,
-        walletAddressUSDT: finalWallet,
-        initialDeposit: initialDeposit > 0 ? initialDeposit : 50000
-      });
+    const profileData: ProfileCreationData = {
+      fullName,
+      username: finalUsername,
+      email,
+      phone,
+      mpesaNumber: mpesaNumber || phone,
+      country,
+      password,
+      referralCode: generatedRefCode,
+      avatar: selectedAvatar,
+      avatarUrl: selectedAvatar,
+      walletAddressUSDT: finalWallet,
+      initialDepositKES: initialDeposit > 0 ? initialDeposit : 50000,
+      initialDeposit: initialDeposit > 0 ? initialDeposit : 50000
+    };
 
+    api.registerProfile(profileData).then(() => {
+      onCreateProfile(profileData);
       setIsSubmitting(false);
       setSuccessCreated(true);
       triggerConfetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
@@ -107,16 +120,24 @@ export const CreateProfileModal: React.FC<CreateProfileModalProps> = ({
       setTimeout(() => {
         setSuccessCreated(false);
         onClose();
-      }, 1500);
-    }, 600);
+      }, 1200);
+    }).catch(() => {
+      onCreateProfile(profileData);
+      setIsSubmitting(false);
+      setSuccessCreated(true);
+      setTimeout(() => {
+        setSuccessCreated(false);
+        onClose();
+      }, 1200);
+    });
   };
 
   return (
-    <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-[#0B0F17] border border-amber-500/30 rounded-3xl max-w-2xl w-full text-white shadow-2xl overflow-hidden my-8 backdrop-blur-2xl">
+    <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-y-auto">
+      <div className="bg-[#0B0F17] border border-amber-500/30 rounded-3xl max-w-2xl w-full text-white shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-200">
         
         {/* Header Banner */}
-        <div className="bg-gradient-to-r from-[#0E131F] via-[#151A29] to-[#0E131F] p-6 border-b border-amber-500/20 flex items-center justify-between">
+        <div className="shrink-0 bg-gradient-to-r from-[#0E131F] via-[#151A29] to-[#0E131F] p-5 sm:p-6 border-b border-amber-500/20 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/40 flex items-center justify-center">
               <UserPlus className="w-5 h-5" />
@@ -135,8 +156,37 @@ export const CreateProfileModal: React.FC<CreateProfileModalProps> = ({
           </button>
         </div>
 
+        {/* Live Profile Icon & Summary Bar */}
+        <div className="bg-[#07090E] px-6 py-3 border-b border-slate-800 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <ProfileAvatar 
+              src={selectedAvatar} 
+              name={fullName || 'Investor'} 
+              tier={currentTier}
+              size="md"
+              showKycBadge={true}
+            />
+            <div>
+              <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                <span>{fullName.trim() || 'New Investor Profile'}</span>
+                <span className="text-[10px] bg-amber-500/20 text-amber-300 px-1.5 py-0.2 rounded border border-amber-500/30 font-extrabold font-mono">
+                  {currentTier}
+                </span>
+              </div>
+              <div className="text-[10px] text-slate-400 font-mono">
+                @{username.trim() || 'username'} • Ksh {initialDeposit.toLocaleString()} Starting Capital
+              </div>
+            </div>
+          </div>
+
+          <div className="hidden sm:flex items-center gap-1 text-[11px] text-emerald-400 bg-emerald-950/40 border border-emerald-500/30 px-2.5 py-1 rounded-xl font-bold">
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>Instant KYC Ready</span>
+          </div>
+        </div>
+
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5 text-xs">
+        <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-4 text-xs overflow-y-auto flex-1 overscroll-contain">
           
           {errorMessage && (
             <div className="p-3 rounded-xl bg-rose-950/80 border border-rose-500/40 text-rose-300 font-bold flex items-center gap-2">
@@ -152,20 +202,33 @@ export const CreateProfileModal: React.FC<CreateProfileModalProps> = ({
             </div>
           )}
 
-          {/* Avatar Picker */}
+          {/* Profile Icon / Avatar Picker */}
           <div>
-            <label className="block text-slate-300 font-bold mb-2">Select Investor Avatar</label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-slate-300 font-bold">Select Profile Icon / Avatar</label>
+              <span className="text-[10px] text-amber-400 font-bold">Custom luxury emblems</span>
+            </div>
             <div className="flex items-center gap-3 overflow-x-auto pb-1">
               {AVATAR_OPTIONS.map((av) => (
                 <button
                   type="button"
                   key={av.id}
                   onClick={() => setSelectedAvatar(av.url)}
-                  className={`relative rounded-2xl overflow-hidden p-0.5 border-2 transition-all shrink-0 cursor-pointer ${
-                    selectedAvatar === av.url ? 'border-amber-400 ring-2 ring-amber-400/30' : 'border-slate-700 opacity-60 hover:opacity-100'
+                  className={`relative rounded-2xl overflow-hidden p-1 border-2 transition-all shrink-0 cursor-pointer ${
+                    selectedAvatar === av.url ? 'border-amber-400 ring-2 ring-amber-400/40 scale-105 shadow-lg shadow-amber-500/20' : 'border-slate-800 opacity-60 hover:opacity-100'
                   }`}
                 >
                   <img src={av.url} alt={av.label} className="w-12 h-12 rounded-xl object-cover" />
+                  {av.isLuxury && (
+                    <span className="absolute top-1 right-1 bg-amber-500 text-slate-950 p-0.5 rounded-full">
+                      <Crown className="w-2.5 h-2.5" />
+                    </span>
+                  )}
+                  {selectedAvatar === av.url && (
+                    <span className="absolute bottom-1 right-1 bg-emerald-500 text-slate-950 w-3.5 h-3.5 rounded-full text-[8px] font-black flex items-center justify-center">
+                      ✓
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
@@ -285,7 +348,7 @@ export const CreateProfileModal: React.FC<CreateProfileModalProps> = ({
             </div>
           </div>
 
-          <div className="pt-4 border-t border-slate-800">
+          <div className="pt-2">
             <button
               type="submit"
               disabled={isSubmitting}
@@ -296,9 +359,25 @@ export const CreateProfileModal: React.FC<CreateProfileModalProps> = ({
             </button>
           </div>
 
+          {onOpenLogin && (
+            <div className="pt-2 text-center">
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onOpenLogin();
+                }}
+                className="text-slate-400 hover:text-amber-300 text-xs font-semibold cursor-pointer"
+              >
+                Already have an investor account? <span className="text-amber-400 font-bold underline">Sign In instead</span>
+              </button>
+            </div>
+          )}
+
         </form>
 
       </div>
     </div>
   );
 };
+

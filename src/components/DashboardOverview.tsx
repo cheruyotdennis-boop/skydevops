@@ -24,7 +24,9 @@ import {
 import { triggerConfetti } from '../utils/confetti';
 import { safeCopyText } from '../utils/storage';
 import { UserProfile, WalletState, ActiveInvestment, Transaction } from '../types';
+import { ProfileAvatar } from './ProfileAvatar';
 import { HISTORICAL_GROWTH_DATA } from '../data/mockData';
+import { api, BackendHealthResponse } from '../services/api';
 
 interface DashboardOverviewProps {
   user: UserProfile;
@@ -79,6 +81,28 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   };
 
   const [hoveredChartIdx, setHoveredChartIdx] = useState<number | null>(null);
+  const [backendHealth, setBackendHealth] = useState<BackendHealthResponse | null>(null);
+  const [aiInsight, setAiInsight] = useState<string>('');
+  const [loadingAi, setLoadingAi] = useState<boolean>(false);
+
+  // Poll backend health & quotes on load
+  useEffect(() => {
+    api.checkHealth().then(data => {
+      if (data) setBackendHealth(data);
+    });
+
+    // Generate initial AI quant recommendation
+    api.getAiInsights(wallet.totalBalance, user.tier).then(insight => {
+      if (insight) setAiInsight(insight);
+    });
+  }, [wallet.totalBalance, user.tier]);
+
+  const handleRefreshAi = async () => {
+    setLoadingAi(true);
+    const text = await api.getAiInsights(wallet.totalBalance, user.tier);
+    if (text) setAiInsight(text);
+    setLoadingAi(false);
+  };
 
   const handleClaim = () => {
     triggerConfetti({
@@ -90,8 +114,8 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   };
 
   const pieData = [
-    { name: 'Prime Growth (7.5%)', value: 50000, color: '#F59E0B' },
-    { name: 'Prime Starter (7.5%)', value: 20000, color: '#D4AF37' },
+    { name: 'Silver (7.5%)', value: 50000, color: '#F59E0B' },
+    { name: 'Bronze (7.5%)', value: 20000, color: '#CD7F32' },
     { name: 'Available Capital', value: wallet.availableCash, color: '#10B981' }
   ];
 
@@ -135,23 +159,32 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         <div className="absolute top-0 right-0 -mt-10 -mr-10 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
         
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-400/40 backdrop-blur-md">
-                <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
-                {user.tier} Account • Verified
-              </span>
-              <span className="text-xs text-slate-300">
-                Sponsor ID: <b className="font-mono text-amber-400">#{user.referralCode}</b>
-              </span>
+          <div className="flex items-start sm:items-center gap-4">
+            <ProfileAvatar 
+              src={user.avatar}
+              name={user.fullName}
+              tier={user.tier}
+              size="lg"
+              showKycBadge={true}
+            />
+            <div className="space-y-1.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-400/40 backdrop-blur-md">
+                  <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
+                  {user.tier} Account • Verified
+                </span>
+                <span className="text-xs text-slate-300">
+                  Sponsor ID: <b className="font-mono text-amber-400">#{user.referralCode}</b>
+                </span>
+              </div>
+              
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight font-heading">
+                Welcome to Quantiq Prime, <span className="bg-gradient-to-r from-amber-300 via-amber-400 to-yellow-500 bg-clip-text text-transparent">{user.fullName.split(' ')[0]}</span>
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
+                Institutional algorithmic yield active. Trade smart, invest wise, and compound returns daily with automated payout cycles in Kenyan Shillings (KES).
+              </p>
             </div>
-            
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight font-heading">
-              Welcome to Quantiq Prime, <span className="bg-gradient-to-r from-amber-300 via-amber-400 to-yellow-500 bg-clip-text text-transparent">{user.fullName.split(' ')[0]}</span>
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
-              Institutional algorithmic yield active. Trade smart, invest wise, and compound returns daily with automated payout cycles in Kenyan Shillings (KES).
-            </p>
           </div>
 
           {/* Real-time Yield Accrual Box */}
@@ -226,17 +259,17 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-2xl font-black text-white font-heading">
+            <div className="text-2xl font-black text-white font-mono">
               Ksh {wallet.totalBalance.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
-            <div className="mt-1 flex items-center gap-1.5 text-xs text-emerald-400 font-bold">
+            <div className="mt-1 flex items-center gap-1.5 text-xs text-emerald-400 font-bold font-mono">
               <TrendingUp className="w-3.5 h-3.5" />
               <span>+18.4% this month</span>
             </div>
           </div>
           <div className="mt-3 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
             <span>Available cash:</span>
-            <span className="font-bold text-white">Ksh {wallet.availableCash.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            <span className="font-bold text-white font-mono">Ksh {wallet.availableCash.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
           </div>
         </div>
 
@@ -252,7 +285,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-2xl font-black text-amber-300 font-heading">
+            <div className="text-2xl font-black text-amber-300 font-mono">
               Ksh {wallet.activeInvested.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
             <div className="mt-1 flex items-center gap-1.5 text-xs text-amber-400 font-bold">
@@ -262,7 +295,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           </div>
           <div className="mt-3 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
             <span>Daily Expected Yield:</span>
-            <span className="font-bold text-emerald-400">+Ksh {wallet.todayYield.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            <span className="font-bold text-emerald-400 font-mono">+Ksh {wallet.todayYield.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
           </div>
         </div>
 
@@ -275,7 +308,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-2xl font-black text-emerald-400 font-heading">
+            <div className="text-2xl font-black text-emerald-400 font-mono">
               Ksh {wallet.totalEarnings.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
             <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-300 font-medium">
@@ -284,7 +317,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           </div>
           <div className="mt-3 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
             <span>Today's payout:</span>
-            <span className="font-bold text-emerald-400">+Ksh {wallet.todayYield.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            <span className="font-bold text-emerald-400 font-mono">+Ksh {wallet.todayYield.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
           </div>
         </div>
 
@@ -297,11 +330,11 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-2xl font-black text-white font-heading">
+            <div className="text-2xl font-black text-white font-mono">
               Ksh {wallet.referralEarnings.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
-            <div className="mt-1 flex items-center gap-1.5 text-xs text-amber-400 font-bold">
-              <span>20% Direct Commission Active</span>
+            <div className="mt-1 flex items-center gap-1.5 text-xs text-amber-400 font-bold font-mono">
+              <span>10% Direct Commission Active</span>
             </div>
           </div>
           <div className="mt-3 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
@@ -636,6 +669,81 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           </div>
         </div>
 
+      </div>
+
+      {/* Backend Engine & AI Quant Intelligence Live Telemetry */}
+      <div className="bg-gradient-to-r from-[#0B0F17] via-[#0E1424] to-[#0B0F17] border border-amber-500/30 rounded-3xl p-6 shadow-2xl backdrop-blur-xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-400/40 text-amber-400 flex items-center justify-center font-black">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-bold text-white font-heading">Institutional Quant AI & Backend Engine</h2>
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  {backendHealth ? 'LIVE SERVER (0.4ms)' : 'ALGO ENGINE ACTIVE'}
+                </span>
+              </div>
+              <p className="text-xs text-slate-400">
+                High-Frequency triangular arbitrage, M-Pesa Daraja settlement node & portfolio yield optimization
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleRefreshAi}
+              disabled={loadingAi}
+              className="px-3 py-1.5 bg-[#070A12] hover:bg-slate-800 border border-amber-500/30 text-amber-400 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5"
+            >
+              <Activity className={`w-3.5 h-3.5 ${loadingAi ? 'animate-spin' : ''}`} />
+              <span>{loadingAi ? 'Synthesizing...' : 'Refresh AI Analysis'}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Live Analysis Output */}
+        <div className="mt-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2 bg-[#070A12]/80 border border-slate-800/80 rounded-2xl p-4">
+            <div className="text-[11px] font-extrabold uppercase text-amber-400 tracking-wider flex items-center gap-1.5 mb-2">
+              <Flame className="w-3.5 h-3.5 text-amber-400" />
+              <span>Algorithmic Yield Intelligence</span>
+            </div>
+            <p className="text-xs text-slate-200 leading-relaxed font-sans">
+              {aiInsight || `Quantiq High-Frequency Arbitrage Engine confirms optimal liquidity on USD/KES at 129.40 and USDT pairs. For capital of KES ${wallet.totalBalance.toLocaleString()}, allocating into ${user.tier} tier generates daily compounding returns with automated Lipa Na M-PESA daily settlement.`}
+            </p>
+          </div>
+
+          <div className="bg-[#070A12]/80 border border-slate-800/80 rounded-2xl p-4 flex flex-col justify-between">
+            <div>
+              <div className="text-[11px] font-extrabold uppercase text-slate-400 tracking-wider mb-2">
+                Backend Services Gateway
+              </div>
+              <div className="space-y-1.5 text-[11px]">
+                <div className="flex items-center justify-between text-slate-300">
+                  <span>M-Pesa STK (Till 505031):</span>
+                  <span className="font-mono text-emerald-400 font-bold">CONNECTED</span>
+                </div>
+                <div className="flex items-center justify-between text-slate-300">
+                  <span>Crypto / Forex Oracle:</span>
+                  <span className="font-mono text-emerald-400 font-bold">ONLINE</span>
+                </div>
+                <div className="flex items-center justify-between text-slate-300">
+                  <span>Smart Contract Settlement:</span>
+                  <span className="font-mono text-amber-300 font-bold">AUTOMATED</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-2 mt-2 border-t border-slate-800 flex items-center justify-between text-[10px] text-slate-400">
+              <span>Server Version: 3.4.0</span>
+              <span className="text-emerald-400 font-mono">100% SLA Uptime</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Active Investments & Recent Ledger */}

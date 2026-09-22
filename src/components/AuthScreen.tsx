@@ -22,7 +22,9 @@ import {
 import { triggerConfetti } from '../utils/confetti';
 import { UserProfile, ProfileCreationData, InvestmentPlan } from '../types';
 import { QuantiqLogo } from './QuantiqLogo';
+import { ProfileAvatar } from './ProfileAvatar';
 import bgWallpaper from '../assets/images/quantiq_prime_bg_1787826829164.jpg';
+import luxuryAvatarImg from '../assets/images/luxury_profile_avatar_1787995685280.jpg';
 
 interface AuthScreenProps {
   onLoginSuccess: (user: Partial<UserProfile>, initialDeposit?: number) => void;
@@ -34,6 +36,7 @@ interface AuthScreenProps {
 }
 
 const AVATAR_PRESETS = [
+  luxuryAvatarImg,
   'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250',
   'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=250',
   'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=250',
@@ -107,6 +110,9 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
       triggerConfetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
       
       const cleanUsername = username.trim().toLowerCase().replace(/\s+/g, '');
+      const autoGenReferralCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const sponsorRef = referralCode.trim() || '505031';
+
       const createdUser: Partial<UserProfile> = {
         id: `usr_${Date.now()}`,
         fullName: fullName.trim(),
@@ -115,10 +121,10 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
         phone: phone.trim(),
         mpesaNumber: mpesaNumber.trim() || '0712345678',
         country,
-        referralCode: referralCode.trim() || '505031',
-        referredBy: referralCode ? `Sponsor #${referralCode}` : 'Quantiq Sovereign Partner',
+        referralCode: autoGenReferralCode,
+        referredBy: `Sponsor #${sponsorRef}`,
         joinedDate: new Date().toISOString().split('T')[0],
-        tier: initialDeposit >= 200000 ? 'Platinum Sovereign' : initialDeposit >= 50000 ? 'Gold VIP' : 'Silver VIP',
+        tier: initialDeposit >= 200000 ? 'Platinum (VIP)' : initialDeposit >= 100000 ? 'Gold' : initialDeposit >= 30000 ? 'Silver' : 'Bronze',
         kycStatus: 'Verified',
         avatar: selectedAvatar,
         walletAddressUSDT: 'TXq7j8kP39LmNxR8w92Z0A1m4kVyTe6pQc'
@@ -454,6 +460,9 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                       className="w-full pl-9 pr-3 py-2.5 text-xs bg-amber-950/20 border border-amber-500/40 rounded-xl font-mono font-bold text-amber-300 focus:bg-[#131929] focus:outline-none"
                     />
                   </div>
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    Your own unique referral code will be auto-generated upon registration.
+                  </p>
                 </div>
               </div>
 
@@ -503,11 +512,16 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                 </div>
               </div>
 
-              {/* Initial Demo Balance */}
-              <div className="p-3.5 bg-amber-950/20 border border-amber-500/30 rounded-2xl">
-                <div className="flex items-center justify-between text-xs font-bold text-amber-300 mb-1.5">
-                  <span>Initial Sandbox Balance</span>
-                  <span className="text-[10px] text-amber-400 font-extrabold">Instant Testing Capital (KES)</span>
+              {/* Initial Account Funding Tier */}
+              <div className="p-3.5 bg-amber-950/20 border border-amber-500/30 rounded-2xl space-y-2">
+                <div className="flex items-center justify-between text-xs font-bold text-amber-300">
+                  <span className="flex items-center gap-1.5">
+                    <Coins className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Select Starting Capital Tier (KES)</span>
+                  </span>
+                  <span className="text-[10px] text-amber-400 font-extrabold font-mono">
+                    {initialDeposit >= 200000 ? 'VIP Platinum Tier (8.5%/day)' : initialDeposit >= 100000 ? 'Gold Tier (8.0%/day)' : initialDeposit >= 30000 ? 'Silver Tier (7.5%/day)' : 'Bronze Tier (7.0%/day)'}
+                  </span>
                 </div>
                 <div className="grid grid-cols-4 gap-2">
                   {[10000, 30000, 100000, 200000].map((amt) => (
@@ -515,7 +529,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                       key={amt}
                       type="button"
                       onClick={() => setInitialDeposit(amt)}
-                      className={`py-2 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+                      className={`py-2 rounded-xl font-bold font-mono text-xs transition-all cursor-pointer ${
                         initialDeposit === amt 
                           ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-black shadow-md' 
                           : 'bg-[#0E131F] text-slate-300 hover:bg-slate-800 border border-slate-700'
@@ -582,7 +596,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                         className="w-full p-2.5 rounded-2xl border border-slate-800 bg-[#0E131F] hover:border-amber-500/40 hover:bg-amber-950/20 flex items-center justify-between transition-all cursor-pointer text-left"
                       >
                         <div className="flex items-center gap-2.5">
-                          <img src={p.avatar} alt={p.fullName} className="w-9 h-9 rounded-xl object-cover ring-1 ring-amber-400/40" />
+                          <ProfileAvatar src={p.avatar} name={p.fullName} tier={p.tier} size="sm" />
                           <div>
                             <div className="text-xs font-bold text-white">{p.fullName}</div>
                             <div className="text-[10px] text-slate-400">@{p.username} • {p.email}</div>
@@ -682,7 +696,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                       referralCode: '505031',
                       referredBy: 'Quantiq_VIP (505031)',
                       joinedDate: '2025-11-14',
-                      tier: 'Gold VIP',
+                      tier: 'Gold',
                       kycStatus: 'Verified',
                       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250',
                       walletAddressUSDT: 'TXq7j8kP39LmNxR8w92Z0A1m4kVyTe6pQc'

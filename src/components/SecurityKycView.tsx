@@ -14,6 +14,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { UserProfile } from '../types';
+import { ProfileAvatar } from './ProfileAvatar';
 
 interface SecurityKycViewProps {
   user: UserProfile;
@@ -84,13 +85,22 @@ export const SecurityKycView: React.FC<SecurityKycViewProps> = ({
         {/* Left Column: KYC Status Card */}
         <div className="space-y-6">
           <div className="bg-[#0B0F17]/90 rounded-3xl p-6 border border-amber-500/20 shadow-2xl backdrop-blur-xl">
-            <div className="flex items-center gap-3 pb-4 border-b border-slate-800">
-              <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center">
-                <ShieldCheck className="w-5 h-5" />
-              </div>
-              <div>
-                <h2 className="text-base font-bold text-white font-heading">Institutional Verification</h2>
-                <div className="text-xs text-emerald-400 font-bold">100% Fully Compliant</div>
+            {/* Investor Profile Icon & Status */}
+            <div className="flex items-center gap-4 pb-4 border-b border-slate-800">
+              <ProfileAvatar
+                src={user.avatar}
+                name={user.fullName}
+                tier={user.tier}
+                size="lg"
+                showKycBadge={true}
+              />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 text-xs text-amber-400 font-bold uppercase tracking-wider">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>KYC Level 2 Verified</span>
+                </div>
+                <h2 className="text-base font-bold text-white font-heading truncate">{user.fullName}</h2>
+                <div className="text-xs text-slate-400 font-mono">@{user.username}</div>
               </div>
             </div>
 
@@ -114,7 +124,7 @@ export const SecurityKycView: React.FC<SecurityKycViewProps> = ({
             </div>
 
             <div className="mt-5 p-3 rounded-2xl bg-[#07090E] border border-slate-800 text-[11px] text-slate-400">
-              Daily withdrawal limit: <b className="text-white">Ksh 10,000,000</b> with zero holding periods.
+              Daily withdrawal limit: <b className="text-white font-mono">Ksh 10,000,000</b> with zero holding periods.
             </div>
           </div>
 

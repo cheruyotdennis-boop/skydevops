@@ -8,7 +8,13 @@ export const DEFAULT_CONTACTS: PlatformContacts = {
   officeLocation: 'Delta Corner Towers, 7th Floor, Westlands, Nairobi, Kenya',
   whatsappSupport: '+254 700 505 031',
   telegramSupport: '@QuantiqPrimeOfficial',
-  kesUsdExchangeRate: 130.00 // 1 USD = 130 KES
+  kesUsdExchangeRate: 130.00, // 1 USD = 130 KES
+  cryptoDepositWallets: {
+    usdtTrc20: 'TY7Q6B92PqmK89vXZ01mNa4kVyTe6pQc99',
+    usdtErc20: '0x89aF49321B008A2d319808389201a4e788bc5541',
+    btc: 'bc1q9p8200193892019384910293481290a1841e7',
+    eth: '0x4428019389201938920193849102934812903491'
+  }
 };
 
 export const INITIAL_USER: UserProfile = {
@@ -22,7 +28,7 @@ export const INITIAL_USER: UserProfile = {
   referralCode: '505031',
   referredBy: 'Quantiq_VIP (505031)',
   joinedDate: '2025-11-14',
-  tier: 'Gold VIP',
+  tier: 'Gold',
   kycStatus: 'Verified',
   avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250',
   twoFactorEnabled: true,
@@ -37,26 +43,26 @@ export const INITIAL_WALLET: WalletState = {
   activeInvested: 70000.00,
   totalEarnings: 38450.00,
   todayYield: 5250.00,
-  referralEarnings: 12000.00,
+  referralEarnings: 6000.00,
   pendingWithdrawals: 0
 };
 
 export const INVESTMENT_PLANS: InvestmentPlan[] = [
   {
-    id: 'plan_starter',
-    name: 'Prime Starter',
+    id: 'plan_bronze',
+    name: 'Bronze',
     tagline: 'Ksh 5K - 30K Allocation • 10 Days Horizon • 7.5% Daily ROI',
     dailyRoi: 7.5, // 7.5% daily
     durationDays: 10,
     minDeposit: 5000,
     maxDeposit: 30000,
     principalReturn: true,
-    colorTheme: 'from-slate-700 via-slate-600 to-slate-800',
+    colorTheme: 'from-amber-900 via-amber-800 to-amber-950',
     popular: false,
     features: [
       '7.50% Daily Automated Yield',
       '10 Days Cycle Duration',
-      '20% Direct Referral Bonus on Referee Stake',
+      '10% Direct Referral Bonus on Referee Stake',
       'Principal 100% Returned on Maturity',
       'Instant Daily Settlement to M-PESA / Wallet',
       'Standard 24/7 Priority Support'
@@ -65,20 +71,20 @@ export const INVESTMENT_PLANS: InvestmentPlan[] = [
     totalPoolValue: 14280000
   },
   {
-    id: 'plan_growth',
-    name: 'Prime Growth Accelerator',
+    id: 'plan_silver',
+    name: 'Silver',
     tagline: 'Ksh 30K - 100K Allocation • 15 Days Horizon • 7.5% Daily ROI',
     dailyRoi: 7.5, // 7.5% daily
     durationDays: 15,
     minDeposit: 30000,
     maxDeposit: 100000,
     principalReturn: true,
-    colorTheme: 'from-amber-600 via-yellow-500 to-amber-700',
+    colorTheme: 'from-slate-500 via-slate-400 to-slate-600',
     popular: true,
     features: [
       '7.50% Daily Automated Yield',
       '15 Days Cycle Duration',
-      '20% Direct Referral Bonus on Referee Stake',
+      '10% Direct Referral Bonus on Referee Stake',
       'Principal 100% Returned on Maturity',
       'Zero Fee Instant M-PESA Withdrawals',
       'High-Frequency Algorithmic Yield'
@@ -87,20 +93,20 @@ export const INVESTMENT_PLANS: InvestmentPlan[] = [
     totalPoolValue: 58950000
   },
   {
-    id: 'plan_executive',
-    name: 'Prime Executive Yield',
+    id: 'plan_gold',
+    name: 'Gold',
     tagline: 'Ksh 100K - 200K Allocation • 15 Days Horizon • 7.5% Daily ROI',
     dailyRoi: 7.5, // 7.5% daily
     durationDays: 15,
     minDeposit: 100000,
     maxDeposit: 200000,
     principalReturn: true,
-    colorTheme: 'from-slate-800 via-amber-700 to-yellow-600',
+    colorTheme: 'from-amber-600 via-yellow-500 to-amber-700',
     popular: false,
     features: [
       '7.50% Daily Automated Yield',
       '15 Days Cycle Duration',
-      '20% Direct Referral Bonus on Referee Stake',
+      '10% Direct Referral Bonus on Referee Stake',
       'Insured Principal Capital Guarantee',
       'Direct Institutional Account Manager',
       'Unlimited Fast Liquidity Access'
@@ -109,20 +115,20 @@ export const INVESTMENT_PLANS: InvestmentPlan[] = [
     totalPoolValue: 146200000
   },
   {
-    id: 'plan_sovereign',
-    name: 'Quantiq Prime Sovereign VIP',
+    id: 'plan_platinum',
+    name: 'Platinum (VIP)',
     tagline: 'Ksh 200K - 500K Allocation • 20 Days Horizon • 7.5% Daily ROI',
     dailyRoi: 7.5, // 7.5% daily
     durationDays: 20,
     minDeposit: 200000,
     maxDeposit: 500000,
     principalReturn: true,
-    colorTheme: 'from-black via-amber-950 to-yellow-900',
+    colorTheme: 'from-slate-950 via-teal-950 to-amber-950',
     popular: false,
     features: [
       '7.50% Daily Automated Yield',
       '20 Days High-Yield Horizon',
-      '20% Direct Referral Bonus on Referee Stake',
+      '10% Direct Referral Bonus on Referee Stake',
       'Dedicated Private Liquidity Desk',
       'Executive Concierge 24/7 Access',
       'Guaranteed 150% Net ROI + Capital'
@@ -136,8 +142,8 @@ export const INVESTMENT_PLANS: InvestmentPlan[] = [
 export const INITIAL_ACTIVE_INVESTMENTS: ActiveInvestment[] = [
   {
     id: 'inv_9041',
-    planId: 'plan_growth',
-    planName: 'Prime Growth (Ksh 30K-100K @ 7.5% Daily)',
+    planId: 'plan_silver',
+    planName: 'Silver (Ksh 30K-100K @ 7.5% Daily)',
     investedAmount: 50000.00,
     dailyRoi: 7.5,
     dailyYieldAmount: 3750.00,
@@ -152,8 +158,8 @@ export const INITIAL_ACTIVE_INVESTMENTS: ActiveInvestment[] = [
   },
   {
     id: 'inv_8820',
-    planId: 'plan_starter',
-    planName: 'Prime Starter (Ksh 5K-30K @ 7.5% Daily)',
+    planId: 'plan_bronze',
+    planName: 'Bronze (Ksh 5K-30K @ 7.5% Daily)',
     investedAmount: 20000.00,
     dailyRoi: 7.5,
     dailyYieldAmount: 1500.00,
@@ -197,14 +203,14 @@ export const INITIAL_TRANSACTIONS: Transaction[] = [
   {
     id: 'tx_97645',
     type: 'REFERRAL_BONUS',
-    amount: 10000.00,
+    amount: 5000.00,
     currency: 'KES',
     fee: 0,
     status: 'COMPLETED',
     timestamp: '2026-08-26 16:42 EAT',
     txHash: '0x12b04fec8794aa923982181734918e788bc554311099e',
     methodOrAddress: 'Affiliate Direct (user: @crypto_kevin)',
-    note: 'Direct 20% commission on referee Ksh 50,000 stake'
+    note: 'Direct 10% commission on referee Ksh 50,000 stake'
   },
   {
     id: 'tx_96411',
@@ -228,7 +234,7 @@ export const INITIAL_TRANSACTIONS: Transaction[] = [
     status: 'COMPLETED',
     timestamp: '2026-08-18 09:15 EAT',
     txHash: '0x39fa0919248aa019280bba398402938174981014e7a',
-    methodOrAddress: 'Prime Growth Accelerator Plan #inv_9041',
+    methodOrAddress: 'Silver Yield Contract #inv_9041',
     note: 'Locked for 15 days @ 7.50% daily interest'
   },
   {
@@ -253,7 +259,7 @@ export const INITIAL_REFERRALS: ReferralMember[] = [
     tierLevel: 1,
     joinedDate: '2026-08-18',
     activeDeposits: 50000,
-    commissionEarned: 10000, // 20% of 50000
+    commissionEarned: 5000, // 10% of 50000
     status: 'Active'
   },
   {
@@ -262,7 +268,7 @@ export const INITIAL_REFERRALS: ReferralMember[] = [
     tierLevel: 1,
     joinedDate: '2026-08-05',
     activeDeposits: 100000,
-    commissionEarned: 20000, // 20% of 100000
+    commissionEarned: 10000, // 10% of 100000
     status: 'Active'
   },
   {
@@ -271,7 +277,7 @@ export const INITIAL_REFERRALS: ReferralMember[] = [
     tierLevel: 1,
     joinedDate: '2026-07-29',
     activeDeposits: 30000,
-    commissionEarned: 6000, // 20% of 30000
+    commissionEarned: 3000, // 10% of 30000
     status: 'Active'
   },
   {
@@ -351,8 +357,8 @@ export const INITIAL_NOTIFICATIONS: NotificationItem[] = [
   },
   {
     id: 'n2',
-    title: '20% Referral Commission Received',
-    message: 'Ksh 10,000.00 direct bonus earned from @crypto_kevin via your referral link (#505031).',
+    title: '10% Referral Commission Received',
+    message: 'Ksh 5,000.00 direct bonus earned from @crypto_kevin via your referral link (#505031).',
     timestamp: '16 hours ago',
     read: false,
     type: 'referral'
@@ -377,7 +383,7 @@ export const INITIAL_NOTIFICATIONS: NotificationItem[] = [
 
 export const CRYPTO_RATES = [
   { pair: 'DAILY ROI', price: '7.50% FIXED', change: 'Automated', positive: true },
-  { pair: 'REFERRAL BONUS', price: '20.00% DIRECT', change: 'On Stake', positive: true },
+  { pair: 'REFERRAL BONUS', price: '10.00% DIRECT', change: 'On Stake', positive: true },
   { pair: 'M-PESA PAYBILL', price: '505031', change: 'Instant KES', positive: true },
   { pair: 'USDT / KES', price: 'Ksh 130.00', change: '+0.25%', positive: true },
   { pair: 'USD / KES', price: 'Ksh 129.50', change: '+0.15%', positive: true },

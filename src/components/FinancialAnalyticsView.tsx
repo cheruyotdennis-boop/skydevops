@@ -97,7 +97,7 @@ export const FinancialAnalyticsView: React.FC<FinancialAnalyticsViewProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-[#0B0F17]/90 rounded-3xl p-5 border border-amber-500/20 backdrop-blur-xl">
           <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Historical Total Yield</div>
-          <div className="text-2xl font-black text-emerald-400 mt-1 font-heading font-mono">
+          <div className="text-2xl font-black text-emerald-400 mt-1 font-mono">
             Ksh {wallet.totalEarnings.toLocaleString('en-KE', { minimumFractionDigits: 2 })}
           </div>
           <div className="text-xs text-slate-400 mt-1">
@@ -107,17 +107,17 @@ export const FinancialAnalyticsView: React.FC<FinancialAnalyticsViewProps> = ({
 
         <div className="bg-[#0B0F17]/90 rounded-3xl p-5 border border-amber-500/20 backdrop-blur-xl">
           <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Affiliate Yield Velocity</div>
-          <div className="text-2xl font-black text-amber-400 mt-1 font-heading font-mono">
+          <div className="text-2xl font-black text-amber-400 mt-1 font-mono">
             Ksh {wallet.referralEarnings.toLocaleString('en-KE', { minimumFractionDigits: 2 })}
           </div>
           <div className="text-xs text-slate-400 mt-1">
-            20% direct sponsor bonus
+            10% direct sponsor bonus
           </div>
         </div>
 
         <div className="bg-[#0B0F17]/90 rounded-3xl p-5 border border-amber-500/20 backdrop-blur-xl">
           <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Average Daily Payout</div>
-          <div className="text-2xl font-black text-white mt-1 font-heading font-mono">
+          <div className="text-2xl font-black text-white mt-1 font-mono">
             Ksh {wallet.todayYield.toLocaleString('en-KE', { minimumFractionDigits: 2 })} / day
           </div>
           <div className="text-xs text-emerald-400 mt-1 font-bold">

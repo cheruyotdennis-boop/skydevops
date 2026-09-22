@@ -9,11 +9,18 @@ export interface UserProfile {
   referralCode: string;
   referredBy: string;
   joinedDate: string;
-  tier: 'Standard' | 'Silver VIP' | 'Gold VIP' | 'Platinum Sovereign';
+  tier: 'Bronze' | 'Silver' | 'Gold' | 'Platinum' | string;
   kycStatus: 'Verified' | 'Pending' | 'Unverified';
   avatar: string;
   twoFactorEnabled: boolean;
   walletAddressUSDT: string;
+  walletAddressBTC?: string;
+  walletAddressETH?: string;
+  role?: 'superadmin' | 'admin' | 'user';
+  isAdmin?: boolean;
+  knownDeviceIds?: string[];
+  lastLoginDevice?: string;
+  lastLoginDate?: string;
 }
 
 export interface PlatformContacts {
@@ -25,6 +32,12 @@ export interface PlatformContacts {
   whatsappSupport: string;
   telegramSupport: string;
   kesUsdExchangeRate: number; // e.g. 130 KES per 1 USD
+  cryptoDepositWallets?: {
+    usdtTrc20: string;
+    usdtErc20: string;
+    btc: string;
+    eth: string;
+  };
 }
 
 export interface WalletState {
