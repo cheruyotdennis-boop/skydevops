@@ -65,9 +65,31 @@ export const CreateProfileModal: React.FC<CreateProfileModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successCreated, setSuccessCreated] = useState(false);
 
+  // 2FA Verification State
+  const [sendCodeChannel, setSendCodeChannel] = useState<'phone' | 'email'>('phone');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [codeSent, setCodeSent] = useState(false);
+  const [generatedCode, setGeneratedCode] = useState('');
+  const [codeNotice, setCodeNotice] = useState('');
+
   if (!isOpen) return null;
 
   const currentTier = initialDeposit >= 200000 ? 'Platinum VIP' : initialDeposit >= 100000 ? 'Gold' : initialDeposit >= 30000 ? 'Silver' : 'Bronze';
+
+  const handleSendCode = () => {
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    setGeneratedCode(code);
+    setCodeSent(true);
+    setErrorMessage('');
+    const targetDest = sendCodeChannel === 'phone' ? (mpesaNumber || phone || '+254 712 345 678') : email;
+    setCodeNotice(`2FA registration code ${code} dispatched via ${sendCodeChannel === 'phone' ? 'Phone SMS' : 'Email'} to ${targetDest}`);
+  };
+
+  const autoFillCode = () => {
+    if (generatedCode) {
+      setVerificationCode(generatedCode);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,6 +109,17 @@ export const CreateProfileModal: React.FC<CreateProfileModalProps> = ({
     }
     if (password !== confirmPassword) {
       setErrorMessage('Passwords do not match');
+      return;
+    }
+
+    if (!codeSent) {
+      handleSendCode();
+      setErrorMessage('2FA security code dispatched! Please enter the 6-digit verification code below to complete registration.');
+      return;
+    }
+
+    if (!verificationCode || verificationCode.trim() !== generatedCode) {
+      setErrorMessage('Invalid 6-digit 2FA verification code. Please check your SMS/Email notification.');
       return;
     }
 
@@ -349,6 +382,75 @@ export const CreateProfileModal: React.FC<CreateProfileModalProps> = ({
             </div>
           </div>
 
+          {/* 2-Factor Authentication Verification Step */}
+          <div className="p-3.5 bg-[#07090E] border border-amber-500/30 rounded-2xl space-y-2.5">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-bold text-slate-300 flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <span>2FA Security Code Verification (Required)</span>
+              </span>
+              <div className="flex items-center gap-1 bg-slate-900 p-0.5 rounded-lg border border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setSendCodeChannel('phone')}
+                  className={`px-2 py-0.5 rounded text-[10px] font-bold cursor-pointer transition-all ${
+                    sendCodeChannel === 'phone' ? 'bg-amber-500 text-slate-950 font-black' : 'text-slate-400'
+                  }`}
+                >
+                  Phone SMS
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSendCodeChannel('email')}
+                  className={`px-2 py-0.5 rounded text-[10px] font-bold cursor-pointer transition-all ${
+                    sendCodeChannel === 'email' ? 'bg-amber-500 text-slate-950 font-black' : 'text-slate-400'
+                  }`}
+                >
+                  Email
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleSendCode}
+              className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer border border-slate-700 transition-colors"
+            >
+              {sendCodeChannel === 'phone' ? <Smartphone className="w-3.5 h-3.5 text-emerald-400" /> : <Mail className="w-3.5 h-3.5 text-amber-400" />}
+              <span>Send 2FA Code to {sendCodeChannel === 'phone' ? 'Phone SMS' : 'Email Address'}</span>
+            </button>
+
+            {codeNotice && (
+              <div className="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 text-xs flex items-center justify-between gap-2">
+                <span className="truncate">{codeNotice}</span>
+                <button
+                  type="button"
+                  onClick={autoFillCode}
+                  className="px-2 py-1 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-[10px] rounded-lg shrink-0 cursor-pointer shadow"
+                >
+                  Auto-Fill
+                </button>
+              </div>
+            )}
+
+            {codeSent && (
+              <div className="space-y-1">
+                <label className="block text-[11px] font-bold text-slate-300">
+                  Enter 6-Digit 2FA Code *
+                </label>
+                <input
+                  type="text"
+                  maxLength={6}
+                  required
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
+                  placeholder="e.g. 748291"
+                  className="w-full px-3 py-2 bg-[#0B0F17] border border-amber-500/50 rounded-xl text-amber-300 font-mono font-black text-center text-sm tracking-widest focus:outline-none focus:ring-1 focus:ring-amber-500"
+                />
+              </div>
+            )}
+          </div>
+
           <div className="pt-2">
             <button
               type="submit"
@@ -356,7 +458,7 @@ export const CreateProfileModal: React.FC<CreateProfileModalProps> = ({
               className="w-full bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black py-3 rounded-xl shadow-lg transition-all cursor-pointer uppercase tracking-wider text-xs flex items-center justify-center gap-2"
             >
               <UserPlus className="w-4 h-4" />
-              <span>{isSubmitting ? 'Creating Profile...' : 'Complete Registration & Launch'}</span>
+              <span>{isSubmitting ? 'Creating Profile...' : codeSent ? 'Verify 2FA & Launch Profile' : 'Send 2FA Code & Launch Profile'}</span>
             </button>
           </div>
 

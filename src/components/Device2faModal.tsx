@@ -8,7 +8,6 @@ import {
   RefreshCw, 
   Laptop, 
   AlertTriangle, 
-  ArrowRight,
   Sparkles,
   ShieldCheck,
   X
@@ -17,23 +16,28 @@ import { UserProfile } from '../types';
 import { getCurrentDeviceInfo, maskPhone, maskEmail } from '../utils/deviceSecurity';
 import { triggerConfetti } from '../utils/confetti';
 
-interface Device2faModalProps {
+export interface Device2faModalProps {
   isOpen: boolean;
   user: Partial<UserProfile>;
   expectedCode: string;
+  mode?: 'login' | 'register' | 'device';
+  initialChannel?: 'phone' | 'email';
   onSuccess: (trustedDevice: boolean) => void;
   onCancel: () => void;
-  onResendCode: () => string; // returns new code
+  onResendCode: (channel: 'phone' | 'email') => string; // returns new code
 }
 
 export const Device2faModal: React.FC<Device2faModalProps> = ({
   isOpen,
   user,
   expectedCode,
+  mode = 'login',
+  initialChannel = 'phone',
   onSuccess,
   onCancel,
   onResendCode
 }) => {
+  const [deliveryChannel, setDeliveryChannel] = useState<'phone' | 'email'>(initialChannel);
   const [otpValues, setOtpValues] = useState<string[]>(['', '', '', '', '', '']);
   const [currentCode, setCurrentCode] = useState<string>(expectedCode);
   const [errorMessage, setErrorMessage] = useState<string>('');
@@ -52,12 +56,13 @@ export const Device2faModal: React.FC<Device2faModalProps> = ({
     setErrorMessage('');
     setSecondsRemaining(300);
     setShowNotificationToast(true);
+    setDeliveryChannel(initialChannel);
 
     // Auto-focus first digit
     setTimeout(() => {
       inputRefs.current[0]?.focus();
     }, 150);
-  }, [expectedCode, isOpen]);
+  }, [expectedCode, isOpen, initialChannel]);
 
   // Countdown timer
   useEffect(() => {
@@ -124,20 +129,31 @@ export const Device2faModal: React.FC<Device2faModalProps> = ({
     setErrorMessage('');
 
     setTimeout(() => {
-      // Allow currentCode or master code 505031
-      if (fullCode === currentCode || fullCode === '505031') {
+      if (fullCode === currentCode) {
         triggerConfetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
         onSuccess(trustDevice);
       } else {
         setIsVerifying(false);
-        setErrorMessage('Invalid verification code. Please check your SMS/email and try again.');
+        setErrorMessage('Invalid 2FA code. Please check your SMS/Email notification and try again.');
         inputRefs.current[0]?.focus();
       }
     }, 600);
   };
 
+  const handleChangeChannel = (newChannel: 'phone' | 'email') => {
+    setDeliveryChannel(newChannel);
+    const newCode = onResendCode(newChannel);
+    setCurrentCode(newCode);
+    setSecondsRemaining(300);
+    setOtpValues(['', '', '', '', '', '']);
+    setErrorMessage('');
+    setShowNotificationToast(true);
+    setCopiedCodeNotice(true);
+    setTimeout(() => setCopiedCodeNotice(false), 2500);
+  };
+
   const handleResend = () => {
-    const newCode = onResendCode();
+    const newCode = onResendCode(deliveryChannel);
     setCurrentCode(newCode);
     setSecondsRemaining(300);
     setOtpValues(['', '', '', '', '', '']);
@@ -159,24 +175,36 @@ export const Device2faModal: React.FC<Device2faModalProps> = ({
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
+  const targetPhone = user.phone || user.mpesaNumber || '+254 712 345 678';
+  const targetEmail = user.email || 'investor@quantiqprime.com';
+
   return (
     <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
       
-      {/* Real-time SMS / Push Notification Simulated Toast */}
+      {/* Real-time SMS / Email Simulated Dispatch Toast */}
       {showNotificationToast && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-3 animate-in slide-in-from-top-4 duration-300">
           <div className="bg-slate-900/95 border border-amber-500/50 rounded-2xl p-3.5 shadow-2xl backdrop-blur-xl text-white flex items-start justify-between gap-3">
             <div className="flex items-start gap-3">
               <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-300 shrink-0 mt-0.5">
-                <Smartphone className="w-5 h-5 text-emerald-400 animate-pulse" />
+                {deliveryChannel === 'phone' ? (
+                  <Smartphone className="w-5 h-5 text-emerald-400 animate-pulse" />
+                ) : (
+                  <Mail className="w-5 h-5 text-amber-400 animate-pulse" />
+                )}
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-black text-amber-400">Safaricom & Email OTP</span>
+                  <span className="text-xs font-black text-amber-400">
+                    {deliveryChannel === 'phone' ? 'Safaricom SMS Dispatched' : 'Email Security Code Sent'}
+                  </span>
                   <span className="text-[10px] text-slate-400 font-mono">Just Now</span>
                 </div>
                 <p className="text-xs text-slate-200 mt-0.5">
-                  Your Quantiq device code is <strong className="font-mono text-amber-300 text-sm tracking-wider">{currentCode}</strong>
+                  {deliveryChannel === 'phone' 
+                    ? `Quantiq SMS to ${maskPhone(targetPhone)}: Your 2FA code is `
+                    : `Quantiq Email to ${maskEmail(targetEmail)}: Your 2FA code is `}
+                  <strong className="font-mono text-amber-300 text-sm tracking-wider">{currentCode}</strong>
                 </p>
                 <button
                   onClick={autoFillOtp}
@@ -215,43 +243,69 @@ export const Device2faModal: React.FC<Device2faModalProps> = ({
 
           <span className="inline-flex items-center gap-1.5 bg-amber-500/10 text-amber-300 border border-amber-500/30 text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full mb-1">
             <Lock className="w-3 h-3" />
-            <span>2-Factor Device Security</span>
+            <span>2-Factor Authentication</span>
           </span>
 
           <h2 className="text-xl font-black text-white font-heading mt-1">
-            New Device Login Detected
+            {mode === 'register' 
+              ? 'Verify Registration (2FA)' 
+              : mode === 'device' 
+                ? 'Device Authorization (2FA)' 
+                : 'Login Verification (2FA)'}
           </h2>
           <p className="text-xs text-slate-400 mt-1">
-            For account and capital protection, verify this login attempt.
+            {mode === 'register'
+              ? 'Complete your account security setup to activate your portfolio.'
+              : 'Enter the 6-digit security code dispatched to your account.'}
           </p>
         </div>
 
         {/* Content Body */}
         <div className="p-6 space-y-5">
           
-          {/* Detected Device Info Chip */}
-          <div className="bg-[#07090E] p-3.5 rounded-2xl border border-slate-800 flex items-center justify-between text-xs">
-            <div className="flex items-center gap-2.5">
-              <Laptop className="w-4 h-4 text-amber-400 shrink-0" />
-              <div>
-                <span className="font-bold text-white block">{deviceInfo.name}</span>
-                <span className="text-[10px] text-slate-400 font-mono">{deviceInfo.ipPlaceholder}</span>
-              </div>
+          {/* Channel Selector: Phone SMS vs Email */}
+          <div className="bg-[#07090E] p-3 rounded-2xl border border-slate-800 space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-bold text-slate-300">Deliver 2FA Code Via:</span>
+              <span className="text-[10px] text-amber-400 font-mono">Instant Dispatch</span>
             </div>
-            <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold">
-              Unrecognized
-            </span>
-          </div>
 
-          {/* Delivery Notice */}
-          <div className="text-xs text-slate-300 space-y-1 bg-slate-900/60 p-3 rounded-xl border border-slate-800/80">
-            <div className="flex items-center gap-2 text-emerald-400 font-bold">
-              <Smartphone className="w-3.5 h-3.5" />
-              <span>SMS Dispatched to: {maskPhone(user.phone || user.mpesaNumber)}</span>
-            </div>
-            <div className="flex items-center gap-2 text-amber-400 font-bold">
-              <Mail className="w-3.5 h-3.5" />
-              <span>Email Notice to: {maskEmail(user.email)}</span>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => handleChangeChannel('phone')}
+                className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                  deliveryChannel === 'phone'
+                    ? 'bg-amber-500/20 border-amber-500 text-amber-300 font-bold'
+                    : 'bg-[#0E131F] border-slate-800 text-slate-400 hover:text-white'
+                }`}
+              >
+                <div className="flex items-center gap-1.5 text-xs font-bold">
+                  <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Phone SMS</span>
+                </div>
+                <div className="text-[10px] text-slate-400 truncate mt-0.5 font-mono">
+                  {maskPhone(targetPhone)}
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleChangeChannel('email')}
+                className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                  deliveryChannel === 'email'
+                    ? 'bg-amber-500/20 border-amber-500 text-amber-300 font-bold'
+                    : 'bg-[#0E131F] border-slate-800 text-slate-400 hover:text-white'
+                }`}
+              >
+                <div className="flex items-center gap-1.5 text-xs font-bold">
+                  <Mail className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Email Address</span>
+                </div>
+                <div className="text-[10px] text-slate-400 truncate mt-0.5 font-mono">
+                  {maskEmail(targetEmail)}
+                </div>
+              </button>
             </div>
           </div>
 
@@ -298,7 +352,7 @@ export const Device2faModal: React.FC<Device2faModalProps> = ({
               onChange={e => setTrustDevice(e.target.checked)}
               className="rounded accent-amber-500 w-4 h-4"
             />
-            <span>Trust this browser for 30 days (don't ask again on this device)</span>
+            <span>Trust this browser for 30 days (fast login on this device)</span>
           </label>
 
           {/* Actions */}
@@ -306,17 +360,17 @@ export const Device2faModal: React.FC<Device2faModalProps> = ({
             <button
               onClick={() => verifyOtp()}
               disabled={isVerifying || otpValues.join('').length < 6}
-              className="w-full bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black py-3 rounded-xl shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2 text-xs uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed font-heading"
+              className="w-full bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black py-3.5 rounded-xl shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2 text-xs uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed font-heading"
             >
               {isVerifying ? (
                 <>
                   <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span>Verifying Device Credentials...</span>
+                  <span>Verifying 2FA Credentials...</span>
                 </>
               ) : (
                 <>
                   <ShieldCheck className="w-4 h-4" />
-                  <span>Authorize Device & Access Portal</span>
+                  <span>{mode === 'register' ? 'Verify & Create Account' : 'Authorize & Enter Account'}</span>
                 </>
               )}
             </button>
@@ -336,7 +390,7 @@ export const Device2faModal: React.FC<Device2faModalProps> = ({
 
             {copiedCodeNotice && (
               <p className="text-center text-[11px] text-emerald-400 font-medium">
-                ✓ New 2FA code generated & dispatched to phone/email
+                ✓ New 2FA code dispatched via {deliveryChannel === 'phone' ? 'Phone SMS' : 'Email'}
               </p>
             )}
           </div>

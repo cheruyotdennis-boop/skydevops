@@ -88,9 +88,9 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     setGeneratedCode(code);
     setCodeSent(true);
-    const destDisplay = destination || (targetType === 'phone' ? phone : email);
-    setCodeNotice(`Security code ${code} sent via ${targetType === 'phone' ? 'SMS to ' + destDisplay : 'Email to ' + destDisplay}`);
-    setVerificationCode(code); // auto-fill for frictionless UX while displaying notice
+    setErrorMessage('');
+    const destDisplay = destination || (targetType === 'phone' ? (mpesaNumber || phone || '+254 712 345 678') : (email || 'investor@quantiqprime.com'));
+    setCodeNotice(`2FA security code ${code} dispatched via ${targetType === 'phone' ? 'Phone SMS' : 'Email'} to ${destDisplay}`);
   };
 
   const handleRegister = (e: React.FormEvent) => {
@@ -126,9 +126,15 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
       return;
     }
 
-    // Check code if sent
-    if (codeSent && verificationCode && verificationCode !== generatedCode && verificationCode !== '505031') {
-      setErrorMessage('Invalid verification code entered.');
+    // Enforce 2FA verification code
+    if (!codeSent) {
+      handleSendVerificationCode(sendCodeChannel, sendCodeChannel === 'phone' ? (mpesaNumber || phone) : email);
+      setErrorMessage('2FA verification code dispatched! Please enter the 6-digit code below to finish registration.');
+      return;
+    }
+
+    if (!verificationCode || verificationCode.trim() !== generatedCode) {
+      setErrorMessage('Invalid 6-digit 2FA verification code. Please check your SMS/Email notification.');
       return;
     }
 
@@ -155,6 +161,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
         tier: initialDeposit >= 200000 ? 'Platinum (VIP)' : initialDeposit >= 100000 ? 'Gold' : initialDeposit >= 30000 ? 'Silver' : 'Bronze',
         kycStatus: 'Verified',
         avatar: selectedAvatar,
+        twoFactorEnabled: true,
         walletAddressUSDT: '0xbcf65f39cd5868e8ac571c6d929255dd587f9bff',
         walletAddressBTC: '1KSxkSS6XQsyYfefsTK7xSMrnFxDfGwsGU',
         firstDepositTime: new Date().toISOString(),
@@ -178,8 +185,15 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
       return;
     }
 
-    if (codeSent && verificationCode && verificationCode !== generatedCode && verificationCode !== '505031') {
-      setErrorMessage('Invalid verification code entered.');
+    // Enforce 2FA verification code
+    if (!codeSent) {
+      handleSendVerificationCode(sendCodeChannel, loginIdentifier);
+      setErrorMessage('2FA verification code dispatched! Please enter the 6-digit code below to complete sign in.');
+      return;
+    }
+
+    if (!verificationCode || verificationCode.trim() !== generatedCode) {
+      setErrorMessage('Invalid 6-digit 2FA verification code. Please check your SMS/Email notification.');
       return;
     }
 
@@ -212,11 +226,12 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
           mpesaNumber: isPhone ? cleanInput : '0712345678',
           country: 'Kenya',
           referralCode: autoRefCode,
-          referredBy: `Sponsor #${defaultReferralCode}`,
+          referredBy: defaultReferralCode ? `Sponsor #${defaultReferralCode}` : 'Quantiq Executive Sponsor',
           joinedDate: new Date().toISOString().split('T')[0],
           tier: 'Gold VIP',
           kycStatus: 'Verified',
           avatar: AVATAR_PRESETS[0],
+          twoFactorEnabled: true,
           walletAddressUSDT: '0xbcf65f39cd5868e8ac571c6d929255dd587f9bff',
           walletAddressBTC: '1KSxkSS6XQsyYfefsTK7xSMrnFxDfGwsGU'
         });
@@ -592,14 +607,46 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                     className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow"
                   >
                     {sendCodeChannel === 'phone' ? <Smartphone className="w-3.5 h-3.5" /> : <Mail className="w-3.5 h-3.5" />}
-                    <span>Send Code to {sendCodeChannel === 'phone' ? 'Phone (+254)' : 'Email'}</span>
+                    <span>Send 2FA Code to {sendCodeChannel === 'phone' ? 'Phone (+254)' : 'Email'}</span>
                   </button>
                 </div>
 
                 {codeNotice && (
-                  <div className="p-2 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 text-[11px] flex items-center justify-between">
-                    <span>{codeNotice}</span>
-                    <span className="font-mono font-black text-amber-300 text-xs">{generatedCode}</span>
+                  <div className="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 text-xs flex items-center justify-between gap-2">
+                    <span className="truncate">{codeNotice}</span>
+                    <button
+                      type="button"
+                      onClick={() => setVerificationCode(generatedCode)}
+                      className="px-2 py-1 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-[10px] rounded-lg shrink-0 cursor-pointer shadow"
+                    >
+                      Auto-Fill
+                    </button>
+                  </div>
+                )}
+
+                {codeSent && (
+                  <div className="space-y-1 pt-1">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-[11px] font-bold text-slate-300">
+                        Enter 6-Digit 2FA Verification Code *
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setVerificationCode(generatedCode)}
+                        className="text-[10px] text-amber-400 hover:text-amber-300 font-bold underline cursor-pointer"
+                      >
+                        Auto-Fill Code
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      maxLength={6}
+                      required
+                      value={verificationCode}
+                      onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
+                      placeholder="e.g. 748291"
+                      className="w-full px-3 py-2 text-xs bg-[#07090E] border border-amber-500/50 rounded-xl text-amber-300 font-mono font-black tracking-widest text-center focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    />
                   </div>
                 )}
               </div>
@@ -661,7 +708,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                   ) : (
                     <>
                       <UserPlus className="w-4 h-4" />
-                      <span>Create Profile & Launch Quantiq Dashboard</span>
+                      <span>{codeSent ? 'Verify 2FA & Create Quantiq Profile' : 'Send 2FA Code & Register'}</span>
                     </>
                   )}
                 </button>
@@ -758,29 +805,45 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                       className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer border border-slate-700"
                     >
                       {sendCodeChannel === 'phone' ? <Smartphone className="w-3.5 h-3.5 text-emerald-400" /> : <Mail className="w-3.5 h-3.5 text-amber-400" />}
-                      <span>Send Login Code to {sendCodeChannel === 'phone' ? 'Phone' : 'Email'}</span>
+                      <span>Send 2FA Code to {sendCodeChannel === 'phone' ? 'Phone SMS' : 'Email Address'}</span>
                     </button>
                   </div>
 
                   {codeNotice && (
-                    <div className="p-2 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 text-[11px] flex items-center justify-between">
-                      <span>{codeNotice}</span>
-                      <span className="font-mono font-black text-amber-300 text-xs">{generatedCode}</span>
+                    <div className="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 text-xs flex items-center justify-between gap-2">
+                      <span className="truncate">{codeNotice}</span>
+                      <button
+                        type="button"
+                        onClick={() => setVerificationCode(generatedCode)}
+                        className="px-2 py-1 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-[10px] rounded-lg shrink-0 cursor-pointer shadow"
+                      >
+                        Auto-Fill
+                      </button>
                     </div>
                   )}
 
                   {codeSent && (
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-300 mb-1">
-                        Enter 6-Digit Code
-                      </label>
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-[11px] font-bold text-slate-300">
+                          Enter 6-Digit 2FA Verification Code *
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setVerificationCode(generatedCode)}
+                          className="text-[10px] text-amber-400 hover:text-amber-300 font-bold underline cursor-pointer"
+                        >
+                          Auto-Fill Code
+                        </button>
+                      </div>
                       <input
                         type="text"
                         maxLength={6}
+                        required
                         value={verificationCode}
-                        onChange={(e) => setVerificationCode(e.target.value)}
-                        placeholder="e.g. 505031"
-                        className="w-full px-3 py-2 text-xs bg-[#07090E] border border-amber-500/40 rounded-xl text-amber-300 font-mono font-bold tracking-widest text-center focus:outline-none"
+                        onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
+                        placeholder="e.g. 748291"
+                        className="w-full px-3 py-2 text-xs bg-[#07090E] border border-amber-500/50 rounded-xl text-amber-300 font-mono font-black tracking-widest text-center focus:outline-none focus:ring-1 focus:ring-amber-500"
                       />
                     </div>
                   )}
@@ -830,7 +893,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                     <span>Authenticating...</span>
                   ) : (
                     <>
-                      <span>Sign In to Quantiq Prime</span>
+                      <span>{codeSent ? 'Verify 2FA & Sign In' : 'Send 2FA Code & Sign In'}</span>
                       <ArrowRight className="w-4 h-4" />
                     </>
                   )}

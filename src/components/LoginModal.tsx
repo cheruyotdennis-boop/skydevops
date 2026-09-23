@@ -52,8 +52,15 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     setGeneratedCode(code);
     setCodeSent(true);
-    setCodeNotice(`Security code ${code} sent via ${sendCodeChannel === 'phone' ? 'SMS' : 'Email'} to ${identifier || 'your account'}`);
-    setVerificationCode(code);
+    setErrorMessage('');
+    const targetDest = identifier.trim() || (sendCodeChannel === 'phone' ? '+254 712 345 678' : 'investor@quantiqprime.com');
+    setCodeNotice(`2FA security code ${code} dispatched via ${sendCodeChannel === 'phone' ? 'Phone SMS' : 'Email'} to ${targetDest}`);
+  };
+
+  const autoFillCode = () => {
+    if (generatedCode) {
+      setVerificationCode(generatedCode);
+    }
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -69,8 +76,14 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       return;
     }
 
-    if (codeSent && verificationCode && verificationCode !== generatedCode && verificationCode !== '505031') {
-      setErrorMessage('Invalid verification code entered.');
+    if (!codeSent) {
+      handleSendCode();
+      setErrorMessage('2FA code dispatched! Please enter the 6-digit verification code below to sign in.');
+      return;
+    }
+
+    if (!verificationCode || verificationCode.trim() !== generatedCode) {
+      setErrorMessage('Invalid 6-digit 2FA verification code. Please check your SMS/Email notification.');
       return;
     }
 
@@ -284,25 +297,39 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 onClick={handleSendCode}
                 className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-1.5 px-3 rounded-lg text-[11px] flex items-center justify-center gap-1.5 cursor-pointer border border-slate-700"
               >
-                <span>Send Code to {sendCodeChannel === 'phone' ? 'Phone SMS' : 'Email Address'}</span>
+                {sendCodeChannel === 'phone' ? <Smartphone className="w-3.5 h-3.5 text-emerald-400" /> : <Mail className="w-3.5 h-3.5 text-amber-400" />}
+                <span>Send 2FA Code to {sendCodeChannel === 'phone' ? 'Phone SMS' : 'Email Address'}</span>
               </button>
 
               {codeNotice && (
-                <div className="p-2 rounded-lg bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 text-[10px] flex items-center justify-between">
-                  <span>{codeNotice}</span>
-                  <span className="font-mono font-black text-amber-300">{generatedCode}</span>
+                <div className="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 text-xs flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 truncate">
+                    {sendCodeChannel === 'phone' ? <Smartphone className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> : <Mail className="w-3.5 h-3.5 text-amber-400 shrink-0" />}
+                    <span className="truncate">{codeNotice}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={autoFillCode}
+                    className="px-2 py-1 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-[10px] rounded-lg shrink-0 cursor-pointer shadow"
+                  >
+                    Auto-Fill
+                  </button>
                 </div>
               )}
 
               {codeSent && (
                 <div>
+                  <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                    Enter 6-Digit 2FA Code *
+                  </label>
                   <input
                     type="text"
                     maxLength={6}
+                    required
                     value={verificationCode}
-                    onChange={(e) => setVerificationCode(e.target.value)}
-                    placeholder="Enter 6-digit code"
-                    className="w-full px-3 py-1.5 bg-[#0B0F17] border border-amber-500/40 rounded-lg text-amber-300 font-mono font-bold text-center text-xs focus:outline-none"
+                    onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
+                    placeholder="e.g. 748291"
+                    className="w-full px-3 py-2 bg-[#0B0F17] border border-amber-500/50 rounded-xl text-amber-300 font-mono font-black text-center text-sm tracking-widest focus:outline-none focus:ring-1 focus:ring-amber-500"
                   />
                 </div>
               )}
@@ -337,7 +364,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 className="w-full bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black py-2.5 rounded-xl shadow-lg transition-all cursor-pointer uppercase tracking-wider text-xs flex items-center justify-center gap-2"
               >
                 <LogIn className="w-4 h-4" />
-                <span>{isLoading ? 'Verifying Account...' : 'Sign In Now'}</span>
+                <span>{isLoading ? 'Verifying Account...' : codeSent ? 'Verify 2FA & Sign In' : 'Send 2FA Code & Sign In'}</span>
               </button>
             </div>
           </form>
