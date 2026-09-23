@@ -107,19 +107,19 @@ export const InvestmentsView: React.FC<InvestmentsViewProps> = ({
         </div>
       </div>
 
-      {/* Capital Lock & Maturity Rule Info Banner */}
+      {/* 24-Hour Yield Cycle & Liquidity Banner */}
       <div className="bg-gradient-to-r from-amber-950/40 via-yellow-950/30 to-[#0B0F17] border border-amber-500/40 rounded-2xl p-4 sm:p-5 text-xs text-slate-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0">
-            <Lock className="w-5 h-5" />
+            <Coins className="w-5 h-5" />
           </div>
           <div>
             <div className="text-amber-300 font-extrabold text-xs uppercase tracking-wider flex items-center gap-1.5">
-              <span>Security Policy: Balance Locked Until Maturity</span>
+              <span>Automated 24-Hour Yield Cycles: Withdraw Anytime After 24h</span>
               <span className="bg-emerald-950 text-emerald-400 border border-emerald-500/40 text-[10px] font-bold px-2 py-0.2 rounded-full">Automated 7.5% Daily ROI</span>
             </div>
             <p className="text-slate-300 text-[11px] sm:text-xs mt-0.5 leading-relaxed">
-              When activating a contract, your principal is safely locked for the contract horizon (10, 15, or 20 days). Your daily 7.5% yield is paid out every 24h into your liquid cash, and the principal unlocks automatically upon contract maturity.
+              When activating an investment pool, your capital trades in high-frequency algorithmic nodes. Your 7.5% daily yield is credited automatically every 24 hours and clients can withdraw freely after 24 hours.
             </p>
           </div>
         </div>

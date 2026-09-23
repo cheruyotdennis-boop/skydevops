@@ -503,21 +503,28 @@ export default function App() {
       status: 'COMPLETED',
       timestamp: `${new Date().toISOString().split('T')[0]} ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} EAT`,
       txHash: `0x${Math.random().toString(16).substring(2)}${Math.random().toString(16).substring(2)}`,
-      methodOrAddress: `${plan.name} Contract`,
-      note: `Capital locked for ${plan.durationDays} days @ ${plan.dailyRoi}% daily`
+      methodOrAddress: `${plan.name} Pool`,
+      note: `Active allocation for ${plan.durationDays} days @ ${plan.dailyRoi}% daily (Withdraw after 24h)`
     };
     setTransactions(prev => [newTx, ...prev]);
 
     // 4. Notification
     const newNotif: NotificationItem = {
       id: `notif_${Date.now()}`,
-      title: 'Contract Capital Locked & Activated',
-      message: `Successfully locked Ksh ${cleanAmount.toLocaleString('en-KE')} in ${plan.name} for ${plan.durationDays} days. Daily yield is +Ksh ${dailyYield.toLocaleString('en-KE', { minimumFractionDigits: 2 })}.`,
+      title: 'Investment Allocation Activated',
+      message: `Successfully allocated Ksh ${cleanAmount.toLocaleString('en-KE')} in ${plan.name} for ${plan.durationDays} days. Daily yield is +Ksh ${dailyYield.toLocaleString('en-KE', { minimumFractionDigits: 2 })}. Withdrawals available every 24h.`,
       timestamp: 'Just now',
       read: false,
       type: 'payout'
     };
     setNotifications(prev => [newNotif, ...prev]);
+
+    // Track deposit timestamp for 24h withdrawal rule
+    setUser(prev => ({
+      ...prev,
+      firstDepositTime: prev.firstDepositTime || new Date().toISOString(),
+      lastDepositTime: new Date().toISOString()
+    }));
   };
 
   const handleReleaseMaturedContract = (contractId: string) => {
@@ -590,12 +597,19 @@ export default function App() {
     const newNotif: NotificationItem = {
       id: `notif_${Date.now()}`,
       title: 'Deposit Received & Credited',
-      message: `Ksh ${cleanAmount.toLocaleString('en-KE')} (${currency}) has been added to your available cash balance.`,
+      message: `Ksh ${cleanAmount.toLocaleString('en-KE')} (${currency}) has been added to your available cash balance. Withdrawals unlock after 24h trading cycle.`,
       timestamp: 'Just now',
       read: false,
       type: 'deposit'
     };
     setNotifications(prev => [newNotif, ...prev]);
+
+    // Record deposit timestamp for 24h withdrawal rule
+    setUser(prev => ({
+      ...prev,
+      firstDepositTime: prev.firstDepositTime || new Date().toISOString(),
+      lastDepositTime: new Date().toISOString()
+    }));
   };
 
   const handleConfirmWithdrawal = (amount: number, address: string, txHash: string) => {

@@ -39,8 +39,8 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({
   onUpdateUser
 }) => {
   const [withdrawAmount, setWithdrawAmount] = useState<number>(Math.min(13000, wallet.availableCash));
-  const [network, setNetwork] = useState<'MPESA' | 'TRC20' | 'ERC20' | 'BTC' | 'ETH'>('TRC20');
-  const [destinationAddress, setDestinationAddress] = useState(user.walletAddressUSDT || 'TXq7j8kP39LmNxR8w92Z0A1m4kVyTe6pQc');
+  const [network, setNetwork] = useState<'MPESA' | 'BEP20' | 'BTC'>('BEP20');
+  const [destinationAddress, setDestinationAddress] = useState(user.walletAddressUSDT || '0xbcf65f39cd5868e8ac571c6d929255dd587f9bff');
   const [saveAsDefaultWallet, setSaveAsDefaultWallet] = useState<boolean>(true);
   const [securityPin, setSecurityPin] = useState('1234');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -51,11 +51,17 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({
 
   const exchangeRate = contacts?.kesUsdExchangeRate || 130.00;
   const btcRateKES = 12480000;
-  const ethRateKES = 428500;
+
+  // 24-Hour Yield Liquidity Rule calculation
+  const depositTimestamp = user.lastDepositTime || user.firstDepositTime || user.joinedDate;
+  const depositDateMs = depositTimestamp ? new Date(depositTimestamp).getTime() : Date.now() - 25 * 60 * 60 * 1000;
+  const hoursSinceDeposit = Math.max(0, (Date.now() - depositDateMs) / (1000 * 60 * 60));
+  const hoursRemainingUntil24h = Math.max(0, 24 - hoursSinceDeposit);
+  const is24HoursPassed = hoursSinceDeposit >= 24;
 
   // Calculate crypto receiving amount
   const getCryptoPayoutEstimate = () => {
-    if (network === 'TRC20' || network === 'ERC20') {
+    if (network === 'BEP20') {
       const usdt = withdrawAmount / exchangeRate;
       return `${usdt.toFixed(2)} USDT`;
     }
@@ -63,25 +69,19 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({
       const btc = withdrawAmount / btcRateKES;
       return `${btc.toFixed(6)} BTC`;
     }
-    if (network === 'ETH') {
-      const eth = withdrawAmount / ethRateKES;
-      return `${eth.toFixed(5)} ETH`;
-    }
     return `Ksh ${withdrawAmount.toLocaleString()}`;
   };
 
   // Quick switch network and prepopulate relevant address
-  const handleSelectNetwork = (rail: 'MPESA' | 'TRC20' | 'ERC20' | 'BTC' | 'ETH') => {
+  const handleSelectNetwork = (rail: 'MPESA' | 'BEP20' | 'BTC') => {
     setNetwork(rail);
     setErrorMessage('');
     if (rail === 'MPESA') {
       setDestinationAddress(user.mpesaNumber || user.phone || '0712345678');
-    } else if (rail === 'TRC20' || rail === 'ERC20') {
-      setDestinationAddress(user.walletAddressUSDT || '');
+    } else if (rail === 'BEP20') {
+      setDestinationAddress(user.walletAddressUSDT || '0xbcf65f39cd5868e8ac571c6d929255dd587f9bff');
     } else if (rail === 'BTC') {
-      setDestinationAddress(user.walletAddressBTC || '');
-    } else if (rail === 'ETH') {
-      setDestinationAddress(user.walletAddressETH || user.walletAddressUSDT?.startsWith('0x') ? user.walletAddressUSDT : '');
+      setDestinationAddress(user.walletAddressBTC || '1KSxkSS6XQsyYfefsTK7xSMrnFxDfGwsGU');
     }
   };
 
@@ -94,7 +94,14 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({
     }
 
     if (withdrawAmount > wallet.availableCash) {
-      setErrorMessage(`Amount exceeds available liquid cash. Your Ksh ${wallet.activeInvested.toLocaleString('en-KE', { minimumFractionDigits: 2 })} in yield packages is locked until maturity.`);
+      setErrorMessage(`Amount exceeds available balance of Ksh ${wallet.availableCash.toLocaleString('en-KE', { minimumFractionDigits: 2 })}.`);
+      return;
+    }
+
+    // 24-Hour Policy Check: Allows withdrawal after 24 hours of algorithmic yield cycle
+    if (!is24HoursPassed && wallet.totalBalance > 0 && wallet.availableCash > 0) {
+      const remainingH = Math.ceil(hoursRemainingUntil24h);
+      setErrorMessage(`24-Hour Trading Cycle: Withdrawals unlock 24 hours after deposit cycle start (${remainingH}h remaining). All accrued yields are paid out.`);
       return;
     }
 
@@ -105,12 +112,8 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({
     }
 
     // Basic format sanity checks
-    if (network === 'TRC20' && !cleanDest.startsWith('T') && cleanDest.length < 25) {
-      setErrorMessage('Tron TRC-20 addresses typically start with a capital "T" (e.g. TY7Q6B92...). Please verify your personal wallet address.');
-      return;
-    }
-    if (network === 'ERC20' && !cleanDest.startsWith('0x')) {
-      setErrorMessage('Ethereum ERC-20 addresses typically start with "0x". Please verify your personal wallet address.');
+    if (network === 'BEP20' && !cleanDest.startsWith('0x')) {
+      setErrorMessage('USDT (BEP-20) addresses start with "0x". Please verify your personal wallet address.');
       return;
     }
     if (network === 'MPESA' && !/^(07|01|254|\+254)/.test(cleanDest.replace(/\s+/g, ''))) {
@@ -132,12 +135,10 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({
 
       // If user opted to save this personal wallet address to their profile
       if (saveAsDefaultWallet && onUpdateUser) {
-        if (network === 'TRC20' || network === 'ERC20') {
+        if (network === 'BEP20') {
           onUpdateUser({ walletAddressUSDT: cleanDest });
         } else if (network === 'BTC') {
           onUpdateUser({ walletAddressBTC: cleanDest });
-        } else if (network === 'ETH') {
-          onUpdateUser({ walletAddressETH: cleanDest });
         } else if (network === 'MPESA') {
           onUpdateUser({ mpesaNumber: cleanDest });
         }
@@ -190,47 +191,48 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({
             </div>
           )}
 
-          {/* Balance Breakdown: Liquid vs Locked */}
+          {/* Balance Breakdown: Available vs Active Allocation */}
           <div className="grid grid-cols-2 gap-3">
             <div className="p-3.5 rounded-2xl bg-[#07090E] border border-emerald-500/40">
               <span className="text-[11px] text-emerald-400 font-bold uppercase tracking-wider block">Withdrawable Cash</span>
               <div className="text-base sm:text-lg font-black font-mono text-white mt-1">
                 Ksh {wallet.availableCash.toLocaleString('en-KE', { minimumFractionDigits: 2 })}
               </div>
-              <span className="text-[10px] text-slate-400 block mt-0.5">Unlocked & Ready</span>
+              <span className="text-[10px] text-emerald-400/80 block mt-0.5">
+                {is24HoursPassed ? 'Ready for Instant Payout' : `Unlocks in ${Math.ceil(hoursRemainingUntil24h)}h`}
+              </span>
             </div>
 
             <div className="p-3.5 rounded-2xl bg-[#07090E] border border-amber-500/30">
               <span className="text-[11px] text-amber-400 font-bold uppercase tracking-wider flex items-center gap-1">
-                <Lock className="w-3 h-3 text-amber-400" />
-                <span>Locked Capital</span>
+                <Coins className="w-3 h-3 text-amber-400" />
+                <span>Active Investment Pool</span>
               </span>
               <div className="text-base sm:text-lg font-black font-mono text-amber-300 mt-1">
                 Ksh {wallet.activeInvested.toLocaleString('en-KE', { minimumFractionDigits: 2 })}
               </div>
-              <span className="text-[10px] text-slate-400 block mt-0.5">Locked until maturity</span>
+              <span className="text-[10px] text-slate-400 block mt-0.5">Automated 7.5% daily yield</span>
             </div>
           </div>
 
-          {/* Locked Balance Policy Explainer */}
-          {wallet.activeInvested > 0 && (
-            <div className="p-3 rounded-2xl bg-amber-950/20 border border-amber-500/30 text-slate-300 text-[11px] flex items-start gap-2 leading-relaxed">
-              <Info className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-              <div>
-                <span className="text-amber-300 font-bold">Maturity Lock Rule:</span> Capital in active investment contracts (Ksh {wallet.activeInvested.toLocaleString()}) remains in algorithmic trading until contract expiration. Your daily ROI in Available Cash can be withdrawn anytime to your personal wallet.
-              </div>
+          {/* 24-Hour Withdrawal Access Notice */}
+          <div className="p-3 rounded-2xl bg-[#07090E] border border-amber-500/30 text-slate-300 text-[11px] flex items-start gap-2.5 leading-relaxed">
+            <Clock className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+            <div>
+              <span className="text-amber-300 font-bold">24-Hour Yield & Liquidity Policy:</span>
+              <p className="text-slate-300 mt-0.5">
+                Clients can withdraw available earnings and capital after every <b>24-hour cycle</b>. Daily returns are credited every 24h directly to your wallet for instant cashout.
+              </p>
             </div>
-          )}
+          </div>
 
           {/* Network Selector */}
           <div>
             <label className="block font-bold text-slate-300 mb-1.5">Select Payout Rail</label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {[
-                { id: 'TRC20', label: 'USDT (TRC-20)', sub: 'Personal Wallet • 0 Fee', icon: '⚡' },
-                { id: 'ERC20', label: 'USDT (ERC-20)', sub: 'Personal Wallet', icon: '💎' },
-                { id: 'BTC', label: 'Bitcoin (BTC)', sub: 'Personal Wallet', icon: '₿' },
-                { id: 'ETH', label: 'Ethereum (ETH)', sub: 'Personal Wallet', icon: 'Ξ' },
+                { id: 'BEP20', label: 'USDT (BEP-20)', sub: 'Binance Smart Chain', icon: '⚡' },
+                { id: 'BTC', label: 'Bitcoin (BTC)', sub: 'Native SegWit / Taproot', icon: '₿' },
                 { id: 'MPESA', label: 'M-PESA (KES)', sub: 'Safaricom Direct', icon: '📱' }
               ].map((rail) => (
                 <button

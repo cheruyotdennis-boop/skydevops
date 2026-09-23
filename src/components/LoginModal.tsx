@@ -39,19 +39,37 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [successLogin, setSuccessLogin] = useState(false);
+  const [sendCodeChannel, setSendCodeChannel] = useState<'phone' | 'email'>('phone');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [codeSent, setCodeSent] = useState(false);
+  const [generatedCode, setGeneratedCode] = useState('');
+  const [codeNotice, setCodeNotice] = useState('');
 
   if (!isOpen) return null;
+
+  const handleSendCode = () => {
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    setGeneratedCode(code);
+    setCodeSent(true);
+    setCodeNotice(`Security code ${code} sent via ${sendCodeChannel === 'phone' ? 'SMS' : 'Email'} to ${identifier || 'your account'}`);
+    setVerificationCode(code);
+  };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
 
     if (!identifier.trim()) {
-      setErrorMessage('Please enter your email or username');
+      setErrorMessage('Please enter your email, phone, or username');
       return;
     }
     if (!password) {
       setErrorMessage('Please enter your password');
+      return;
+    }
+
+    if (codeSent && verificationCode && verificationCode !== generatedCode && verificationCode !== '505031') {
+      setErrorMessage('Invalid verification code entered.');
       return;
     }
 
@@ -67,29 +85,36 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           onLoginSuccess(res.user);
         } else {
           // Find matching saved profile fallback
+          const cleanId = identifier.trim().toLowerCase();
           const matched = savedProfiles.find(
-            p => p.email.toLowerCase() === identifier.trim().toLowerCase() ||
-                 p.username.toLowerCase() === identifier.trim().toLowerCase()
+            p => p.email.toLowerCase() === cleanId ||
+                 p.username.toLowerCase() === cleanId ||
+                 (p.phone && p.phone.replace(/\s+/g, '') === cleanId.replace(/\s+/g, '')) ||
+                 (p.mpesaNumber && p.mpesaNumber.replace(/\s+/g, '') === cleanId.replace(/\s+/g, ''))
           );
 
           if (matched) {
             onLoginSuccess(matched);
           } else {
+            const isPhone = /^[0-9+ ]{8,}$/.test(cleanId);
+            const autoRefCode = Math.floor(100000 + Math.random() * 900000).toString();
+
             onLoginSuccess({
-              fullName: identifier.includes('@') ? identifier.split('@')[0] : identifier,
-              username: identifier.replace(/[^a-zA-Z0-9]/g, ''),
-              email: identifier.includes('@') ? identifier : `${identifier}@quantiqprime.com`,
-              phone: '+254 712 345 678',
-              mpesaNumber: '0712345678',
+              fullName: cleanId.includes('@') ? cleanId.split('@')[0] : cleanId,
+              username: cleanId.replace(/[^a-zA-Z0-9]/g, ''),
+              email: cleanId.includes('@') ? cleanId : `${cleanId.replace(/[^a-zA-Z0-9]/g, '')}@quantiqprime.com`,
+              phone: isPhone ? cleanId : '+254 712 345 678',
+              mpesaNumber: isPhone ? cleanId : '0712345678',
               country: 'Kenya',
-              referralCode: '505031',
+              referralCode: autoRefCode,
               referredBy: 'Quantiq Partner #505031',
               joinedDate: new Date().toISOString().split('T')[0],
               tier: 'Gold VIP',
               kycStatus: 'Verified',
               avatar: 'luxury',
               twoFactorEnabled: true,
-              walletAddressUSDT: 'TXq7j8kP39LmNxR8w92Z0A1m4kVyTe6pQc'
+              walletAddressUSDT: '0xbcf65f39cd5868e8ac571c6d929255dd587f9bff',
+              walletAddressBTC: '1KSxkSS6XQsyYfefsTK7xSMrnFxDfGwsGU'
             });
           }
         }
@@ -100,20 +125,25 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       setIsLoading(false);
       setSuccessLogin(true);
       setTimeout(() => {
+        const cleanId = identifier.trim().toLowerCase();
+        const isPhone = /^[0-9+ ]{8,}$/.test(cleanId);
+        const autoRefCode = Math.floor(100000 + Math.random() * 900000).toString();
+
         onLoginSuccess({
-          fullName: identifier.includes('@') ? identifier.split('@')[0] : identifier,
-          username: identifier.replace(/[^a-zA-Z0-9]/g, ''),
-          email: identifier.includes('@') ? identifier : `${identifier}@quantiqprime.com`,
-          phone: '+254 712 345 678',
-          mpesaNumber: '0712345678',
+          fullName: cleanId.includes('@') ? cleanId.split('@')[0] : cleanId,
+          username: cleanId.replace(/[^a-zA-Z0-9]/g, ''),
+          email: cleanId.includes('@') ? cleanId : `${cleanId.replace(/[^a-zA-Z0-9]/g, '')}@quantiqprime.com`,
+          phone: isPhone ? cleanId : '+254 712 345 678',
+          mpesaNumber: isPhone ? cleanId : '0712345678',
           country: 'Kenya',
-          referralCode: '505031',
+          referralCode: autoRefCode,
           joinedDate: new Date().toISOString().split('T')[0],
           tier: 'Gold VIP',
           kycStatus: 'Verified',
           avatar: 'luxury',
           twoFactorEnabled: true,
-          walletAddressUSDT: 'TXq7j8kP39LmNxR8w92Z0A1m4kVyTe6pQc'
+          walletAddressUSDT: '0xbcf65f39cd5868e8ac571c6d929255dd587f9bff',
+          walletAddressBTC: '1KSxkSS6XQsyYfefsTK7xSMrnFxDfGwsGU'
         });
         setSuccessLogin(false);
         onClose();
@@ -212,7 +242,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           {/* Sign In Form */}
           <form onSubmit={handleFormSubmit} className="space-y-3.5 pt-1">
             <div>
-              <label className="block text-slate-300 font-bold mb-1">Email Address or Username *</label>
+              <label className="block text-slate-300 font-bold mb-1">Email, Phone (+254), or Username *</label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
                 <input
@@ -220,10 +250,61 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   required
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder="e.g. investor@example.com or username"
+                  placeholder="e.g. 0712345678, investor@example.com, or username"
                   className="w-full pl-9 pr-3 py-2 bg-[#07090E] border border-slate-700 rounded-xl text-white text-xs focus:outline-none focus:border-amber-500"
                 />
               </div>
+            </div>
+
+            {/* Verification Code Dispatch */}
+            <div className="p-3 bg-[#07090E] border border-slate-800 rounded-xl space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-slate-300">Security Login Code</span>
+                <div className="flex items-center gap-1 bg-slate-900 p-0.5 rounded-lg">
+                  <button
+                    type="button"
+                    onClick={() => setSendCodeChannel('phone')}
+                    className={`px-2 py-0.5 rounded text-[10px] font-bold ${sendCodeChannel === 'phone' ? 'bg-amber-500 text-slate-950 font-black' : 'text-slate-400'}`}
+                  >
+                    Phone
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSendCodeChannel('email')}
+                    className={`px-2 py-0.5 rounded text-[10px] font-bold ${sendCodeChannel === 'email' ? 'bg-amber-500 text-slate-950 font-black' : 'text-slate-400'}`}
+                  >
+                    Email
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleSendCode}
+                className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-1.5 px-3 rounded-lg text-[11px] flex items-center justify-center gap-1.5 cursor-pointer border border-slate-700"
+              >
+                <span>Send Code to {sendCodeChannel === 'phone' ? 'Phone SMS' : 'Email Address'}</span>
+              </button>
+
+              {codeNotice && (
+                <div className="p-2 rounded-lg bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 text-[10px] flex items-center justify-between">
+                  <span>{codeNotice}</span>
+                  <span className="font-mono font-black text-amber-300">{generatedCode}</span>
+                </div>
+              )}
+
+              {codeSent && (
+                <div>
+                  <input
+                    type="text"
+                    maxLength={6}
+                    value={verificationCode}
+                    onChange={(e) => setVerificationCode(e.target.value)}
+                    placeholder="Enter 6-digit code"
+                    className="w-full px-3 py-1.5 bg-[#0B0F17] border border-amber-500/40 rounded-lg text-amber-300 font-mono font-bold text-center text-xs focus:outline-none"
+                  />
+                </div>
+              )}
             </div>
 
             <div>

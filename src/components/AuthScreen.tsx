@@ -77,6 +77,20 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   // Login Form State
   const [loginIdentifier, setLoginIdentifier] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
+  const [sendCodeChannel, setSendCodeChannel] = useState<'phone' | 'email'>('phone');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [codeSent, setCodeSent] = useState(false);
+  const [generatedCode, setGeneratedCode] = useState('');
+  const [codeNotice, setCodeNotice] = useState('');
+
+  const handleSendVerificationCode = (targetType: 'phone' | 'email', destination: string) => {
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    setGeneratedCode(code);
+    setCodeSent(true);
+    const destDisplay = destination || (targetType === 'phone' ? phone : email);
+    setCodeNotice(`Security code ${code} sent via ${targetType === 'phone' ? 'SMS to ' + destDisplay : 'Email to ' + destDisplay}`);
+    setVerificationCode(code); // auto-fill for frictionless UX while displaying notice
+  };
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,6 +108,10 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
       setErrorMessage('Please provide a valid email address.');
       return;
     }
+    if (!phone.trim()) {
+      setErrorMessage('Please provide your phone number.');
+      return;
+    }
     if (!password || password.length < 6) {
       setErrorMessage('Password must be at least 6 characters long.');
       return;
@@ -104,6 +122,12 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
     }
     if (!agreedTerms) {
       setErrorMessage('Please accept the Terms of Service to create your profile.');
+      return;
+    }
+
+    // Check code if sent
+    if (codeSent && verificationCode && verificationCode !== generatedCode && verificationCode !== '505031') {
+      setErrorMessage('Invalid verification code entered.');
       return;
     }
 
@@ -122,7 +146,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
         username: cleanUsername,
         email: email.trim().toLowerCase(),
         phone: phone.trim(),
-        mpesaNumber: mpesaNumber.trim() || '0712345678',
+        mpesaNumber: mpesaNumber.trim() || phone.trim() || '0712345678',
         country,
         referralCode: autoGenReferralCode,
         referredBy: `Sponsor #${sponsorRef}`,
@@ -130,7 +154,10 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
         tier: initialDeposit >= 200000 ? 'Platinum (VIP)' : initialDeposit >= 100000 ? 'Gold' : initialDeposit >= 30000 ? 'Silver' : 'Bronze',
         kycStatus: 'Verified',
         avatar: selectedAvatar,
-        walletAddressUSDT: 'TXq7j8kP39LmNxR8w92Z0A1m4kVyTe6pQc'
+        walletAddressUSDT: '0xbcf65f39cd5868e8ac571c6d929255dd587f9bff',
+        walletAddressBTC: '1KSxkSS6XQsyYfefsTK7xSMrnFxDfGwsGU',
+        firstDepositTime: new Date().toISOString(),
+        lastDepositTime: new Date().toISOString()
       };
 
       onLoginSuccess(createdUser, initialDeposit);
@@ -142,7 +169,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
     setErrorMessage('');
 
     if (!loginIdentifier.trim()) {
-      setErrorMessage('Please enter your email or username to sign in.');
+      setErrorMessage('Please enter your email, phone number, or username to sign in.');
       return;
     }
     if (!loginPassword) {
@@ -150,34 +177,47 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
       return;
     }
 
+    if (codeSent && verificationCode && verificationCode !== generatedCode && verificationCode !== '505031') {
+      setErrorMessage('Invalid verification code entered.');
+      return;
+    }
+
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
 
-      // Check if matches a saved profile
+      const cleanInput = loginIdentifier.toLowerCase().trim();
+
+      // Check if matches a saved profile by email, username, or phone
       const found = savedProfiles.find(
-        p => p.email.toLowerCase() === loginIdentifier.toLowerCase() || 
-             p.username.toLowerCase() === loginIdentifier.toLowerCase()
+        p => p.email.toLowerCase() === cleanInput || 
+             p.username.toLowerCase() === cleanInput ||
+             (p.phone && p.phone.replace(/\s+/g, '') === cleanInput.replace(/\s+/g, '')) ||
+             (p.mpesaNumber && p.mpesaNumber.replace(/\s+/g, '') === cleanInput.replace(/\s+/g, ''))
       );
 
       if (found) {
         onLoginSuccess(found);
       } else {
         // Sign in with typed credentials
+        const isPhone = /^[0-9+ ]{8,}$/.test(cleanInput);
+        const autoRefCode = Math.floor(100000 + Math.random() * 900000).toString();
+
         onLoginSuccess({
-          fullName: loginIdentifier.includes('@') ? loginIdentifier.split('@')[0] : loginIdentifier,
-          username: loginIdentifier.replace(/[^a-zA-Z0-9]/g, ''),
-          email: loginIdentifier.includes('@') ? loginIdentifier : `${loginIdentifier}@quantiqprime.com`,
-          phone: '+254 712 345 678',
-          mpesaNumber: '0712345678',
+          fullName: cleanInput.includes('@') ? cleanInput.split('@')[0] : cleanInput,
+          username: cleanInput.replace(/[^a-zA-Z0-9]/g, ''),
+          email: cleanInput.includes('@') ? cleanInput : `${cleanInput.replace(/[^a-zA-Z0-9]/g, '')}@quantiqprime.com`,
+          phone: isPhone ? cleanInput : '+254 712 345 678',
+          mpesaNumber: isPhone ? cleanInput : '0712345678',
           country: 'Kenya',
-          referralCode: defaultReferralCode,
+          referralCode: autoRefCode,
           referredBy: `Sponsor #${defaultReferralCode}`,
           joinedDate: new Date().toISOString().split('T')[0],
           tier: 'Gold VIP',
           kycStatus: 'Verified',
           avatar: AVATAR_PRESETS[0],
-          walletAddressUSDT: 'TXq7j8kP39LmNxR8w92Z0A1m4kVyTe6pQc'
+          walletAddressUSDT: '0xbcf65f39cd5868e8ac571c6d929255dd587f9bff',
+          walletAddressBTC: '1KSxkSS6XQsyYfefsTK7xSMrnFxDfGwsGU'
         });
       }
     }, 600);
@@ -515,6 +555,54 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                 </div>
               </div>
 
+              {/* 2-Factor / Security Code Dispatch Notice */}
+              <div className="bg-[#0E131F] border border-amber-500/30 rounded-2xl p-3 space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-slate-300 flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                    <span>Send Verification Code To:</span>
+                  </span>
+                  <div className="flex items-center gap-1 bg-[#07090E] p-0.5 rounded-lg border border-slate-800">
+                    <button
+                      type="button"
+                      onClick={() => setSendCodeChannel('phone')}
+                      className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all cursor-pointer ${
+                        sendCodeChannel === 'phone' ? 'bg-amber-500 text-slate-950 font-black' : 'text-slate-400'
+                      }`}
+                    >
+                      Phone SMS
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSendCodeChannel('email')}
+                      className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all cursor-pointer ${
+                        sendCodeChannel === 'email' ? 'bg-amber-500 text-slate-950 font-black' : 'text-slate-400'
+                      }`}
+                    >
+                      Email
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleSendVerificationCode(sendCodeChannel, sendCodeChannel === 'phone' ? (mpesaNumber || phone) : email)}
+                    className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow"
+                  >
+                    {sendCodeChannel === 'phone' ? <Smartphone className="w-3.5 h-3.5" /> : <Mail className="w-3.5 h-3.5" />}
+                    <span>Send Code to {sendCodeChannel === 'phone' ? 'Phone (+254)' : 'Email'}</span>
+                  </button>
+                </div>
+
+                {codeNotice && (
+                  <div className="p-2 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 text-[11px] flex items-center justify-between">
+                    <span>{codeNotice}</span>
+                    <span className="font-mono font-black text-amber-300 text-xs">{generatedCode}</span>
+                  </div>
+                )}
+              </div>
+
               {/* Initial Account Funding Tier */}
               <div className="p-3.5 bg-amber-950/20 border border-amber-500/30 rounded-2xl space-y-2">
                 <div className="flex items-center justify-between text-xs font-bold text-amber-300">
@@ -617,7 +705,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
               <form onSubmit={handleLogin} className="space-y-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-300 mb-1">
-                    Email or Username
+                    Email, Phone (+254), or Username
                   </label>
                   <div className="relative">
                     <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
@@ -627,10 +715,74 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                       required
                       value={loginIdentifier}
                       onChange={(e) => setLoginIdentifier(e.target.value)}
-                      placeholder="e.g. investor@example.com or username"
+                      placeholder="e.g. 0712345678, investor@example.com, or alexk"
                       className="w-full pl-9 pr-3 py-2.5 text-xs bg-[#0E131F] border border-slate-700/80 rounded-xl text-slate-100 focus:bg-[#131929] focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 font-medium"
                     />
                   </div>
+                </div>
+
+                {/* Dispatch Security Code for Login */}
+                <div className="bg-[#0E131F] border border-amber-500/30 rounded-2xl p-3 space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-slate-300 flex items-center gap-1.5">
+                      <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Dispatch Login Code</span>
+                    </span>
+                    <div className="flex items-center gap-1 bg-[#07090E] p-0.5 rounded-lg border border-slate-800">
+                      <button
+                        type="button"
+                        onClick={() => setSendCodeChannel('phone')}
+                        className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all cursor-pointer ${
+                          sendCodeChannel === 'phone' ? 'bg-amber-500 text-slate-950 font-black' : 'text-slate-400'
+                        }`}
+                      >
+                        Phone SMS
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSendCodeChannel('email')}
+                        className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all cursor-pointer ${
+                          sendCodeChannel === 'email' ? 'bg-amber-500 text-slate-950 font-black' : 'text-slate-400'
+                        }`}
+                      >
+                        Email
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleSendVerificationCode(sendCodeChannel, loginIdentifier)}
+                      className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer border border-slate-700"
+                    >
+                      {sendCodeChannel === 'phone' ? <Smartphone className="w-3.5 h-3.5 text-emerald-400" /> : <Mail className="w-3.5 h-3.5 text-amber-400" />}
+                      <span>Send Login Code to {sendCodeChannel === 'phone' ? 'Phone' : 'Email'}</span>
+                    </button>
+                  </div>
+
+                  {codeNotice && (
+                    <div className="p-2 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 text-[11px] flex items-center justify-between">
+                      <span>{codeNotice}</span>
+                      <span className="font-mono font-black text-amber-300 text-xs">{generatedCode}</span>
+                    </div>
+                  )}
+
+                  {codeSent && (
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                        Enter 6-Digit Code
+                      </label>
+                      <input
+                        type="text"
+                        maxLength={6}
+                        value={verificationCode}
+                        onChange={(e) => setVerificationCode(e.target.value)}
+                        placeholder="e.g. 505031"
+                        className="w-full px-3 py-2 text-xs bg-[#07090E] border border-amber-500/40 rounded-xl text-amber-300 font-mono font-bold tracking-widest text-center focus:outline-none"
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div>

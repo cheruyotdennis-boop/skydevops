@@ -16,6 +16,8 @@ export interface UserProfile {
   walletAddressUSDT: string;
   walletAddressBTC?: string;
   walletAddressETH?: string;
+  firstDepositTime?: string;
+  lastDepositTime?: string;
   role?: 'superadmin' | 'admin' | 'user';
   isAdmin?: boolean;
   knownDeviceIds?: string[];

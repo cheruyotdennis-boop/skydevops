@@ -36,7 +36,10 @@ export const ReferralAffiliateView: React.FC<ReferralAffiliateViewProps> = ({
   const [referrals, setReferrals] = useState<ReferralMember[]>(INITIAL_REFERRALS);
   const [selectedTierTab, setSelectedTierTab] = useState<1 | 2 | 3>(1);
 
-  const referralUrl = `https://quantiqprime.com/register?ref=${user.referralCode}`;
+  const baseUrl = typeof window !== 'undefined' && window.location.origin
+    ? window.location.origin
+    : 'https://quantiqprime.com';
+  const referralUrl = `${baseUrl}/?ref=${user.referralCode || '505031'}`;
 
   const handleCopyLink = () => {
     safeCopyText(referralUrl);

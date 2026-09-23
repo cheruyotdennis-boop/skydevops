@@ -153,12 +153,12 @@ export const InvestModal: React.FC<InvestModalProps> = ({
             </div>
           </div>
 
-          {/* Lock Terms Card */}
+          {/* 24-Hour Yield Cycle Terms Card */}
           <div className="p-3.5 rounded-2xl bg-amber-950/20 border border-amber-500/30 flex items-start gap-2.5 text-slate-300">
-            <Lock className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+            <Coins className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
             <div className="text-[11px] leading-relaxed">
-              <span className="text-amber-300 font-bold block">🔒 Balance Locked Until Maturity</span>
-              Your principal of <b>Ksh {investAmount.toLocaleString()}</b> will be locked in trading contracts for <b>{plan.durationDays} days</b> until <b>{maturityDateStr}</b>. Daily earnings (+Ksh {dailyYield.toLocaleString()} / day) are paid into your wallet every 24h, and the principal unlocks automatically on maturity.
+              <span className="text-amber-300 font-bold block">⚡ 24-Hour Yield & Liquidity Cycle</span>
+              Your allocation of <b>Ksh {investAmount.toLocaleString()}</b> generates automated daily earnings (+Ksh {dailyYield.toLocaleString()} / day). Returns are paid into your wallet every 24h, and you are eligible to withdraw earnings and capital after every 24 hours.
             </div>
           </div>
 
