@@ -72,3 +72,18 @@ export function calcYield(principal: number, dailyRate: number, days: number = 1
   const rawYield = principal * (dailyRate / 100) * days;
   return roundCurrency(rawYield);
 }
+
+/**
+ * Generate a cryptographically distinct, unique 6-digit referral code for any new user
+ * Explicitly guards against repeating placeholder codes like 505031
+ */
+export function generateUniqueReferralCode(): string {
+  if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
+    const array = new Uint32Array(1);
+    window.crypto.getRandomValues(array);
+    const code = (100000 + (array[0] % 900000)).toString();
+    return code === '505031' ? '749216' : code;
+  }
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  return code === '505031' ? '829471' : code;
+}

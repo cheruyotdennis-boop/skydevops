@@ -16,15 +16,15 @@ export const DEFAULT_CONTACTS: PlatformContacts = {
 };
 
 export const INITIAL_USER: UserProfile = {
-  id: 'usr_001',
+  id: 'usr_investor_default',
   fullName: 'Investor Account',
   username: 'investor',
   email: 'investor@quantiqprime.com',
   phone: '+254 700 000 000',
   mpesaNumber: '0700000000',
   country: 'Kenya',
-  referralCode: '505031',
-  referredBy: 'Quantiq Partner #505031',
+  referralCode: '839214',
+  referredBy: 'Executive VIP Sponsor',
   joinedDate: '2026-01-15',
   tier: 'Bronze',
   kycStatus: 'Verified',
@@ -186,7 +186,7 @@ export const INITIAL_NOTIFICATIONS: NotificationItem[] = [
 export const CRYPTO_RATES = [
   { pair: 'DAILY ROI', price: '7.50% FIXED', change: 'Automated', positive: true },
   { pair: 'REFERRAL BONUS', price: '10.00% DIRECT', change: 'On Stake', positive: true },
-  { pair: 'M-PESA PAYBILL', price: '505031', change: 'Instant KES', positive: true },
+  { pair: 'LIPA NA M-PESA', price: 'INSTANT STK', change: 'KES Direct', positive: true },
   { pair: 'USDT / KES', price: 'Ksh 130.00', change: '+0.25%', positive: true },
   { pair: 'USD / KES', price: 'Ksh 129.50', change: '+0.15%', positive: true },
   { pair: 'BTC / KES', price: 'Ksh 12,480,000', change: '+4.12%', positive: true },

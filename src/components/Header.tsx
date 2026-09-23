@@ -62,12 +62,11 @@ export const Header: React.FC<HeaderProps> = ({
 
   const isUserAdmin = Boolean(
     isAuthenticated && (
-      user.isAdmin || 
+      user.isAdmin === true || 
       user.role === 'admin' || 
       user.role === 'superadmin' || 
-      user.id === 'usr_001' || 
-      user.email?.toLowerCase() === 'admin@quantiqprime.com' ||
-      user.email?.toLowerCase() === 'cheruyot.dennis@student.moringaschool.com'
+      user.email?.toLowerCase().trim() === 'admin@quantiqprime.com' ||
+      user.email?.toLowerCase().trim() === 'cheruyot.dennis@student.moringaschool.com'
     )
   );
 
@@ -238,10 +237,10 @@ export const Header: React.FC<HeaderProps> = ({
                     id="header-mpesa-btn"
                     onClick={onOpenMpesa}
                     className="flex items-center gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-extrabold px-3.5 py-2 rounded-xl transition-all shadow-md shadow-emerald-600/20 active:scale-95 cursor-pointer"
-                    title="Lipa Na M-PESA Deposit & Withdrawal"
+                    title="Lipa Na M-PESA Direct Deposit & Withdrawal"
                   >
                     <span className="font-mono text-[10px] font-black bg-white text-emerald-900 px-1 py-0.2 rounded">M-PESA</span>
-                    <span className="hidden sm:inline">KES Paybill</span>
+                    <span className="hidden sm:inline">Instant KES</span>
                   </button>
 
                   <button

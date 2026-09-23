@@ -43,21 +43,24 @@ import { MobileBottomNav } from './components/MobileBottomNav';
 import { AdminCustomerDatabase } from './components/AdminCustomerDatabase';
 import { Lock, PhoneCall, MessageSquare } from 'lucide-react';
 import { safeGetItem, safeSetItem } from './utils/storage';
-import { roundCurrency } from './utils/security';
+import { roundCurrency, generateUniqueReferralCode } from './utils/security';
 import { isDeviceRecognized, registerCurrentDevice, generateDevice2faOtp } from './utils/deviceSecurity';
 
 import bgWallpaper from './assets/images/quantiq_prime_bg_1787826829164.jpg';
 
 export default function App() {
-  // Read referral code from window query parameter if present (e.g. ?ref=505031)
-  const [initialRefCode, setInitialRefCode] = useState('505031');
+  // Read referral code from window query parameter if present (e.g. ?ref=749216)
+  const [initialRefCode, setInitialRefCode] = useState(() => generateUniqueReferralCode());
 
   useEffect(() => {
     try {
       if (typeof window !== 'undefined' && window.location && typeof window.location.search === 'string') {
         const match = window.location.search.match(/[?&]ref=([^&]+)/);
         if (match && match[1]) {
-          setInitialRefCode(decodeURIComponent(match[1]));
+          const parsed = decodeURIComponent(match[1]);
+          if (parsed && parsed !== '505031') {
+            setInitialRefCode(parsed);
+          }
         }
       }
     } catch {
@@ -67,18 +70,7 @@ export default function App() {
 
   // Saved Profiles List for multi-profile switching
   const [savedProfiles, setSavedProfiles] = useState<UserProfile[]>(() => {
-    const loaded = safeGetItem<UserProfile[]>('quantiq_saved_profiles', [INITIAL_USER]);
-    return loaded.map(p => {
-      if (p.email?.toLowerCase() === 'cheruyot.dennis@student.moringaschool.com') {
-        return {
-          ...p,
-          fullName: 'Executive Member',
-          username: 'VIPInvestor',
-          email: 'investor@quantiqprime.com'
-        };
-      }
-      return p;
-    });
+    return safeGetItem<UserProfile[]>('quantiq_saved_profiles', [INITIAL_USER]);
   });
 
   // State with LocalStorage persistence - default to false for new public visitors on first load
@@ -92,12 +84,11 @@ export default function App() {
 
   const [user, setUser] = useState<UserProfile>(() => {
     const loaded = safeGetItem<UserProfile>('quantiq_user', INITIAL_USER);
-    if (loaded.email?.toLowerCase() === 'cheruyot.dennis@student.moringaschool.com') {
+    if (loaded && (loaded.referralCode === '505031' || !loaded.referralCode)) {
       return {
         ...loaded,
-        fullName: 'Executive Member',
-        username: 'VIPInvestor',
-        email: 'investor@quantiqprime.com'
+        referralCode: generateUniqueReferralCode(),
+        referredBy: loaded.referredBy?.includes('505031') ? 'Quantiq Executive Sponsor' : loaded.referredBy
       };
     }
     return loaded;
@@ -158,12 +149,11 @@ export default function App() {
   // Global Admin Access Verification
   const isUserAdmin = Boolean(
     isAuthenticated && (
-      user.isAdmin || 
+      user.isAdmin === true || 
       user.role === 'admin' || 
       user.role === 'superadmin' || 
-      user.id === 'usr_001' || 
-      user.email?.toLowerCase() === 'admin@quantiqprime.com' ||
-      user.email?.toLowerCase() === 'cheruyot.dennis@student.moringaschool.com'
+      user.email?.toLowerCase().trim() === 'admin@quantiqprime.com' ||
+      user.email?.toLowerCase().trim() === 'cheruyot.dennis@student.moringaschool.com'
     )
   );
   const [isDepositOpen, setIsDepositOpen] = useState<boolean>(false);
@@ -261,8 +251,11 @@ export default function App() {
     const isMasterAdmin = 
       userData.email?.toLowerCase() === 'admin@quantiqprime.com' ||
       userData.email?.toLowerCase() === 'cheruyot.dennis@student.moringaschool.com' || 
-      userData.id === 'usr_001' ||
       userData.role === 'superadmin';
+
+    const cleanReferralCode = (!userData.referralCode || userData.referralCode === '505031')
+      ? generateUniqueReferralCode()
+      : userData.referralCode;
 
     const fullUser: UserProfile = {
       id: userData.id || `usr_${Date.now()}`,
@@ -272,8 +265,8 @@ export default function App() {
       phone: userData.phone || '+254 712 345 678',
       mpesaNumber: userData.mpesaNumber || '0712345678',
       country: userData.country || 'Kenya',
-      referralCode: userData.referralCode || '505031',
-      referredBy: userData.referredBy || 'Sponsor #505031',
+      referralCode: cleanReferralCode,
+      referredBy: userData.referredBy && !userData.referredBy.includes('505031') ? userData.referredBy : 'Quantiq Executive Sponsor',
       joinedDate: userData.joinedDate || new Date().toISOString().split('T')[0],
       tier: userData.tier || 'Gold VIP',
       kycStatus: userData.kycStatus || 'Verified',
@@ -351,6 +344,10 @@ export default function App() {
   };
 
   const handleCreateProfile = (data: ProfileCreationData) => {
+    const finalRefCode = (!data.referralCode || data.referralCode === '505031')
+      ? generateUniqueReferralCode()
+      : data.referralCode;
+
     const newUser: UserProfile = {
       id: `usr_${Date.now()}`,
       fullName: data.fullName,
@@ -359,8 +356,8 @@ export default function App() {
       phone: data.phone || '+254 712 345 678',
       mpesaNumber: data.mpesaNumber || '0712345678',
       country: data.country || 'Kenya',
-      referralCode: data.referralCode || '505031',
-      referredBy: `Sponsor #${data.referralCode || '505031'}`,
+      referralCode: finalRefCode,
+      referredBy: `Executive Sponsor`,
       joinedDate: new Date().toISOString().split('T')[0],
       tier: (data.initialDepositUSD || 0) >= 10000 || (data.initialDepositKES || 0) >= 200000 ? 'Platinum (VIP)' : (data.initialDepositUSD || 0) >= 2500 || (data.initialDepositKES || 0) >= 100000 ? 'Gold' : (data.initialDepositUSD || 0) >= 500 || (data.initialDepositKES || 0) >= 30000 ? 'Silver' : 'Bronze',
       kycStatus: 'Verified',
@@ -974,7 +971,7 @@ export default function App() {
               onClick={() => setIsMpesaOpen(true)}
               className="text-emerald-400 hover:text-emerald-300 font-bold cursor-pointer"
             >
-              Lipa Na M-PESA (505031)
+              Lipa Na M-PESA Direct
             </button>
           </div>
           <div className="text-center md:text-right text-slate-500 text-[11px]">

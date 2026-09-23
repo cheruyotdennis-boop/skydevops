@@ -54,7 +54,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({
   // Receiving Deposit Addresses (Two official customer deposit addresses: USDT BEP-20 and BTC)
   const depositAddresses: Record<string, { address: string; network: string; memo?: string }> = {
     KES_MPESA: {
-      address: `Paybill: ${contacts?.mpesaPaybill || '505031'} | Acc: VIP-QP`,
+      address: `Lipa Na M-PESA STK Push (Online Automation)`,
       network: 'Safaricom M-PESA'
     },
     USDT_BEP20: {
@@ -159,7 +159,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({
                 <Smartphone className="w-5 h-5 text-emerald-400 shrink-0" />
                 <div>
                   <div className="font-bold text-white">Kenya Lipa Na M-PESA Direct STK</div>
-                  <div className="text-[11px] text-emerald-300">Paybill 505031 • Instant Auto Crediting</div>
+                  <div className="text-[11px] text-emerald-300">Instant Phone PIN Prompt • Auto-Credited</div>
                 </div>
               </div>
               <button
@@ -182,7 +182,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({
               {[
                 { id: 'USDT_BEP20', label: 'USDT (BEP-20)', sub: 'BNB Smart Chain • Low Fee', icon: '⚡' },
                 { id: 'BTC', label: 'Bitcoin (BTC)', sub: 'Native Bitcoin Network', icon: '₿' },
-                { id: 'KES_MPESA', label: 'M-PESA (KES)', sub: 'Paybill 505031 Instant', icon: '📱' }
+                { id: 'KES_MPESA', label: 'M-PESA (KES)', sub: 'Direct Safaricom STK', icon: '📱' }
               ].map((coin) => (
                 <button
                   key={coin.id}

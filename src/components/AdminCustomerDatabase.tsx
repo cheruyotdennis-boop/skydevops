@@ -893,7 +893,7 @@ export const AdminCustomerDatabase: React.FC<AdminCustomerDatabaseProps> = ({
                     <span>Live Daraja STK Push Settlement Stream</span>
                   </h3>
                   <p className="text-xs text-slate-400">
-                    Lipa Na M-PESA Official Paybill: <strong className="text-amber-400">505031</strong> (Till Placeholder: 1234)
+                    Lipa Na M-PESA Direct Daraja STK Push & Settlement Gateway (Online)
                   </p>
                 </div>
                 <span className="text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-1 rounded-full font-mono">

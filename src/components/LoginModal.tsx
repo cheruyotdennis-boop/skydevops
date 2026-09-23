@@ -17,6 +17,7 @@ import {
 import { UserProfile } from '../types';
 import { ProfileAvatar } from './ProfileAvatar';
 import { api } from '../services/api';
+import { generateUniqueReferralCode } from '../utils/security';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -97,7 +98,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             onLoginSuccess(matched);
           } else {
             const isPhone = /^[0-9+ ]{8,}$/.test(cleanId);
-            const autoRefCode = Math.floor(100000 + Math.random() * 900000).toString();
+            const autoRefCode = generateUniqueReferralCode();
 
             onLoginSuccess({
               fullName: cleanId.includes('@') ? cleanId.split('@')[0] : cleanId,
@@ -107,7 +108,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               mpesaNumber: isPhone ? cleanId : '0712345678',
               country: 'Kenya',
               referralCode: autoRefCode,
-              referredBy: 'Quantiq Partner #505031',
+              referredBy: 'Quantiq Executive Sponsor',
               joinedDate: new Date().toISOString().split('T')[0],
               tier: 'Gold VIP',
               kycStatus: 'Verified',

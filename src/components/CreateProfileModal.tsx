@@ -19,6 +19,7 @@ import {
   Crown
 } from 'lucide-react';
 import { triggerConfetti } from '../utils/confetti';
+import { generateUniqueReferralCode } from '../utils/security';
 import { ProfileCreationData } from '../types';
 import { ProfileAvatar } from './ProfileAvatar';
 import luxuryAvatarImg from '../assets/images/luxury_profile_avatar_1787995685280.jpg';
@@ -46,7 +47,7 @@ export const CreateProfileModal: React.FC<CreateProfileModalProps> = ({
   onClose,
   onCreateProfile,
   onOpenLogin,
-  defaultReferralCode = '505031'
+  defaultReferralCode
 }) => {
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
@@ -56,7 +57,7 @@ export const CreateProfileModal: React.FC<CreateProfileModalProps> = ({
   const [country, setCountry] = useState('Kenya');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [referralCode, setReferralCode] = useState(defaultReferralCode);
+  const [referralCode, setReferralCode] = useState(defaultReferralCode && defaultReferralCode !== '505031' ? defaultReferralCode : '');
   const [selectedAvatar, setSelectedAvatar] = useState(AVATAR_OPTIONS[0].url);
   const [walletAddress, setWalletAddress] = useState('');
   const [initialDeposit, setInitialDeposit] = useState<number>(50000);
@@ -91,7 +92,7 @@ export const CreateProfileModal: React.FC<CreateProfileModalProps> = ({
 
     setIsSubmitting(true);
 
-    const generatedRefCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const generatedRefCode = generateUniqueReferralCode();
     const finalUsername = username.trim() || email.split('@')[0].toLowerCase();
     const finalWallet = walletAddress.trim() || `T${Math.random().toString(36).substring(2, 12).toUpperCase()}x7Y9k`;
 
@@ -332,7 +333,7 @@ export const CreateProfileModal: React.FC<CreateProfileModalProps> = ({
                 type="text"
                 value={referralCode}
                 onChange={(e) => setReferralCode(e.target.value)}
-                placeholder="505031"
+                placeholder="e.g. 748291 (Optional)"
                 className="w-full px-3 py-2 bg-[#07090E] border border-slate-700 rounded-xl text-amber-400 font-mono font-bold focus:outline-none focus:border-amber-500"
               />
             </div>

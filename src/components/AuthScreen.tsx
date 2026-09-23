@@ -21,6 +21,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { triggerConfetti } from '../utils/confetti';
+import { generateUniqueReferralCode } from '../utils/security';
 import { UserProfile, ProfileCreationData, InvestmentPlan } from '../types';
 import { QuantiqLogo } from './QuantiqLogo';
 import { ProfileAvatar } from './ProfileAvatar';
@@ -48,7 +49,7 @@ const AVATAR_PRESETS = [
 
 export const AuthScreen: React.FC<AuthScreenProps> = ({
   onLoginSuccess,
-  defaultReferralCode = '505031',
+  defaultReferralCode,
   savedProfiles = [],
   initialMode = 'register',
   selectedPlan = null,
@@ -67,7 +68,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   const [country, setCountry] = useState('Kenya');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [referralCode, setReferralCode] = useState(defaultReferralCode);
+  const [referralCode, setReferralCode] = useState(defaultReferralCode && defaultReferralCode !== '505031' ? defaultReferralCode : '');
   const [selectedAvatar, setSelectedAvatar] = useState(AVATAR_PRESETS[0]);
   const [initialDeposit, setInitialDeposit] = useState<number>(selectedPlan ? selectedPlan.minDeposit : 50000);
   const [agreedTerms, setAgreedTerms] = useState(true);
@@ -137,8 +138,8 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
       triggerConfetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
       
       const cleanUsername = username.trim().toLowerCase().replace(/\s+/g, '');
-      const autoGenReferralCode = Math.floor(100000 + Math.random() * 900000).toString();
-      const sponsorRef = referralCode.trim() || '505031';
+      const autoGenReferralCode = generateUniqueReferralCode();
+      const sponsorRef = referralCode.trim();
 
       const createdUser: Partial<UserProfile> = {
         id: `usr_${Date.now()}`,
@@ -149,7 +150,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
         mpesaNumber: mpesaNumber.trim() || phone.trim() || '0712345678',
         country,
         referralCode: autoGenReferralCode,
-        referredBy: `Sponsor #${sponsorRef}`,
+        referredBy: sponsorRef ? `Sponsor #${sponsorRef}` : 'Quantiq Executive Sponsor',
         joinedDate: new Date().toISOString().split('T')[0],
         tier: initialDeposit >= 200000 ? 'Platinum (VIP)' : initialDeposit >= 100000 ? 'Gold' : initialDeposit >= 30000 ? 'Silver' : 'Bronze',
         kycStatus: 'Verified',
@@ -499,7 +500,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                       type="text"
                       value={referralCode}
                       onChange={(e) => setReferralCode(e.target.value)}
-                      placeholder="505031"
+                      placeholder="e.g. 748291 (Optional)"
                       className="w-full pl-9 pr-3 py-2.5 text-xs bg-amber-950/20 border border-amber-500/40 rounded-xl font-mono font-bold text-amber-300 focus:bg-[#131929] focus:outline-none"
                     />
                   </div>

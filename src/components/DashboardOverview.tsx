@@ -240,7 +240,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                   {user.tier} Account • Verified
                 </span>
                 <span className="text-xs text-slate-300">
-                  Sponsor ID: <b className="font-mono text-amber-400">#{user.referralCode}</b>
+                  Referral Code: <b className="font-mono text-amber-400">#{user.referralCode}</b>
                 </span>
               </div>
               
@@ -422,7 +422,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           </div>
           <div className="text-center">
             <div className="text-xs font-black text-white">Lipa Na M-PESA</div>
-            <div className="text-[10px] text-emerald-300">Paybill 505031</div>
+            <div className="text-[10px] text-emerald-300">Instant STK Prompt</div>
           </div>
         </button>
 
@@ -799,7 +799,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               </div>
               <div className="space-y-1.5 text-[11px]">
                 <div className="flex items-center justify-between text-slate-300">
-                  <span>M-Pesa STK (Paybill 505031):</span>
+                  <span>M-Pesa STK Gateway:</span>
                   <span className="font-mono text-emerald-400 font-bold">CONNECTED</span>
                 </div>
                 <div className="flex items-center justify-between text-slate-300">
