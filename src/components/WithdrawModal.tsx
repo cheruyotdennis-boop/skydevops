@@ -12,7 +12,8 @@ import {
   Wallet,
   ArrowRightLeft,
   Copy,
-  Check
+  Check,
+  Clock
 } from 'lucide-react';
 import { triggerConfetti } from '../utils/confetti';
 import { WalletState, UserProfile, PlatformContacts } from '../types';
@@ -319,11 +320,9 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({
               placeholder={
                 network === 'MPESA' 
                   ? 'e.g. 0712345678 or 2547...' 
-                  : network === 'TRC20'
-                    ? 'Paste your personal TRC-20 wallet (e.g. TY7Q6B92PqmK...)'
-                    : network === 'ERC20' || network === 'ETH'
-                      ? 'Paste your personal Ethereum address (e.g. 0x89aF4932...)'
-                      : 'Paste your personal Bitcoin address (e.g. bc1q...)'
+                  : network === 'BEP20'
+                    ? 'Paste your personal BEP-20 USDT wallet (e.g. 0x...)'
+                    : 'Paste your personal Bitcoin address (e.g. bc1q...)'
               }
               className="w-full px-3 py-2.5 bg-[#07090E] border border-slate-700 rounded-xl text-amber-300 font-mono text-xs focus:outline-none focus:border-amber-500"
             />

@@ -165,11 +165,13 @@ export default function App() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
   const [selectedPlanForInvest, setSelectedPlanForInvest] = useState<InvestmentPlan | null>(null);
 
-  // Device 2FA verification state for unrecognized devices
+  // Device 2FA verification state for login, registration, and unrecognized devices
   const [pending2faUser, setPending2faUser] = useState<{
     user: Partial<UserProfile>;
     initialDeposit?: number;
     expectedCode: string;
+    mode?: 'login' | 'register' | 'device';
+    channel?: 'phone' | 'email';
   } | null>(null);
 
   // Sync to localStorage
@@ -215,19 +217,31 @@ export default function App() {
   }, [notifications]);
 
   // Handlers
-  const handleLoginAttempt = (userData: Partial<UserProfile>, initialDeposit?: number) => {
-    // Check if current device is recognized for this user profile
+  const handleLoginAttempt = (
+    userData: Partial<UserProfile>, 
+    initialDeposit?: number,
+    options?: { mode?: 'login' | 'register' | 'device'; channel?: 'phone' | 'email'; skipOtp?: boolean }
+  ) => {
+    // If skipOtp is true (already verified in-modal), proceed to completeLogin
+    if (options?.skipOtp) {
+      completeLogin(userData, initialDeposit, true);
+      return;
+    }
+
     const recognized = isDeviceRecognized(userData);
 
-    if (!recognized) {
-      // Unrecognized / new device detected! Generate 2FA OTP and prompt Device2faModal
+    // If new device or explicit login/register mode, trigger 2FA modal
+    if (!recognized || options?.mode === 'login' || options?.mode === 'register') {
       const otp = generateDevice2faOtp();
       setPending2faUser({
         user: userData,
         initialDeposit,
-        expectedCode: otp
+        expectedCode: otp,
+        mode: options?.mode || (!recognized ? 'device' : 'login'),
+        channel: options?.channel || (userData.phone ? 'phone' : 'email')
       });
       setIsLoginModalOpen(false);
+      setIsCreateProfileOpen(false);
       return;
     }
 
@@ -765,9 +779,9 @@ export default function App() {
       <div className="min-h-screen bg-[#07090E] flex flex-col font-sans selection:bg-amber-500 selection:text-black relative">
         <AuthScreen 
           onLoginSuccess={(userData, initialDep) => {
-            handleLoginAttempt(userData, initialDep);
+            handleLoginAttempt(userData, initialDep, { skipOtp: true });
           }}
-          defaultReferralCode={initialRefCode || '505031'}
+          defaultReferralCode={initialRefCode && initialRefCode !== '505031' ? initialRefCode : ''}
           savedProfiles={savedProfiles}
           initialMode={authMode}
           selectedPlan={selectedPlanForAuth}
@@ -778,13 +792,30 @@ export default function App() {
           }}
           onOpenContacts={() => setIsContactsOpen(true)}
         />
+
+        {/* 2FA Verification Modal for Login & Registration */}
+        {pending2faUser && (
+          <Device2faModal
+            isOpen={Boolean(pending2faUser)}
+            user={pending2faUser.user}
+            expectedCode={pending2faUser.expectedCode}
+            mode={pending2faUser.mode || 'login'}
+            initialChannel={pending2faUser.channel || 'phone'}
+            onSuccess={handle2faSuccess}
+            onCancel={() => setPending2faUser(null)}
+            onResendCode={(channel) => {
+              const newOtp = generateDevice2faOtp();
+              setPending2faUser(prev => prev ? { ...prev, expectedCode: newOtp, channel } : null);
+              return newOtp;
+            }}
+          />
+        )}
+
         <ContactSupportModal
           isOpen={isContactsOpen}
           onClose={() => setIsContactsOpen(false)}
           contacts={contacts}
           user={user}
-          onUpdateContacts={(updated) => setContacts(updated)}
-          onUpdateUser={(updated) => setUser(prev => ({ ...prev, ...updated }))}
         />
       </div>
     );
@@ -1059,8 +1090,6 @@ export default function App() {
         onClose={() => setIsContactsOpen(false)}
         contacts={contacts}
         user={user}
-        onUpdateContacts={(updated) => setContacts(updated)}
-        onUpdateUser={(updated) => setUser(prev => ({ ...prev, ...updated }))}
       />
 
       <CreateProfileModal
@@ -1068,28 +1097,30 @@ export default function App() {
         onClose={() => setIsCreateProfileOpen(false)}
         onCreateProfile={handleCreateProfile}
         onOpenLogin={() => setIsLoginModalOpen(true)}
-        defaultReferralCode={user.referralCode || '505031'}
+        defaultReferralCode={user.referralCode && user.referralCode !== '505031' ? user.referralCode : ''}
       />
 
       <LoginModal
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
-        onLoginSuccess={handleLoginAttempt}
+        onLoginSuccess={(u) => handleLoginAttempt(u, undefined, { skipOtp: true })}
         onOpenCreateProfile={() => setIsCreateProfileOpen(true)}
         savedProfiles={savedProfiles}
       />
 
-      {/* 2FA Verification Modal for Unrecognized Devices */}
+      {/* 2FA Verification Modal for Login, Registration & Unrecognized Devices */}
       {pending2faUser && (
         <Device2faModal
           isOpen={Boolean(pending2faUser)}
           user={pending2faUser.user}
           expectedCode={pending2faUser.expectedCode}
+          mode={pending2faUser.mode || 'login'}
+          initialChannel={pending2faUser.channel || 'phone'}
           onSuccess={handle2faSuccess}
           onCancel={() => setPending2faUser(null)}
-          onResendCode={() => {
+          onResendCode={(channel) => {
             const newOtp = generateDevice2faOtp();
-            setPending2faUser(prev => prev ? { ...prev, expectedCode: newOtp } : null);
+            setPending2faUser(prev => prev ? { ...prev, expectedCode: newOtp, channel } : null);
             return newOtp;
           }}
         />

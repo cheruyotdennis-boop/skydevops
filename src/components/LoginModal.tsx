@@ -12,7 +12,8 @@ import {
   Sparkles, 
   ShieldCheck, 
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Smartphone
 } from 'lucide-react';
 import { UserProfile } from '../types';
 import { ProfileAvatar } from './ProfileAvatar';

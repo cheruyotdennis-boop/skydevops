@@ -14,7 +14,8 @@ import {
   Zap,
   LogIn,
   Unlock,
-  Check
+  Check,
+  Coins
 } from 'lucide-react';
 import { InvestmentPlan, ActiveInvestment, WalletState } from '../types';
 import { INVESTMENT_PLANS } from '../data/mockData';
