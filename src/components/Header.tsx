@@ -13,7 +13,8 @@ import {
   LogIn,
   UserPlus,
   ExternalLink,
-  ChevronDown
+  ChevronDown,
+  X
 } from 'lucide-react';
 import { UserProfile, WalletState, NotificationItem } from '../types';
 import { CRYPTO_RATES } from '../data/mockData';
@@ -277,41 +278,66 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <Bell className="w-4 h-4" />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-amber-500 text-slate-950 text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-md animate-pulse">
+                  <span className="absolute -top-1 -right-1 bg-amber-500 text-slate-950 text-[10px] font-black min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center shadow-md animate-pulse leading-none">
                     {unreadCount}
                   </span>
                 )}
               </button>
 
               {showNotifications && (
-                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-[#0B0F17] rounded-3xl shadow-2xl border border-amber-500/30 p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                  <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-                    <div className="font-bold text-sm text-white font-heading">Quantiq Alerts & Notifications</div>
-                    <span className="text-[11px] font-bold text-amber-400 bg-amber-950/60 border border-amber-500/30 px-2.5 py-0.5 rounded-full">
-                      {notifications.length} Updates
-                    </span>
+                <div className="fixed inset-x-3 top-16 sm:top-auto sm:inset-x-auto sm:absolute sm:right-0 sm:mt-2 sm:w-96 max-w-lg bg-[#0B0F17] rounded-3xl shadow-2xl border border-amber-500/30 p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-800 gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Bell className="w-4 h-4 text-amber-400 shrink-0" />
+                      <span className="font-bold text-sm text-white font-heading truncate">Alerts & Notifications</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className="text-[10px] font-bold text-amber-400 bg-amber-950/60 border border-amber-500/30 px-2 py-0.5 rounded-full whitespace-nowrap">
+                        {notifications.length} Updates
+                      </span>
+                      <button 
+                        onClick={() => setShowNotifications(false)}
+                        className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                        aria-label="Close notifications"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="mt-3 space-y-2.5 max-h-72 overflow-y-auto">
-                    {notifications.map((item) => (
-                      <div
-                        key={item.id}
-                        className={`p-3 rounded-2xl border text-xs transition-colors ${
-                          item.read
-                            ? 'bg-[#111622] border-slate-800/80 text-slate-400'
-                            : 'bg-amber-950/20 border-amber-500/30 text-slate-200'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="font-bold text-slate-100 flex items-center gap-1.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-                            {item.title}
-                          </div>
-                          <span className="text-[10px] text-slate-500 whitespace-nowrap">{item.timestamp}</span>
-                        </div>
-                        <p className="mt-1 text-slate-300 text-[11px] leading-relaxed">{item.message}</p>
+                  <div className="mt-3 space-y-2.5 max-h-80 overflow-y-auto pr-0.5">
+                    {notifications.length === 0 ? (
+                      <div className="py-8 text-center text-slate-400 text-xs">
+                        <Bell className="w-8 h-8 text-slate-600 mx-auto mb-2 opacity-50" />
+                        <p>No new notifications right now</p>
                       </div>
-                    ))}
+                    ) : (
+                      notifications.map((item) => (
+                        <div
+                          key={item.id}
+                          className={`p-3.5 rounded-2xl border text-xs transition-colors ${
+                            item.read
+                              ? 'bg-[#111622] border-slate-800/80 text-slate-400'
+                              : 'bg-amber-950/20 border-amber-500/30 text-slate-200'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-2.5 mb-1.5 min-w-0">
+                            <div className="flex items-start gap-2 min-w-0 flex-1">
+                              <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0 mt-1"></span>
+                              <span className="font-bold text-slate-100 text-xs break-words leading-tight">
+                                {item.title}
+                              </span>
+                            </div>
+                            <span className="text-[10px] text-slate-400 whitespace-nowrap shrink-0 font-mono mt-0.5">
+                              {item.timestamp}
+                            </span>
+                          </div>
+                          <p className="text-slate-300 text-[11px] leading-relaxed break-words pl-4">
+                            {item.message}
+                          </p>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               )}
