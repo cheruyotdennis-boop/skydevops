@@ -100,42 +100,41 @@ export const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
       onClick={onClick}
     >
       {/* Tier Ring Frame */}
-      <div className={`rounded-2xl overflow-hidden ${showTierRing ? getTierRingStyle(tier) : ''} ${sizeMap[size].container}`}>
-        <div className="w-full h-full bg-[#0E131F] rounded-[14px] flex items-center justify-center overflow-hidden relative">
+      <div className={`rounded-none overflow-hidden ${showTierRing ? getTierRingStyle(tier) : ''} ${sizeMap[size].container}`}>
+        <div className="w-full h-full bg-black rounded-none flex items-center justify-center overflow-hidden relative">
           
           {resolvedSrc ? (
             <img
               src={resolvedSrc}
               alt={name}
               referrerPolicy="no-referrer"
-              className="w-full h-full object-cover rounded-[13px]"
+              className="w-full h-full object-cover rounded-none"
               onError={(e) => {
                 // If image fails, fallback to styled initials
                 (e.target as HTMLElement).style.display = 'none';
               }}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-tr from-[#151A29] via-[#0E131F] to-[#1A2236] text-amber-300 font-black font-heading tracking-wider">
+            <div className="w-full h-full flex items-center justify-center bg-black text-amber-300 font-black font-heading tracking-wider border border-neutral-800">
               <span className={sizeMap[size].text}>{getInitials(name)}</span>
             </div>
           )}
 
           {/* Micro Ambient Shimmer */}
-          <div className="absolute inset-0 bg-gradient-to-tr from-amber-500/10 via-transparent to-white/10 pointer-events-none"></div>
+          <div className="absolute inset-0 bg-gradient-to-tr from-amber-500/10 via-transparent to-white/5 pointer-events-none"></div>
         </div>
       </div>
 
       {/* Online Status Dot */}
       {showOnlineStatus && !showKycBadge && (
         <span className={`absolute ${sizeMap[size].dot} flex items-center justify-center`}>
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-full w-full bg-emerald-500 border-2 border-[#07090E]"></span>
+          <span className="relative inline-flex rounded-none h-full w-full bg-emerald-500 border border-black"></span>
         </span>
       )}
 
       {/* KYC Verified / VIP Badge */}
       {showKycBadge && (
-        <div className={`absolute ${sizeMap[size].badge} bg-gradient-to-tr from-amber-500 to-yellow-400 text-slate-950 rounded-full flex items-center justify-center border-2 border-[#07090E] shadow-sm`}>
+        <div className={`absolute ${sizeMap[size].badge} bg-amber-500 text-slate-950 rounded-none flex items-center justify-center border border-black shadow-sm`}>
           <ShieldCheck className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
         </div>
       )}

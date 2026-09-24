@@ -8,15 +8,53 @@
 }
 
 @layer base {
-  body {
+  html, body {
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-    background-color: #07090E;
+    background-color: #000000;
     color: #F8FAFC;
   }
   
   h1, h2, h3, h4, h5, h6, .font-heading {
     font-family: 'Outfit', sans-serif;
   }
+}
+
+/* Sharp Institutional Square Architecture:
+   Make all buttons, boxes, cards, inputs, dialogs, badges, and avatars square */
+button,
+input,
+select,
+textarea,
+dialog,
+.rounded-none,
+.rounded-sm,
+.rounded,
+.rounded-md,
+.rounded-lg,
+.rounded-xl,
+.rounded-2xl,
+.rounded-3xl,
+.rounded-full,
+[class*="rounded-"] {
+  border-radius: 0px !important;
+}
+
+/* Pure Black Obsidian Theme Palette Overrides */
+.bg-\[\#07090E\],
+.bg-\[\#0B0F17\],
+.bg-\[\#0E131F\],
+.bg-\[\#06080E\],
+.bg-\[\#04060A\],
+.bg-\[\#080B11\],
+.bg-\[\#07090F\],
+.bg-\[\#111622\] {
+  background-color: #000000 !important;
+}
+
+.bg-\[\#0E131F\]\/90,
+.bg-\[\#07090F\]\/95,
+.bg-\[\#080B11\]\/95 {
+  background-color: rgba(5, 5, 5, 0.98) !important;
 }
 
 /* Universal Monospace & Currency / Numbers with Clean Dotless Zeros */
@@ -41,13 +79,13 @@ pre,
 }
 
 ::-webkit-scrollbar-track {
-  background: #0B0F17;
+  background: #000000;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #27272A;
-  border-radius: 9999px;
-  border: 1px solid rgba(212, 175, 55, 0.15);
+  background: #262626;
+  border-radius: 0px !important;
+  border: 1px solid rgba(212, 175, 55, 0.2);
 }
 
 ::-webkit-scrollbar-thumb:hover {

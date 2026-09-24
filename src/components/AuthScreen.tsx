@@ -248,18 +248,8 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#07090E] flex flex-col justify-center py-10 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div className="min-h-screen bg-black flex flex-col justify-center py-10 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       
-      {/* Background Wallpaper matching uploaded style */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-30 mix-blend-screen pointer-events-none scale-105"
-        style={{ backgroundImage: `url(${bgWallpaper})` }}
-      ></div>
-
-      {/* Luxury Golden Ambient Glows */}
-      <div className="absolute top-10 left-1/3 w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
-      <div className="absolute bottom-10 right-1/4 w-[400px] h-[400px] bg-yellow-600/10 rounded-full blur-3xl pointer-events-none"></div>
-
       <div className="sm:mx-auto sm:w-full sm:max-w-xl z-10">
         
         {/* Brand Header */}

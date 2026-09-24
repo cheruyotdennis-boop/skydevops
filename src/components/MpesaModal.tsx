@@ -177,7 +177,7 @@ export const MpesaModal: React.FC<MpesaModalProps> = ({
         {/* Success State */}
         {stkStatus === 'success' ? (
           <div className="py-8 text-center space-y-3">
-            <div className="w-16 h-16 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-500/40 flex items-center justify-center mx-auto animate-bounce">
+            <div className="w-16 h-16 rounded-none bg-emerald-950 text-emerald-400 border border-emerald-500/40 flex items-center justify-center mx-auto">
               <CheckCircle2 className="w-10 h-10" />
             </div>
             <h4 className="text-xl font-black text-white font-heading">

@@ -80,15 +80,14 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-[#080B11]/95 backdrop-blur-xl border-b border-amber-500/20 shadow-2xl">
+    <header className="sticky top-0 z-50 bg-black border-b border-neutral-800 shadow-2xl">
       
       {/* Live Market Ticker */}
-      <div className="bg-[#04060A] text-slate-300 text-xs py-1.5 px-4 overflow-x-auto whitespace-nowrap border-b border-slate-800/80 scrollbar-none">
+      <div className="bg-black text-slate-300 text-xs py-1.5 px-4 overflow-x-auto whitespace-nowrap border-b border-neutral-800 scrollbar-none">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-6">
           <div className="flex items-center gap-2 text-amber-400 font-bold shrink-0">
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+              <span className="inline-flex h-2 w-2 bg-amber-500"></span>
             </span>
             <span className="tracking-wider font-heading uppercase text-[11px]">QUANTIQ LIVE TERMINAL</span>
           </div>
@@ -105,14 +104,14 @@ export const Header: React.FC<HeaderProps> = ({
 
           <div className="hidden lg:flex items-center gap-2 text-slate-400 shrink-0">
             <span className="text-[11px]">Sponsor Ref:</span>
-            <span className="font-mono text-amber-400 font-bold bg-amber-950/40 border border-amber-500/30 px-2 py-0.5 rounded-md">#{user.referralCode}</span>
+            <span className="font-mono text-amber-400 font-bold bg-neutral-900 border border-neutral-700 px-2 py-0.5 rounded-none">#{user.referralCode}</span>
           </div>
         </div>
       </div>
 
       {/* Main Navbar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex items-center justify-between h-20 gap-2 sm:gap-4">
           
           {/* Quantiq Prime Brand Logo */}
           <div className="cursor-pointer shrink-0" onClick={() => setActiveTab('overview')}>
@@ -120,14 +119,14 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Nav Tabs */}
-          <nav className="hidden xl:flex items-center gap-1 bg-[#0E131F]/90 p-1.5 rounded-2xl border border-slate-800/90 shadow-inner">
+          <nav className="hidden 2xl:flex items-center gap-1 bg-neutral-950 p-1 border border-neutral-800">
             <button
               id="nav-overview"
               onClick={() => setActiveTab('overview')}
-              className={`px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+              className={`px-4 py-2 text-xs font-bold rounded-none transition-all cursor-pointer ${
                 activeTab === 'overview'
-                  ? 'bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 shadow-md shadow-amber-500/20'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
+                  ? 'bg-amber-500 text-slate-950 shadow-md font-black'
+                  : 'text-slate-300 hover:text-white hover:bg-neutral-900'
               }`}
             >
               Dashboard
@@ -135,10 +134,10 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               id="nav-investments"
               onClick={() => setActiveTab('investments')}
-              className={`px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+              className={`px-4 py-2 text-xs font-bold rounded-none transition-all cursor-pointer ${
                 activeTab === 'investments'
-                  ? 'bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 shadow-md shadow-amber-500/20'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
+                  ? 'bg-amber-500 text-slate-950 shadow-md font-black'
+                  : 'text-slate-300 hover:text-white hover:bg-neutral-900'
               }`}
             >
               Yield Portfolios
@@ -146,10 +145,10 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               id="nav-analytics"
               onClick={() => setActiveTab('analytics')}
-              className={`px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+              className={`px-4 py-2 text-xs font-bold rounded-none transition-all cursor-pointer ${
                 activeTab === 'analytics'
-                  ? 'bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 shadow-md shadow-amber-500/20'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
+                  ? 'bg-amber-500 text-slate-950 shadow-md font-black'
+                  : 'text-slate-300 hover:text-white hover:bg-neutral-900'
               }`}
             >
               Growth Charts
@@ -157,10 +156,10 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               id="nav-transactions"
               onClick={() => setActiveTab('transactions')}
-              className={`px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+              className={`px-4 py-2 text-xs font-bold rounded-none transition-all cursor-pointer ${
                 activeTab === 'transactions'
-                  ? 'bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 shadow-md shadow-amber-500/20'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
+                  ? 'bg-amber-500 text-slate-950 shadow-md font-black'
+                  : 'text-slate-300 hover:text-white hover:bg-neutral-900'
               }`}
             >
               Ledger
@@ -168,10 +167,10 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               id="nav-referrals"
               onClick={() => setActiveTab('referrals')}
-              className={`px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+              className={`px-4 py-2 text-xs font-bold rounded-none transition-all cursor-pointer ${
                 activeTab === 'referrals'
-                  ? 'bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 shadow-md shadow-amber-500/20'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
+                  ? 'bg-amber-500 text-slate-950 shadow-md font-black'
+                  : 'text-slate-300 hover:text-white hover:bg-neutral-900'
               }`}
             >
               Affiliates (10% Bonus)
@@ -180,28 +179,28 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 id="nav-database"
                 onClick={() => setActiveTab('database')}
-                className={`px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-4 py-2 text-xs font-bold rounded-none transition-all cursor-pointer flex items-center gap-1.5 ${
                   activeTab === 'database'
-                    ? 'bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 shadow-md shadow-amber-500/20 font-black'
+                    ? 'bg-amber-500 text-slate-950 shadow-md font-black'
                     : 'text-amber-400 hover:text-amber-300 hover:bg-amber-500/10'
                 }`}
               >
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span className="w-2 h-2 bg-emerald-400"></span>
                 <span>Client Database</span>
               </button>
             )}
           </nav>
 
           {/* User & Wallet Actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0 ml-auto">
             
             {!isAuthenticated ? (
               /* Public / Unauthenticated Navigation Buttons */
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2 sm:gap-2.5">
                 <button
                   id="header-login-btn"
                   onClick={onOpenLogin}
-                  className="flex items-center gap-1.5 bg-[#0E131F] hover:bg-slate-800 text-slate-100 border border-slate-700 hover:border-amber-500/50 text-xs font-bold px-4 py-2.5 rounded-xl transition-all active:scale-95 cursor-pointer shadow-md"
+                  className="flex items-center gap-1.5 bg-neutral-900 hover:bg-neutral-800 text-slate-100 border border-neutral-700 hover:border-amber-500 text-xs font-bold px-3 sm:px-4 py-2 sm:py-2.5 rounded-none transition-all active:scale-95 cursor-pointer shadow-md"
                 >
                   <LogIn className="w-4 h-4 text-amber-400" />
                   <span>Log In</span>
@@ -210,7 +209,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <button
                   id="header-register-btn"
                   onClick={onOpenRegister}
-                  className="flex items-center gap-1.5 bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 text-xs font-black px-4 py-2.5 rounded-xl transition-all shadow-md shadow-amber-500/20 active:scale-95 cursor-pointer"
+                  className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black px-3 sm:px-4 py-2 sm:py-2.5 rounded-none transition-all active:scale-95 cursor-pointer"
                 >
                   <UserPlus className="w-4 h-4" />
                   <span>Register</span>
@@ -220,8 +219,8 @@ export const Header: React.FC<HeaderProps> = ({
               /* Authenticated User & Wallet Navigation */
               <>
                 {/* Quick Balance Preview */}
-                <div className="hidden lg:flex items-center gap-2.5 bg-[#0E131F] border border-amber-500/30 rounded-2xl px-3.5 py-2 shadow-md shadow-amber-500/5">
-                  <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-600 to-yellow-400 text-slate-950 flex items-center justify-center shadow-xs">
+                <div className="hidden 2xl:flex items-center gap-2.5 bg-black border border-neutral-800 rounded-none px-3.5 py-2">
+                  <div className="w-8 h-8 rounded-none bg-amber-500 text-slate-950 flex items-center justify-center">
                     <Wallet className="w-4 h-4" />
                   </div>
                   <div className="text-left">
@@ -233,21 +232,21 @@ export const Header: React.FC<HeaderProps> = ({
                 </div>
 
                 {/* Quick Action Buttons */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2">
                   <button
                     id="header-mpesa-btn"
                     onClick={onOpenMpesa}
-                    className="flex items-center gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-extrabold px-3.5 py-2 rounded-xl transition-all shadow-md shadow-emerald-600/20 active:scale-95 cursor-pointer"
+                    className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold px-2.5 sm:px-3.5 py-2 rounded-none transition-all border border-emerald-500 active:scale-95 cursor-pointer"
                     title="Lipa Na M-PESA Direct Deposit & Withdrawal"
                   >
-                    <span className="font-mono text-[10px] font-black bg-white text-emerald-900 px-1 py-0.2 rounded">M-PESA</span>
-                    <span className="hidden sm:inline">Instant KES</span>
+                    <span className="font-mono text-[10px] font-black bg-white text-emerald-900 px-1 py-0.2 rounded-none">M-PESA</span>
+                    <span className="hidden md:inline">Instant KES</span>
                   </button>
 
                   <button
                     id="header-deposit-btn"
                     onClick={onOpenDeposit}
-                    className="flex items-center gap-1.5 bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 text-xs font-black px-3.5 py-2 rounded-xl transition-all shadow-md shadow-amber-500/20 active:scale-95 cursor-pointer"
+                    className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black px-2.5 sm:px-3.5 py-2 rounded-none transition-all active:scale-95 cursor-pointer"
                   >
                     <ArrowDownLeft className="w-4 h-4" />
                     <span className="hidden sm:inline">Deposit</span>
@@ -256,7 +255,7 @@ export const Header: React.FC<HeaderProps> = ({
                   <button
                     id="header-withdraw-btn"
                     onClick={onOpenWithdraw}
-                    className="hidden lg:flex items-center gap-1.5 bg-[#0E131F] hover:bg-slate-800 text-slate-100 border border-slate-700 hover:border-amber-500/40 text-xs font-bold px-3.5 py-2 rounded-xl transition-all active:scale-95 cursor-pointer"
+                    className="hidden xl:flex items-center gap-1.5 bg-neutral-900 hover:bg-neutral-800 text-slate-100 border border-neutral-700 hover:border-amber-500 text-xs font-bold px-3.5 py-2 rounded-none transition-all active:scale-95 cursor-pointer"
                   >
                     <ArrowUpRight className="w-4 h-4 text-amber-400" />
                     <span>Withdraw</span>
@@ -265,125 +264,132 @@ export const Header: React.FC<HeaderProps> = ({
               </>
             )}
 
-            {/* Notifications Dropdown */}
-            <div className="relative shrink-0">
-              <button
-                id="header-notifications-btn"
-                onClick={() => {
-                  setShowNotifications(!showNotifications);
-                  setShowProfileMenu(false);
-                }}
-                className="relative p-2.5 rounded-xl bg-[#0E131F] hover:bg-slate-800 border border-slate-800 text-slate-300 transition-colors cursor-pointer shrink-0"
-                aria-label="Notifications"
-              >
-                <Bell className="w-4 h-4" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-amber-500 text-slate-950 text-[10px] font-black min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center shadow-md animate-pulse leading-none pointer-events-none">
-                    {unreadCount}
-                  </span>
-                )}
-              </button>
+            {/* Notification & User Actions Group with Protected High Z-Index and Zero Shrink */}
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 relative z-30">
+              {/* Notifications Dropdown */}
+              <div className="relative shrink-0">
+                <button
+                  id="header-notifications-btn"
+                  onClick={() => {
+                    setShowNotifications(!showNotifications);
+                    setShowProfileMenu(false);
+                  }}
+                  className="relative z-30 p-2 sm:p-2.5 rounded-none bg-black hover:bg-neutral-900 border border-neutral-800 text-slate-300 transition-colors cursor-pointer shrink-0 flex items-center justify-center"
+                  aria-label="Notifications"
+                >
+                  <Bell className="w-4 h-4 text-slate-200" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-amber-500 text-slate-950 text-[10px] font-black min-w-[18px] h-[18px] px-1 rounded-none flex items-center justify-center pointer-events-none z-40">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
 
-              {showNotifications && (
-                <>
-                  {/* Invisible backdrop to dismiss when clicking outside */}
-                  <div 
-                    className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]" 
-                    onClick={() => setShowNotifications(false)} 
-                  />
+                {showNotifications && (
+                  <>
+                    {/* Invisible / subtle backdrop to dismiss when clicking outside */}
+                    <div 
+                      className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-[1px]" 
+                      onClick={() => setShowNotifications(false)} 
+                    />
 
-                  {/* Dropdown Menu positioned strictly BELOW the button */}
-                  <div className="absolute right-0 top-full mt-3 w-80 sm:w-96 max-w-[calc(100vw-1.5rem)] bg-[#0B0F17] rounded-3xl shadow-2xl border border-amber-500/40 p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                    <div className="flex items-center justify-between pb-3 border-b border-slate-800 gap-2">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
-                          <Bell className="w-3.5 h-3.5" />
-                        </div>
-                        <span className="font-bold text-sm text-white font-heading truncate">Alerts & Updates</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <span className="text-[10px] font-bold text-amber-400 bg-amber-950/60 border border-amber-500/30 px-2 py-0.5 rounded-full whitespace-nowrap">
-                          {notifications.length} Updates
-                        </span>
-                        <button 
-                          onClick={() => setShowNotifications(false)}
-                          className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
-                          aria-label="Close notifications"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="mt-3 space-y-2.5 max-h-80 overflow-y-auto pr-0.5">
-                      {notifications.length === 0 ? (
-                        <div className="py-8 text-center text-slate-400 text-xs">
-                          <Bell className="w-8 h-8 text-slate-600 mx-auto mb-2 opacity-50" />
-                          <p>No new notifications right now</p>
-                        </div>
-                      ) : (
-                        notifications.map((item) => (
-                          <div
-                            key={item.id}
-                            className={`p-3.5 rounded-2xl border text-xs transition-colors ${
-                              item.read
-                                ? 'bg-[#111622] border-slate-800/80 text-slate-400'
-                                : 'bg-amber-950/20 border-amber-500/30 text-slate-200'
-                            }`}
-                          >
-                            <div className="flex items-start justify-between gap-3 min-w-0">
-                              <div className="flex items-start gap-2.5 min-w-0 flex-1">
-                                <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0 mt-1.5"></span>
-                                <div className="min-w-0 flex-1">
-                                  <h4 className="font-bold text-slate-100 text-xs break-words leading-snug">
-                                    {item.title}
-                                  </h4>
-                                  <p className="mt-1 text-slate-300 text-[11px] leading-relaxed break-words">
-                                    {item.message}
-                                  </p>
-                                </div>
-                              </div>
-                              <span className="text-[10px] text-slate-400 whitespace-nowrap shrink-0 font-mono mt-0.5">
-                                {item.timestamp}
-                              </span>
-                            </div>
+                    {/* Dropdown Menu positioned strictly with highest z-index above everything */}
+                    <div className="fixed inset-x-3 top-20 sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2.5 w-auto sm:w-96 max-w-[calc(100vw-1rem)] bg-black rounded-none shadow-[0_20px_60px_rgba(0,0,0,0.95)] border-2 border-neutral-700 p-4 z-[105] animate-in fade-in duration-150">
+                      <div className="flex items-center justify-between pb-3 border-b border-neutral-800 gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-7 h-7 rounded-none bg-neutral-900 border border-neutral-700 flex items-center justify-center text-amber-400 shrink-0">
+                            <Bell className="w-3.5 h-3.5" />
                           </div>
-                        ))
-                      )}
+                          <span className="font-bold text-sm text-white font-heading truncate">Alerts & Updates</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-[10px] font-bold text-amber-400 bg-neutral-900 border border-neutral-700 px-2 py-0.5 rounded-none whitespace-nowrap">
+                            {notifications.length} Updates
+                          </span>
+                          <button 
+                            onClick={() => setShowNotifications(false)}
+                            className="p-1 rounded-none text-slate-400 hover:text-white hover:bg-neutral-900 transition-colors cursor-pointer"
+                            aria-label="Close notifications"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 space-y-2.5 max-h-80 overflow-y-auto pr-0.5">
+                        {notifications.length === 0 ? (
+                          <div className="py-8 text-center text-slate-400 text-xs">
+                            <Bell className="w-8 h-8 text-slate-600 mx-auto mb-2 opacity-50" />
+                            <p>No new notifications right now</p>
+                          </div>
+                        ) : (
+                          notifications.map((item) => (
+                            <div
+                              key={item.id}
+                              className={`p-3.5 rounded-none border text-xs transition-colors ${
+                                item.read
+                                  ? 'bg-neutral-950 border-neutral-900 text-slate-400'
+                                  : 'bg-black border-neutral-700 text-slate-200'
+                              }`}
+                            >
+                              <div className="flex items-start justify-between gap-3 min-w-0">
+                                <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                                  <span className="w-2 h-2 bg-amber-400 shrink-0 mt-1.5"></span>
+                                  <div className="min-w-0 flex-1">
+                                    <h4 className="font-bold text-slate-100 text-xs break-words leading-snug">
+                                      {item.title}
+                                    </h4>
+                                    <p className="mt-1 text-slate-300 text-[11px] leading-relaxed break-words">
+                                      {item.message}
+                                    </p>
+                                  </div>
+                                </div>
+                                <span className="text-[10px] text-slate-400 whitespace-nowrap shrink-0 font-mono mt-0.5">
+                                  {item.timestamp}
+                                </span>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
                     </div>
+                  </>
+                )}
+              </div>
+
+              {/* Profile Dropdown */}
+              <div className="relative shrink-0">
+                <button
+                  id="header-profile-menu-btn"
+                  onClick={() => {
+                    setShowProfileMenu(!showProfileMenu);
+                    setShowNotifications(false);
+                  }}
+                  className="flex items-center gap-2 p-1.5 rounded-none hover:bg-neutral-900 transition-colors border border-transparent hover:border-neutral-800 cursor-pointer shrink-0"
+                >
+                  <ProfileAvatar
+                    src={user.avatar}
+                    name={user.fullName}
+                    tier={user.tier}
+                    size="sm"
+                    showOnlineStatus={true}
+                    showTierRing={true}
+                  />
+                  <div className="hidden xl:block text-left">
+                    <div className="text-xs font-bold text-slate-100 leading-none">{user.username}</div>
+                    <div className="text-[10px] text-amber-400 font-extrabold">{user.tier}</div>
                   </div>
-                </>
-              )}
-            </div>
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 hidden xl:block" />
+                </button>
 
-            {/* Profile Dropdown */}
-            <div className="relative shrink-0">
-              <button
-                id="header-profile-menu-btn"
-                onClick={() => {
-                  setShowProfileMenu(!showProfileMenu);
-                  setShowNotifications(false);
-                }}
-                className="flex items-center gap-2 p-1.5 rounded-2xl hover:bg-slate-800/60 transition-colors border border-transparent hover:border-slate-700 cursor-pointer shrink-0"
-              >
-                <ProfileAvatar
-                  src={user.avatar}
-                  name={user.fullName}
-                  tier={user.tier}
-                  size="sm"
-                  showOnlineStatus={true}
-                  showTierRing={true}
-                />
-                <div className="hidden xl:block text-left">
-                  <div className="text-xs font-bold text-slate-100 leading-none">{user.username}</div>
-                  <div className="text-[10px] text-amber-400 font-extrabold">{user.tier}</div>
-                </div>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400 hidden xl:block" />
-              </button>
-
-              {showProfileMenu && (
-                <div className="absolute right-0 mt-2 w-72 bg-[#0B0F17] rounded-3xl shadow-2xl border border-amber-500/30 p-3.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                  <div className="p-2 border-b border-slate-800 flex items-center gap-3">
+                {showProfileMenu && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-[1px]" 
+                      onClick={() => setShowProfileMenu(false)} 
+                    />
+                    <div className="fixed inset-x-3 top-20 sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2.5 w-auto sm:w-72 bg-black rounded-none shadow-[0_20px_60px_rgba(0,0,0,0.95)] border-2 border-neutral-700 p-3.5 z-[105] animate-in fade-in duration-150">
+                  <div className="p-2 border-b border-neutral-800 flex items-center gap-3">
                     <ProfileAvatar
                       src={user.avatar}
                       name={user.fullName}
@@ -524,58 +530,60 @@ export const Header: React.FC<HeaderProps> = ({
                     </button>
                   </div>
                 </div>
-              )}
+              </>
+            )}
+              </div>
             </div>
 
           </div>
         </div>
 
         {/* Mobile Navigation Tabs */}
-        <div className="flex md:hidden items-center justify-between overflow-x-auto py-2.5 border-t border-slate-800 gap-2 scrollbar-none text-xs">
+        <div className="flex md:hidden items-center justify-between overflow-x-auto py-2.5 border-t border-neutral-800 gap-2 scrollbar-none text-xs bg-black relative z-10">
           <button
             onClick={() => setActiveTab('overview')}
-            className={`px-3 py-1.5 font-bold rounded-xl shrink-0 ${
-              activeTab === 'overview' ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-black' : 'bg-[#0E131F] text-slate-300'
+            className={`px-3 py-1.5 font-bold rounded-none shrink-0 ${
+              activeTab === 'overview' ? 'bg-amber-500 text-slate-950 font-black' : 'bg-neutral-900 text-slate-300'
             }`}
           >
             Dashboard
           </button>
           <button
             onClick={() => setActiveTab('investments')}
-            className={`px-3 py-1.5 font-bold rounded-xl shrink-0 ${
-              activeTab === 'investments' ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-black' : 'bg-[#0E131F] text-slate-300'
+            className={`px-3 py-1.5 font-bold rounded-none shrink-0 ${
+              activeTab === 'investments' ? 'bg-amber-500 text-slate-950 font-black' : 'bg-neutral-900 text-slate-300'
             }`}
           >
             Yields
           </button>
           <button
             onClick={() => setActiveTab('analytics')}
-            className={`px-3 py-1.5 font-bold rounded-xl shrink-0 ${
-              activeTab === 'analytics' ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-black' : 'bg-[#0E131F] text-slate-300'
+            className={`px-3 py-1.5 font-bold rounded-none shrink-0 ${
+              activeTab === 'analytics' ? 'bg-amber-500 text-slate-950 font-black' : 'bg-neutral-900 text-slate-300'
             }`}
           >
             Growth
           </button>
           <button
             onClick={() => setActiveTab('transactions')}
-            className={`px-3 py-1.5 font-bold rounded-xl shrink-0 ${
-              activeTab === 'transactions' ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-black' : 'bg-[#0E131F] text-slate-300'
+            className={`px-3 py-1.5 font-bold rounded-none shrink-0 ${
+              activeTab === 'transactions' ? 'bg-amber-500 text-slate-950 font-black' : 'bg-neutral-900 text-slate-300'
             }`}
           >
             Ledger
           </button>
           <button
             onClick={() => setActiveTab('referrals')}
-            className={`px-3 py-1.5 font-bold rounded-xl shrink-0 ${
-              activeTab === 'referrals' ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-black' : 'bg-[#0E131F] text-slate-300'
+            className={`px-3 py-1.5 font-bold rounded-none shrink-0 ${
+              activeTab === 'referrals' ? 'bg-amber-500 text-slate-950 font-black' : 'bg-neutral-900 text-slate-300'
             }`}
           >
             Ref #{user.referralCode}
           </button>
           <button
             onClick={() => setActiveTab('security')}
-            className={`px-3 py-1.5 font-bold rounded-xl shrink-0 ${
-              activeTab === 'security' ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-black' : 'bg-[#0E131F] text-slate-300'
+            className={`px-3 py-1.5 font-bold rounded-none shrink-0 ${
+              activeTab === 'security' ? 'bg-amber-500 text-slate-950 font-black' : 'bg-neutral-900 text-slate-300'
             }`}
           >
             Security
@@ -583,11 +591,11 @@ export const Header: React.FC<HeaderProps> = ({
           {isUserAdmin && (
             <button
               onClick={() => setActiveTab('database')}
-              className={`px-3 py-1.5 font-bold rounded-xl shrink-0 flex items-center gap-1.5 ${
-                activeTab === 'database' ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-black' : 'bg-[#0E131F] text-amber-400 border border-amber-500/30'
+              className={`px-3 py-1.5 font-bold rounded-none shrink-0 flex items-center gap-1.5 ${
+                activeTab === 'database' ? 'bg-amber-500 text-slate-950 font-black' : 'bg-neutral-900 text-amber-400 border border-amber-500/30'
               }`}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span className="w-1.5 h-1.5 rounded-none bg-emerald-400"></span>
               <span>Database</span>
             </button>
           )}

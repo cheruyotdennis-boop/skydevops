@@ -824,7 +824,7 @@ export default function App() {
   const renderDashboardContent = () => (
     <>
       {/* App Header with conditional Log In / Register / Account buttons */}
-      <div className="relative z-10">
+      <div className="relative z-50">
         <Header
           user={user}
           wallet={wallet}
@@ -846,7 +846,7 @@ export default function App() {
 
       {/* Guest Mode Banner if browsing unauthenticated */}
       {!isAuthenticated && (
-        <div className="relative z-20 bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 py-2.5 px-4 text-xs font-black shadow-lg">
+        <div className="relative z-40 bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 py-2.5 px-4 text-xs font-black shadow-lg">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
             <span>You are viewing Quantiq Prime Yield Plans in Guest Mode. Sign in or register to lock in investment capital and earn 7.5% daily.</span>
             <div className="flex items-center gap-2">
@@ -973,7 +973,7 @@ export default function App() {
       />
 
       {/* Footer */}
-      <footer className="mt-8 border-t border-amber-500/20 bg-[#06080E]/95 py-8 text-xs text-slate-400 relative z-10">
+      <footer className="mt-8 border-t border-neutral-800 bg-black py-8 text-xs text-slate-400 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
             <span className="font-black text-amber-400 uppercase tracking-wider font-heading">QUANTIQ PRIME</span>
@@ -992,7 +992,7 @@ export default function App() {
             <button
               id="footer-contact-desk-btn"
               onClick={() => setIsContactsOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/50 text-emerald-300 font-bold rounded-xl cursor-pointer transition-colors shadow-sm"
+              className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/50 text-emerald-300 font-bold cursor-pointer transition-colors"
             >
               <PhoneCall className="w-3.5 h-3.5 text-emerald-400" />
               <span>Contact Support Desk</span>
@@ -1006,7 +1006,7 @@ export default function App() {
             </button>
           </div>
           <div className="text-center md:text-right text-slate-500 text-[11px]">
-            <span>© 2026 Quantiq Prime Wealth Management LLC. Delta Corner Tower, Westlands, Nairobi.</span>
+            <span>© 2026 Quantiq Prime Wealth Management LLC. All Rights Reserved.</span>
           </div>
         </div>
       </footer>
@@ -1014,36 +1014,10 @@ export default function App() {
   );
 
   return (
-    <div className="min-h-screen bg-[#07090E] text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-black relative overflow-x-hidden">
+    <div className="min-h-screen bg-black text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-black relative overflow-x-hidden">
       
-      {/* Background Wallpaper matching uploaded style */}
-      <div 
-        className="fixed inset-0 bg-cover bg-center bg-no-repeat opacity-25 mix-blend-screen pointer-events-none z-0"
-        style={{ backgroundImage: `url(${bgWallpaper})` }}
-      ></div>
-
-      {/* Luxury Golden Ambient Glows */}
-      <div className="fixed top-20 left-1/4 w-[600px] h-[600px] bg-amber-500/5 rounded-full blur-3xl pointer-events-none z-0"></div>
-      <div className="fixed bottom-20 right-1/4 w-[500px] h-[500px] bg-yellow-600/5 rounded-full blur-3xl pointer-events-none z-0"></div>
-
       {/* Main Responsive Dashboard Content */}
       {renderDashboardContent()}
-
-      {/* Persistent Floating Bottom Contact Support Button */}
-      <aside aria-label="Support Desk" className="fixed bottom-20 md:bottom-6 right-4 sm:right-6 z-40">
-        <button
-          id="floating-bottom-contact-button"
-          onClick={() => setIsContactsOpen(true)}
-          className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:from-emerald-500 hover:to-teal-400 text-slate-950 font-black text-xs px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-full shadow-2xl shadow-emerald-950/80 border-2 border-emerald-300/50 hover:scale-105 active:scale-95 transition-all cursor-pointer group"
-          title="Contact VIP Support Desk & WhatsApp (+17712502005)"
-        >
-          <div className="relative flex items-center justify-center">
-            <PhoneCall className="w-4 h-4 text-slate-950 fill-slate-950 group-hover:rotate-12 transition-transform" />
-            <span className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-300 rounded-full animate-ping"></span>
-          </div>
-          <span className="font-heading uppercase tracking-wider text-[11px] sm:text-xs">Contact</span>
-        </button>
-      </aside>
 
       {/* Modals */}
       <DepositModal

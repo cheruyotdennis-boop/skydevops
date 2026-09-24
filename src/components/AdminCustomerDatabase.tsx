@@ -599,7 +599,7 @@ export const AdminCustomerDatabase: React.FC<AdminCustomerDatabaseProps> = ({
             <div className="bg-gradient-to-br from-[#0C101A] to-[#161208] border border-amber-500/40 rounded-xl p-4 transition-all relative overflow-hidden shadow-lg">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-bold text-amber-400 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+                  <span className="w-2 h-2 rounded-none bg-amber-400"></span>
                   <span>Next Payout Cycle</span>
                 </span>
                 <Hourglass className="w-4 h-4 text-amber-400 animate-spin" />
@@ -889,7 +889,7 @@ export const AdminCustomerDatabase: React.FC<AdminCustomerDatabaseProps> = ({
               <div className="p-4 border-b border-slate-800 flex items-center justify-between">
                 <div>
                   <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span className="w-2 h-2 rounded-none bg-emerald-400"></span>
                     <span>Live Daraja STK Push Settlement Stream</span>
                   </h3>
                   <p className="text-xs text-slate-400">

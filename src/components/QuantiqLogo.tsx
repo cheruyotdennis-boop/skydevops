@@ -123,7 +123,7 @@ export const QuantiqLogo: React.FC<QuantiqLogoProps> = ({
         </div>
 
         {showTagline && size !== 'sm' && (
-          <div className="text-[9px] tracking-[0.16em] text-slate-300 font-semibold uppercase mt-1 hidden sm:block">
+          <div className="text-[9px] tracking-[0.16em] text-slate-300 font-semibold uppercase mt-1 hidden xl:block">
             Trade Smart <span className="text-amber-400/80 mx-1">|</span> Invest Wise <span className="text-amber-400/80 mx-1">|</span> Grow Together
           </div>
         )}

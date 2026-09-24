@@ -257,10 +257,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           <div className="bg-[#07090E]/80 backdrop-blur-md border border-amber-500/30 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 lg:w-96 shrink-0 shadow-lg">
             <div>
               <div className="flex items-center gap-1.5 text-xs text-amber-300 font-bold">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-                </span>
+                <span className="inline-flex h-2 w-2 bg-amber-500"></span>
                 <span>Live Accruing Yield (24h)</span>
               </div>
               <div className="text-2xl font-black font-mono text-white mt-1 flex items-baseline gap-1">
@@ -757,8 +754,8 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-base font-bold text-white font-heading">Institutional Quant AI & Backend Engine</h2>
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                  <span className="w-1.5 h-1.5 bg-emerald-400"></span>
                   {backendHealth ? 'LIVE SERVER (0.4ms)' : 'ALGO ENGINE ACTIVE'}
                 </span>
               </div>
