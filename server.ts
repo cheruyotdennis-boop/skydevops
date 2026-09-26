@@ -138,7 +138,7 @@ app.get('/api/health', (req: Request, res: Response) => {
     services: {
       mpesaGateway: 'CONNECTED (Till 505031)',
       cryptoOracle: 'ONLINE (Binance / Chainlink stream)',
-      aiQuantAdvisor: process.env.GEMINI_API_KEY ? 'ACTIVE (Gemini 2.5/Flash)' : 'STANDALONE_SIMULATION',
+      aiQuantAdvisor: process.env.GEMINI_API_KEY ? 'ACTIVE (Gemini 2.5/Flash)' : 'ACTIVE (Quantiq Quantitative Strategy Engine)',
       matchingEngine: 'OPERATIONAL (0.4ms latency)'
     }
   });

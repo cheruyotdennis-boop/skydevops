@@ -53,14 +53,13 @@ export const MpesaModal: React.FC<MpesaModalProps> = ({
   const [withdrawPhone, setWithdrawPhone] = useState(user.mpesaNumber || user.phone || '0712345678');
 
   // STK Push state
-  const [stkStatus, setStkStatus] = useState<'idle' | 'prompting' | 'pin_entering' | 'success'>('idle');
-  const [mpesaPin, setMpesaPin] = useState('');
+  const [stkStatus, setStkStatus] = useState<'idle' | 'success'>('idle');
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [activeReceipt, setActiveReceipt] = useState('');
 
-  // 1. Trigger STK push prompt authorization
-  const handleTriggerStk = () => {
+  // 1. User deposits via M-PESA
+  const handleConfirmMpesaPin = async () => {
     setErrorMessage('');
     if (!mpesaPhone || mpesaPhone.length < 9) {
       setErrorMessage('Please enter a valid Safaricom phone number (e.g. 0712345678).');
@@ -71,14 +70,6 @@ export const MpesaModal: React.FC<MpesaModalProps> = ({
       return;
     }
 
-    setStkStatus('prompting');
-    setTimeout(() => {
-      setStkStatus('pin_entering');
-    }, 600);
-  };
-
-  // 2. User confirms PIN in phone prompt or instant deposit
-  const handleConfirmMpesaPin = async () => {
     setIsProcessing(true);
     setErrorMessage('');
     
@@ -257,69 +248,6 @@ export const MpesaModal: React.FC<MpesaModalProps> = ({
               </button>
             </div>
           </div>
-        ) : stkStatus === 'prompting' || stkStatus === 'pin_entering' ? (
-          
-          /* Interactive STK Push Phone Dialog */
-          <div className="my-5 space-y-4">
-            <div className="bg-[#080808] text-white rounded-none p-5 border-2 border-emerald-500 shadow-2xl relative">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-800 text-xs">
-                <span className="text-emerald-400 font-bold flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
-                  <Smartphone className="w-4 h-4" />
-                  <span>Safaricom STK Push Verification</span>
-                </span>
-                <span className="text-[10px] text-slate-400 font-mono">SIM 1 • Safaricom</span>
-              </div>
-
-              <div className="my-4 text-center space-y-2">
-                <div className="text-xs text-slate-300">
-                  Do you want to pay <b className="text-white font-mono">KES {kesAmount.toLocaleString()}</b> to:
-                </div>
-                <div className="text-sm font-extrabold text-amber-400 font-mono">
-                  QUANTIQ PRIME ASSET MANAGEMENT
-                </div>
-                <div className="text-xs text-slate-400 font-mono">
-                  Till / Paybill: 505031
-                </div>
-
-                <div className="pt-3">
-                  <label className="block text-[11px] text-slate-300 mb-1">
-                    Enter M-PESA PIN on phone ({mpesaPhone}):
-                  </label>
-                  <input
-                    type="password"
-                    maxLength={4}
-                    value={mpesaPin}
-                    onChange={(e) => setMpesaPin(e.target.value)}
-                    placeholder="••••"
-                    className="w-32 mx-auto text-center font-mono text-lg tracking-widest bg-black border border-slate-700 rounded-none py-1.5 text-white focus:outline-none focus:border-emerald-500"
-                    autoFocus
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800 text-xs font-bold">
-                <button
-                  type="button"
-                  onClick={() => setStkStatus('idle')}
-                  className="py-2.5 bg-[#111] hover:bg-[#222] text-slate-300 rounded-none border border-slate-800 transition-colors cursor-pointer uppercase tracking-wider"
-                >
-                  Cancel
-                </button>
-                <button
-                  id="mpesa-pin-confirm-btn"
-                  type="button"
-                  disabled={isProcessing}
-                  onClick={handleConfirmMpesaPin}
-                  className="py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black rounded-none transition-colors font-black flex items-center justify-center gap-1 cursor-pointer uppercase tracking-wider"
-                >
-                  {isProcessing ? 'Authorizing...' : 'Authorize & Pay'}
-                </button>
-              </div>
-            </div>
-            <p className="text-[11px] text-center text-slate-400">
-              Direct API integration with Safaricom Daraja M-PESA Gateway.
-            </p>
-          </div>
         ) : (
           
           /* Main Deposit / Withdrawal Form */
@@ -419,19 +347,11 @@ export const MpesaModal: React.FC<MpesaModalProps> = ({
                     id="trigger-stk-push-btn"
                     type="button"
                     disabled={isProcessing}
-                    onClick={handleDirectMpesaDeposit}
-                    className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs rounded-none shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer uppercase tracking-wider active:scale-98"
+                    onClick={handleConfirmMpesaPin}
+                    className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs rounded-none shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer uppercase tracking-wider active:scale-98"
                   >
                     <Smartphone className="w-4 h-4" />
                     <span>{isProcessing ? 'Processing M-PESA Deposit...' : `Deposit KES ${kesAmount.toLocaleString()} via M-PESA`}</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleTriggerStk}
-                    className="w-full py-2 bg-[#080808] hover:bg-[#111] text-emerald-400 font-bold text-[11px] rounded-none border border-emerald-500/40 transition-all flex items-center justify-center gap-1.5 cursor-pointer uppercase tracking-wider"
-                  >
-                    <span>Send USSD / STK Phone Popup</span>
                   </button>
                 </div>
               </div>

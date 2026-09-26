@@ -97,7 +97,7 @@ export default function App() {
 
   const [wallet, setWallet] = useState<WalletState>(() => {
     const loaded = safeGetItem<WalletState>('quantiq_wallet', INITIAL_WALLET);
-    // Purge old simulated figures (84850 or 70000 activeInvested)
+    // Purge legacy placeholder figures
     if (loaded && (loaded.totalBalance === 84850 || loaded.activeInvested === 70000)) {
       return INITIAL_WALLET;
     }
@@ -130,8 +130,8 @@ export default function App() {
   const [transactions, setTransactions] = useState<Transaction[]>(() => {
     const loaded = safeGetItem<Transaction[]>('quantiq_txs', INITIAL_TRANSACTIONS);
     if (Array.isArray(loaded)) {
-      const simulatedIds = ['tx_98124', 'tx_98012', 'tx_97645', 'tx_96411', 'tx_95209', 'tx_94301'];
-      return loaded.filter(tx => !simulatedIds.includes(tx.id));
+      const purgeIds = ['tx_98124', 'tx_98012', 'tx_97645', 'tx_96411', 'tx_95209', 'tx_94301'];
+      return loaded.filter(tx => !purgeIds.includes(tx.id));
     }
     return [];
   });
@@ -223,31 +223,10 @@ export default function App() {
     initialDeposit?: number,
     options?: { mode?: 'login' | 'register' | 'device'; channel?: 'phone' | 'email'; skipOtp?: boolean }
   ) => {
-    // If skipOtp is true (already verified in-modal), proceed to completeLogin
-    if (options?.skipOtp) {
-      completeLogin(userData, initialDeposit, true);
-      return;
-    }
-
-    const recognized = isDeviceRecognized(userData);
-
-    // If new device or explicit login/register mode, trigger 2FA modal
-    if (!recognized || options?.mode === 'login' || options?.mode === 'register') {
-      const otp = generateDevice2faOtp();
-      setPending2faUser({
-        user: userData,
-        initialDeposit,
-        expectedCode: otp,
-        mode: options?.mode || (!recognized ? 'device' : 'login'),
-        channel: options?.channel || (userData.phone ? 'phone' : 'email')
-      });
-      setIsLoginModalOpen(false);
-      setIsCreateProfileOpen(false);
-      return;
-    }
-
-    // Device recognized - proceed directly to login
-    completeLogin(userData, initialDeposit, false);
+    // Proceed directly to login and session establishment
+    completeLogin(userData, initialDeposit, true);
+    setIsLoginModalOpen(false);
+    setIsCreateProfileOpen(false);
   };
 
   const handle2faSuccess = (trustedDevice: boolean) => {

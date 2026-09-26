@@ -45,7 +45,6 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({
   const [network, setNetwork] = useState<'MPESA' | 'BEP20' | 'BTC'>('MPESA');
   const [destinationAddress, setDestinationAddress] = useState(user.mpesaNumber || user.phone || '0712345678');
   const [saveAsDefaultWallet, setSaveAsDefaultWallet] = useState<boolean>(true);
-  const [securityPin, setSecurityPin] = useState('1234');
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successStep, setSuccessStep] = useState(false);
@@ -379,18 +378,6 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({
                   />
                   <span>Save this as my default personal withdrawal account</span>
                 </label>
-              </div>
-
-              {/* Security PIN */}
-              <div>
-                <label className="block font-bold text-slate-300 mb-1 uppercase tracking-wider text-[11px]">4-Digit Security PIN</label>
-                <input
-                  type="password"
-                  maxLength={4}
-                  value={securityPin}
-                  onChange={(e) => setSecurityPin(e.target.value)}
-                  className="w-full px-3 py-2 bg-black border border-slate-700 rounded-none text-white font-mono tracking-widest text-center text-sm focus:outline-none focus:border-amber-500"
-                />
               </div>
 
               {/* Action Button */}

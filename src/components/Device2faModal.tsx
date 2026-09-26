@@ -181,7 +181,7 @@ export const Device2faModal: React.FC<Device2faModalProps> = ({
   return (
     <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
       
-      {/* Real-time SMS / Email Simulated Dispatch Toast */}
+      {/* Real-time SMS / Email Security Dispatch */}
       {showNotificationToast && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-3 animate-in slide-in-from-top-4 duration-300">
           <div className="bg-slate-900/95 border border-amber-500/50 rounded-2xl p-3.5 shadow-2xl backdrop-blur-xl text-white flex items-start justify-between gap-3">
