@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { triggerConfetti } from '../utils/confetti';
 import { InvestmentPlan, WalletState } from '../types';
+import { getInvestmentImage } from '../utils/investmentAssets';
 
 interface InvestModalProps {
   isOpen: boolean;
@@ -112,6 +113,34 @@ export const InvestModal: React.FC<InvestModalProps> = ({
         {/* Content */}
         <div className="p-5 sm:p-6 space-y-4 text-xs overflow-y-auto flex-1 overscroll-contain">
           
+          {/* Investment Bullion Asset Picture Card */}
+          <div className="relative w-full h-36 rounded-2xl overflow-hidden border border-slate-700/80 shadow-lg group">
+            <img 
+              src={plan.imageUrl || getInvestmentImage(plan.name)} 
+              alt={plan.name}
+              referrerPolicy="no-referrer"
+              className="w-full h-full object-cover object-center"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F17] via-[#0B0F17]/40 to-transparent"></div>
+            <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-black/80 backdrop-blur-md border border-white/20 text-amber-300">
+                  {plan.name.toLowerCase().includes('gold') 
+                    ? '🏅 999.9 Gold Bullion Contract' 
+                    : plan.name.toLowerCase().includes('silver') 
+                    ? '🥈 999 Fine Silver Bullion Contract' 
+                    : `💎 ${plan.name} Bullion`}
+                </span>
+                <div className="text-sm font-black text-white font-heading mt-0.5">{plan.name} Yield Package</div>
+              </div>
+              <div className="text-right">
+                <span className="text-xs font-mono font-black text-emerald-400 bg-black/80 px-2 py-1 rounded-md border border-emerald-500/30">
+                  +{plan.dailyRoi}% / day
+                </span>
+              </div>
+            </div>
+          </div>
+
           {errorMessage && (
             <div className="p-3 bg-rose-950/80 border border-rose-500/40 rounded-xl text-rose-300 font-bold flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />

@@ -43,6 +43,7 @@ import { MobileBottomNav } from './components/MobileBottomNav';
 import { AdminCustomerDatabase } from './components/AdminCustomerDatabase';
 import { Lock, PhoneCall, MessageSquare } from 'lucide-react';
 import { safeGetItem, safeSetItem } from './utils/storage';
+import { getInvestmentImage } from './utils/investmentAssets';
 import { roundCurrency, generateUniqueReferralCode } from './utils/security';
 import { isDeviceRecognized, registerCurrentDevice, generateDevice2faOtp } from './utils/deviceSecurity';
 
@@ -500,7 +501,8 @@ export default function App() {
       totalDays: plan.durationDays,
       status: 'ACTIVE',
       lastPayoutTime: 'Scheduled in 24h',
-      autoReinvest: false
+      autoReinvest: false,
+      imageUrl: plan.imageUrl || getInvestmentImage(plan.name)
     };
     setActiveInvestments(prev => [newInv, ...prev]);
 

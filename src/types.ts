@@ -67,6 +67,7 @@ export interface InvestmentPlan {
   features: string[];
   totalInvestors: number;
   totalPoolValue: number;
+  imageUrl?: string;
 }
 
 export interface ActiveInvestment {
@@ -84,6 +85,7 @@ export interface ActiveInvestment {
   status: 'ACTIVE' | 'COMPLETED';
   lastPayoutTime: string;
   autoReinvest: boolean;
+  imageUrl?: string;
 }
 
 export type TransactionType = 'DEPOSIT' | 'WITHDRAWAL' | 'INVESTMENT' | 'ROI_PAYOUT' | 'REFERRAL_BONUS';

@@ -37,6 +37,7 @@ import {
 import { UserProfile, PlatformContacts } from '../types';
 import { api } from '../services/api';
 import { safeCopyText } from '../utils/storage';
+import { getInvestmentImage } from '../utils/investmentAssets';
 
 interface AdminCustomerDatabaseProps {
   savedProfiles: UserProfile[];
@@ -1307,14 +1308,29 @@ export const AdminCustomerDatabase: React.FC<AdminCustomerDatabaseProps> = ({
                   </div>
 
                   <div className="bg-[#07090F] p-3.5 rounded-xl border border-amber-500/30 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 text-amber-400 font-bold text-xs">
-                        <Zap className="w-4 h-4 text-amber-400" />
-                        <span>{selectedCustomer.planName || `${selectedCustomer.tier} Yield Contract`}</span>
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-lg overflow-hidden shrink-0 border border-slate-700 bg-slate-900 shadow">
+                        <img 
+                          src={getInvestmentImage(selectedCustomer.planName || selectedCustomer.tier)}
+                          alt={selectedCustomer.planName || selectedCustomer.tier}
+                          referrerPolicy="no-referrer"
+                          className="w-full h-full object-cover"
+                        />
                       </div>
-                      <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">
-                        ACTIVE CONTRACT
-                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5 text-amber-400 font-bold text-xs truncate">
+                            <Zap className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                            <span className="truncate">{selectedCustomer.planName || `${selectedCustomer.tier} Yield Contract`}</span>
+                          </div>
+                          <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold shrink-0">
+                            ACTIVE
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-slate-400">
+                          {selectedCustomer.tier.toLowerCase().includes('gold') ? '🏅 999.9 Gold Bullion Asset' : selectedCustomer.tier.toLowerCase().includes('silver') ? '🥈 999 Silver Bullion Asset' : `${selectedCustomer.tier} Bullion`}
+                        </span>
+                      </div>
                     </div>
 
                     {/* Live Ticking Countdown Box */}

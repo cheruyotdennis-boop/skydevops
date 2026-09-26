@@ -27,6 +27,7 @@ import { UserProfile, WalletState, ActiveInvestment, Transaction, ChartDataPoint
 import { ProfileAvatar } from './ProfileAvatar';
 import { HISTORICAL_GROWTH_DATA } from '../data/mockData';
 import { api, BackendHealthResponse } from '../services/api';
+import { getInvestmentImage } from '../utils/investmentAssets';
 
 interface DashboardOverviewProps {
   user: UserProfile;
@@ -861,27 +862,39 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                   key={inv.id}
                   className="p-4 rounded-2xl bg-[#0E131F] border border-slate-800/80 hover:border-amber-500/30 transition-colors"
                 >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <div className="font-bold text-xs text-white flex items-center gap-2">
-                        <span>{inv.planName}</span>
-                        <span className="text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full">
-                          +{inv.dailyRoi}% / day
-                        </span>
-                      </div>
-                      <div className="text-[11px] text-slate-400 mt-0.5 flex flex-wrap items-center gap-2">
-                        <span>Locked Principal: <b className="text-amber-300 font-mono">Ksh {inv.investedAmount.toLocaleString()}</b></span>
-                        <span>•</span>
-                        <span>Earned: <b className="text-emerald-400 font-mono">Ksh {inv.totalEarned.toLocaleString()}</b></span>
-                      </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-slate-700 bg-slate-900 shadow-md">
+                      <img
+                        src={inv.imageUrl || getInvestmentImage(inv.planName)}
+                        alt={inv.planName}
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover"
+                      />
                     </div>
-                    <div className="text-right">
-                      <div className="text-xs font-black text-emerald-400 font-mono">
-                        +Ksh {inv.dailyYieldAmount.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/day
-                      </div>
-                      <div className="text-[10px] text-amber-300 flex items-center justify-end gap-1 font-bold">
-                        <Lock className="w-2.5 h-2.5" />
-                        <span>Day {inv.daysPassed} of {inv.totalDays}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <div className="font-bold text-xs text-white flex items-center gap-2">
+                            <span className="truncate">{inv.planName}</span>
+                            <span className="text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full shrink-0">
+                              +{inv.dailyRoi}% / day
+                            </span>
+                          </div>
+                          <div className="text-[11px] text-slate-400 mt-0.5 flex flex-wrap items-center gap-2">
+                            <span>Locked: <b className="text-amber-300 font-mono">Ksh {inv.investedAmount.toLocaleString()}</b></span>
+                            <span>•</span>
+                            <span>Yield: <b className="text-emerald-400 font-mono">Ksh {inv.totalEarned.toLocaleString()}</b></span>
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <div className="text-xs font-black text-emerald-400 font-mono">
+                            +Ksh {inv.dailyYieldAmount.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/day
+                          </div>
+                          <div className="text-[10px] text-amber-300 flex items-center justify-end gap-1 font-bold">
+                            <Lock className="w-2.5 h-2.5" />
+                            <span>Day {inv.daysPassed} of {inv.totalDays}</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>

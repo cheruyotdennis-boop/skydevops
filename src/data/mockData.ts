@@ -1,4 +1,5 @@
 import { UserProfile, WalletState, InvestmentPlan, ActiveInvestment, Transaction, ReferralMember, ChartDataPoint, NotificationItem, PlatformContacts } from '../types';
+import { INVESTMENT_IMAGES } from '../utils/investmentAssets';
 
 export const DEFAULT_CONTACTS: PlatformContacts = {
   mpesaPaybill: '505031',
@@ -57,6 +58,7 @@ export const INVESTMENT_PLANS: InvestmentPlan[] = [
     principalReturn: true,
     colorTheme: 'from-amber-900 via-amber-800 to-amber-950',
     popular: false,
+    imageUrl: INVESTMENT_IMAGES.bronze,
     features: [
       '7.50% Daily Automated Yield',
       '10 Days Cycle Duration',
@@ -79,6 +81,7 @@ export const INVESTMENT_PLANS: InvestmentPlan[] = [
     principalReturn: true,
     colorTheme: 'from-slate-500 via-slate-400 to-slate-600',
     popular: true,
+    imageUrl: INVESTMENT_IMAGES.silver,
     features: [
       '7.50% Daily Automated Yield',
       '15 Days Cycle Duration',
@@ -101,6 +104,7 @@ export const INVESTMENT_PLANS: InvestmentPlan[] = [
     principalReturn: true,
     colorTheme: 'from-amber-600 via-yellow-500 to-amber-700',
     popular: false,
+    imageUrl: INVESTMENT_IMAGES.gold,
     features: [
       '7.50% Daily Automated Yield',
       '15 Days Cycle Duration',
@@ -123,6 +127,7 @@ export const INVESTMENT_PLANS: InvestmentPlan[] = [
     principalReturn: true,
     colorTheme: 'from-slate-950 via-teal-950 to-amber-950',
     popular: false,
+    imageUrl: INVESTMENT_IMAGES.platinum,
     features: [
       '7.50% Daily Automated Yield',
       '20 Days High-Yield Horizon',

@@ -25,6 +25,7 @@ import { generateUniqueReferralCode } from '../utils/security';
 import { UserProfile, ProfileCreationData, InvestmentPlan } from '../types';
 import { QuantiqLogo } from './QuantiqLogo';
 import { ProfileAvatar } from './ProfileAvatar';
+import { getInvestmentImage } from '../utils/investmentAssets';
 import bgWallpaper from '../assets/images/quantiq_prime_bg_1787826829164.jpg';
 import luxuryAvatarImg from '../assets/images/luxury_profile_avatar_1787995685280.jpg';
 
@@ -274,13 +275,20 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
         {selectedPlan && (
           <div className="mb-4 bg-gradient-to-r from-amber-950/70 via-yellow-950/70 to-amber-950/70 border-2 border-amber-500/60 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-slate-100 shadow-xl shadow-amber-500/10">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-black shrink-0">
-                <Lock className="w-5 h-5" />
+              <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 border border-amber-500/60 bg-slate-900 shadow-md">
+                <img 
+                  src={selectedPlan.imageUrl || getInvestmentImage(selectedPlan.name)}
+                  alt={selectedPlan.name}
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-cover"
+                />
               </div>
               <div>
                 <div className="text-[11px] font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
                   <span>Target Contract Selected</span>
-                  <span className="bg-amber-500 text-slate-950 text-[10px] font-black px-1.5 py-0.2 rounded">Locked until maturity</span>
+                  <span className="bg-amber-500 text-slate-950 text-[10px] font-black px-1.5 py-0.2 rounded">
+                    {selectedPlan.name.toLowerCase().includes('gold') ? '999.9 Gold Bullion' : selectedPlan.name.toLowerCase().includes('silver') ? '999 Fine Silver' : 'Locked until maturity'}
+                  </span>
                 </div>
                 <div className="text-sm font-black text-white font-heading">
                   {selectedPlan.name} • +{selectedPlan.dailyRoi}% Daily ROI ({selectedPlan.durationDays} Days)

@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { InvestmentPlan, ActiveInvestment, WalletState } from '../types';
 import { INVESTMENT_PLANS } from '../data/mockData';
+import { getInvestmentImage, getInvestmentTierBadge } from '../utils/investmentAssets';
 
 interface InvestmentsViewProps {
   wallet: WalletState;
@@ -164,19 +165,29 @@ export const InvestmentsView: React.FC<InvestmentsViewProps> = ({
                       : 'bg-[#0E131F] border-slate-800 hover:border-amber-500/40'
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <div>
-                      <div className="text-xs font-bold text-white font-heading">{inv.planName}</div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-slate-700 bg-slate-900 shadow-md">
+                      <img 
+                        src={inv.imageUrl || getInvestmentImage(inv.planName)} 
+                        alt={inv.planName}
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs font-bold text-white font-heading truncate">{inv.planName}</div>
+                        <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full border flex items-center gap-1 ${
+                          isMatured
+                            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 animate-pulse'
+                            : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                        }`}>
+                          {isMatured ? <Unlock className="w-2.5 h-2.5 text-emerald-400" /> : <Lock className="w-2.5 h-2.5 text-amber-400" />}
+                          <span>{isMatured ? 'Matured' : `Day ${inv.daysPassed}/${inv.totalDays}`}</span>
+                        </span>
+                      </div>
                       <div className="text-[11px] text-slate-400">Contract #{inv.id}</div>
                     </div>
-                    <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full border flex items-center gap-1 ${
-                      isMatured
-                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 animate-pulse'
-                        : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                    }`}>
-                      {isMatured ? <Unlock className="w-3 h-3 text-emerald-400" /> : <Lock className="w-3 h-3 text-amber-400" />}
-                      <span>{isMatured ? 'Matured — Ready to Release' : `Locked: Day ${inv.daysPassed} of ${inv.totalDays}`}</span>
-                    </span>
                   </div>
 
                   <div className="grid grid-cols-3 gap-2 py-2.5 my-2 border-y border-slate-800 text-center">
@@ -332,6 +343,32 @@ export const InvestmentsView: React.FC<InvestmentsViewProps> = ({
 
           {/* Result Card (5 cols) */}
           <div className="lg:col-span-5 bg-[#0E131F] border-2 border-amber-500/50 rounded-3xl p-6 sm:p-7 space-y-4 shadow-xl">
+            {/* Bullion Asset Picture Preview Banner */}
+            <div className="relative w-full h-32 rounded-2xl overflow-hidden border border-slate-700/80 shadow-inner group">
+              <img 
+                src={selectedPlan.imageUrl || getInvestmentImage(selectedPlan.name)}
+                alt={selectedPlan.name}
+                referrerPolicy="no-referrer"
+                className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0E131F] via-[#0E131F]/50 to-transparent"></div>
+              <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-extrabold tracking-wider uppercase px-2 py-0.5 rounded-md bg-black/75 backdrop-blur-md border border-white/20 text-amber-300">
+                    {selectedPlan.name.toLowerCase().includes('gold') 
+                      ? '🏅 999.9 Gold Bullion Contract' 
+                      : selectedPlan.name.toLowerCase().includes('silver') 
+                      ? '🥈 999 Fine Silver Bullion Contract' 
+                      : `💎 ${selectedPlan.name} Contract`}
+                  </span>
+                  <h4 className="text-sm font-black text-white font-heading mt-0.5">{selectedPlan.name} Package</h4>
+                </div>
+                <span className="text-xs font-mono font-black text-amber-400 bg-black/70 px-2 py-1 rounded-md border border-amber-500/30">
+                  +{selectedPlan.dailyRoi}%/day
+                </span>
+              </div>
+            </div>
+
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <span className="text-xs font-bold uppercase text-slate-400">Contract Term</span>
               <span className="text-xs font-black text-amber-400 bg-amber-950/80 px-2.5 py-1 rounded-full border border-amber-500/40">
@@ -404,97 +441,127 @@ export const InvestmentsView: React.FC<InvestmentsViewProps> = ({
 
       {/* 4 Investment Plan Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-        {INVESTMENT_PLANS.map((plan) => (
-          <div
-            key={plan.id}
-            className={`relative bg-[#0B0F17]/90 rounded-3xl p-6 border transition-all flex flex-col justify-between backdrop-blur-xl ${
-              plan.popular
-                ? 'border-amber-500 shadow-xl shadow-amber-500/10 ring-2 ring-amber-500/30'
-                : 'border-slate-800 shadow-md hover:border-amber-500/40'
-            }`}
-          >
-            {plan.popular && (
-              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 text-[10px] font-black uppercase tracking-widest px-3.5 py-1 rounded-full shadow-md">
-                ★ Prime Recommended
-              </div>
-            )}
+        {INVESTMENT_PLANS.map((plan) => {
+          const isGold = plan.name.toLowerCase().includes('gold');
+          const isSilver = plan.name.toLowerCase().includes('silver');
+          const planImg = plan.imageUrl || getInvestmentImage(plan.name);
 
-            <div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-extrabold uppercase tracking-wider text-amber-400 flex items-center gap-1">
-                  <Lock className="w-3 h-3 text-amber-400" />
-                  <span>{plan.durationDays} Days Horizon</span>
-                </span>
-                <span className="text-xs font-bold text-amber-400 bg-amber-950/60 border border-amber-500/30 px-2 py-0.5 rounded-full">
-                  Tier {plan.id.split('_')[1].toUpperCase()}
-                </span>
-              </div>
-
-              <h3 className="text-lg font-black text-white mt-2 font-heading">
-                {plan.name}
-              </h3>
-              <p className="text-xs text-slate-400 mt-1 min-h-[32px] leading-relaxed">
-                {plan.tagline}
-              </p>
-
-              {/* Rate Highlight */}
-              <div className="mt-4 p-4 rounded-2xl bg-[#07090E] border border-amber-500/30">
-                <div className="text-3xl font-black text-amber-400 font-mono">
-                  {plan.dailyRoi}%
-                  <span className="text-xs font-bold text-slate-400 ml-1">/ daily</span>
-                </div>
-                <div className="text-[11px] text-slate-300 mt-1 font-medium flex items-center justify-between">
-                  <span>Total Yield: <b className="text-emerald-400 font-mono">{(plan.dailyRoi * plan.durationDays).toFixed(0)}% Net</b></span>
-                  <span className="text-amber-400 font-bold font-mono">🔒 Locked {plan.durationDays}d</span>
-                </div>
-              </div>
-
-              {/* Features list */}
-              <div className="mt-5 space-y-2.5 text-xs text-slate-300">
-                <div className="flex items-center justify-between text-slate-400 font-semibold pb-1 border-b border-slate-800">
-                  <span>Min Deposit:</span>
-                  <span className="font-mono text-white font-bold">Ksh {plan.minDeposit.toLocaleString()}</span>
-                </div>
-                <div className="flex items-center justify-between text-slate-400 font-semibold pb-1 border-b border-slate-800">
-                  <span>Max Deposit:</span>
-                  <span className="font-mono text-white font-bold">Ksh {plan.maxDeposit.toLocaleString()}</span>
-                </div>
-                <div className="flex items-center justify-between text-amber-400 font-semibold pb-1 border-b border-slate-800">
-                  <span className="flex items-center gap-1">
-                    <Lock className="w-3 h-3" />
-                    <span>Lock Terms:</span>
-                  </span>
-                  <span className="font-bold text-white">Locked until maturity</span>
-                </div>
-                
-                {plan.features.map((feat, idx) => (
-                  <div key={idx} className="flex items-center gap-2 text-slate-300">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                    <span>{feat}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <button
-              onClick={() => handlePlanClick(plan)}
-              className="mt-6 w-full py-3 bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+          return (
+            <div
+              key={plan.id}
+              className={`relative bg-[#0B0F17]/90 rounded-3xl p-6 border transition-all flex flex-col justify-between backdrop-blur-xl group overflow-hidden ${
+                plan.popular
+                  ? 'border-amber-500 shadow-xl shadow-amber-500/10 ring-2 ring-amber-500/30'
+                  : 'border-slate-800 shadow-md hover:border-amber-500/40'
+              }`}
             >
-              {isAuthenticated ? (
-                <>
-                  <Lock className="w-3.5 h-3.5" />
-                  <span>Invest in {plan.name}</span>
-                </>
-              ) : (
-                <>
-                  <LogIn className="w-3.5 h-3.5" />
-                  <span>Sign In to Select Plan</span>
-                </>
+              {plan.popular && (
+                <div className="absolute top-3 right-3 z-20 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-lg">
+                  ★ Prime Recommended
+                </div>
               )}
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        ))}
+
+              <div>
+                {/* Investment Asset Bullion Picture Header */}
+                <div className="relative w-full h-44 -mx-6 -mt-6 mb-4 overflow-hidden border-b border-slate-800/80">
+                  <img
+                    src={planImg}
+                    alt={`${plan.name} bullion asset`}
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full object-cover object-center transform transition-transform duration-700 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F17] via-[#0B0F17]/40 to-transparent"></div>
+
+                  {/* Bullion Specification Pill */}
+                  <div className="absolute bottom-2.5 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider backdrop-blur-md shadow-lg border bg-black/75 border-white/20">
+                    <span className={isGold ? 'text-amber-400 font-bold' : isSilver ? 'text-slate-200 font-bold' : 'text-amber-300'}>
+                      {isGold ? '🏅 999.9 Fine Gold Bullion' : isSilver ? '🥈 999 Fine Silver Bullion' : `💎 ${plan.name} Asset`}
+                    </span>
+                  </div>
+
+                  {/* Horizon Pill */}
+                  <div className="absolute top-3 left-3 bg-black/75 backdrop-blur-md border border-slate-700 px-2 py-0.5 rounded-full text-[10px] font-bold text-amber-400 flex items-center gap-1">
+                    <Lock className="w-2.5 h-2.5" />
+                    <span>{plan.durationDays}d Horizon</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-black text-white font-heading">
+                    {plan.name}
+                  </h3>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                    isGold 
+                      ? 'text-amber-400 bg-amber-950/60 border-amber-500/40' 
+                      : isSilver 
+                      ? 'text-slate-200 bg-slate-900 border-slate-400/40' 
+                      : 'text-amber-400 bg-amber-950/60 border-amber-500/30'
+                  }`}>
+                    {plan.name.toUpperCase()} TIER
+                  </span>
+                </div>
+
+                <p className="text-xs text-slate-400 mt-1 min-h-[32px] leading-relaxed">
+                  {plan.tagline}
+                </p>
+
+                {/* Rate Highlight */}
+                <div className="mt-3 p-3.5 rounded-2xl bg-[#07090E] border border-amber-500/30">
+                  <div className="text-2xl font-black text-amber-400 font-mono flex items-baseline justify-between">
+                    <div>
+                      {plan.dailyRoi}%
+                      <span className="text-xs font-bold text-slate-400 ml-1">/ daily</span>
+                    </div>
+                    <span className="text-xs font-bold text-emerald-400 font-mono">
+                      +{(plan.dailyRoi * plan.durationDays).toFixed(0)}% Net
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-slate-300 mt-1 flex items-center justify-between border-t border-slate-800/80 pt-1.5">
+                    <span>Maturity: <b className="text-white font-mono">{plan.durationDays} Days</b></span>
+                    <span className="text-emerald-400 font-bold font-mono">Principal 100% Returned</span>
+                  </div>
+                </div>
+
+                {/* Features list */}
+                <div className="mt-4 space-y-2 text-xs text-slate-300">
+                  <div className="flex items-center justify-between text-slate-400 font-semibold pb-1 border-b border-slate-800/80">
+                    <span>Min Allocation:</span>
+                    <span className="font-mono text-white font-bold">Ksh {plan.minDeposit.toLocaleString()}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-slate-400 font-semibold pb-1 border-b border-slate-800/80">
+                    <span>Max Allocation:</span>
+                    <span className="font-mono text-white font-bold">Ksh {plan.maxDeposit.toLocaleString()}</span>
+                  </div>
+                  
+                  {plan.features.slice(0, 4).map((feat, idx) => (
+                    <div key={idx} className="flex items-center gap-2 text-slate-300">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      <span className="text-[11px]">{feat}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                onClick={() => handlePlanClick(plan)}
+                className="mt-5 w-full py-3 bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+              >
+                {isAuthenticated ? (
+                  <>
+                    <Lock className="w-3.5 h-3.5" />
+                    <span>Invest in {plan.name}</span>
+                  </>
+                ) : (
+                  <>
+                    <LogIn className="w-3.5 h-3.5" />
+                    <span>Sign In to Select Plan</span>
+                  </>
+                )}
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          );
+        })}
       </div>
 
     </div>
