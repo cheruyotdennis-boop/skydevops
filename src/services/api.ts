@@ -148,6 +148,65 @@ export const api = {
     }
   },
 
+  // Wallet: Process Deposit
+  async deposit(params: {
+    email?: string;
+    userId?: string;
+    amountKES: number;
+    currency?: string;
+    method?: string;
+    txHash?: string;
+    customerName?: string;
+    phone?: string;
+  }): Promise<{ success: boolean; message?: string; transaction?: any; availableBalanceKES?: number; receiptNumber?: string; error?: string }> {
+    try {
+      const res = await fetch('/api/wallet/deposit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params)
+      });
+      return await res.json();
+    } catch (err: any) {
+      return { success: false, error: err?.message || 'Network error' };
+    }
+  },
+
+  // Wallet: Process Withdrawal
+  async withdraw(params: {
+    email?: string;
+    userId?: string;
+    amountKES: number;
+    currency?: string;
+    destination?: string;
+    method?: string;
+    phone?: string;
+    customerName?: string;
+  }): Promise<{ success: boolean; message?: string; transaction?: any; availableBalanceKES?: number; receiptNumber?: string; error?: string }> {
+    try {
+      const res = await fetch('/api/wallet/withdraw', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params)
+      });
+      return await res.json();
+    } catch (err: any) {
+      return { success: false, error: err?.message || 'Network error' };
+    }
+  },
+
+  // Wallet: Fetch Transactions
+  async getTransactions(email?: string): Promise<any[]> {
+    try {
+      const url = email ? `/api/wallet/transactions?email=${encodeURIComponent(email)}` : '/api/wallet/transactions';
+      const res = await fetch(url);
+      if (!res.ok) return [];
+      const data = await res.json();
+      return data.transactions || [];
+    } catch {
+      return [];
+    }
+  },
+
   // Toggle Admin Privileges
   async toggleAdmin(email: string, isAdmin: boolean, role = 'admin'): Promise<{ success: boolean; message: string; customer?: any }> {
     try {

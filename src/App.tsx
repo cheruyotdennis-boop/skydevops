@@ -600,7 +600,7 @@ export default function App() {
       timestamp: `${new Date().toISOString().split('T')[0]} ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} EAT`,
       txHash: txHash,
       methodOrAddress: method,
-      note: `Instant deposit confirmed`
+      note: `Instant deposit confirmed & credited`
     };
     setTransactions(prev => [newTx, ...prev]);
 
@@ -608,14 +608,14 @@ export default function App() {
     const newNotif: NotificationItem = {
       id: `notif_${Date.now()}`,
       title: 'Deposit Received & Credited',
-      message: `Ksh ${cleanAmount.toLocaleString('en-KE')} (${currency}) has been added to your available cash balance. Withdrawals unlock after 24h trading cycle.`,
+      message: `Ksh ${cleanAmount.toLocaleString('en-KE')} (${currency}) has been credited to your available cash balance. Receipt: ${txHash}.`,
       timestamp: 'Just now',
       read: false,
       type: 'deposit'
     };
     setNotifications(prev => [newNotif, ...prev]);
 
-    // Record deposit timestamp for 24h withdrawal rule
+    // Record deposit timestamp
     setUser(prev => ({
       ...prev,
       firstDepositTime: prev.firstDepositTime || new Date().toISOString(),
@@ -625,11 +625,11 @@ export default function App() {
 
   const handleConfirmWithdrawal = (amount: number, address: string, txHash: string) => {
     const cleanAmount = roundCurrency(amount);
-    // 1. Deduct cash
+    // 1. Update wallet balance cleanly
     setWallet(prev => ({
       ...prev,
-      totalBalance: roundCurrency(prev.totalBalance - cleanAmount),
-      availableCash: roundCurrency(prev.availableCash - cleanAmount)
+      totalBalance: Math.max(0, roundCurrency(prev.totalBalance - cleanAmount)),
+      availableCash: Math.max(0, roundCurrency(prev.availableCash - cleanAmount))
     }));
 
     // 2. Log transaction
@@ -642,16 +642,16 @@ export default function App() {
       status: 'COMPLETED',
       timestamp: `${new Date().toISOString().split('T')[0]} ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} EAT`,
       txHash: txHash,
-      methodOrAddress: address.startsWith('254') || address.startsWith('07') ? `M-PESA (${address})` : `TRC20 (${address.slice(0, 8)}...${address.slice(-4)})`,
-      note: 'Profits payout to personal account'
+      methodOrAddress: address.startsWith('254') || address.startsWith('07') ? `M-PESA (${address})` : `Crypto (${address.slice(0, 8)}...${address.slice(-4)})`,
+      note: 'Funds payout dispatched to personal account'
     };
     setTransactions(prev => [newTx, ...prev]);
 
     // 3. Notification
     const newNotif: NotificationItem = {
       id: `notif_${Date.now()}`,
-      title: 'Withdrawal Broadcasted',
-      message: `Ksh ${cleanAmount.toLocaleString('en-KE')} has been dispatched to your account (${address}).`,
+      title: 'Withdrawal Successful & Dispatched',
+      message: `Ksh ${cleanAmount.toLocaleString('en-KE')} has been dispatched to your account (${address}). Receipt: ${txHash}.`,
       timestamp: 'Just now',
       read: false,
       type: 'deposit'
@@ -680,7 +680,7 @@ export default function App() {
       timestamp: `${new Date().toISOString().split('T')[0]} ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} EAT`,
       txHash: receiptCode,
       methodOrAddress: `Lipa Na M-PESA Express (${phone})`,
-      note: `M-PESA KES ${cleanKes.toLocaleString()} via Paybill ${contacts.mpesaPaybill} (Receipt: ${receiptCode})`,
+      note: `M-PESA KES ${cleanKes.toLocaleString()} via Till 505031 (Receipt: ${receiptCode})`,
       mpesaReceiptNumber: receiptCode
     };
     setTransactions(prev => [newTx, ...prev]);
@@ -699,11 +699,11 @@ export default function App() {
 
   const handleConfirmMpesaWithdrawal = (usdAmount: number, kesAmount: number, receiptCode: string, phone: string) => {
     const cleanKes = roundCurrency(kesAmount);
-    // 1. Deduct cash
+    // 1. Deduct cash cleanly
     setWallet(prev => ({
       ...prev,
-      totalBalance: roundCurrency(prev.totalBalance - cleanKes),
-      availableCash: roundCurrency(prev.availableCash - cleanKes)
+      totalBalance: Math.max(0, roundCurrency(prev.totalBalance - cleanKes)),
+      availableCash: Math.max(0, roundCurrency(prev.availableCash - cleanKes))
     }));
 
     // 2. Log M-PESA Transaction

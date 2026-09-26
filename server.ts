@@ -28,10 +28,29 @@ interface UserProfileData {
   twoFactorEnabled: boolean;
   walletAddressUSDT: string;
   initialDepositKES?: number;
+  availableBalanceKES?: number;
+  totalDepositedKES?: number;
+  totalWithdrawnKES?: number;
   role?: 'superadmin' | 'admin' | 'user';
   isAdmin?: boolean;
   knownDeviceIds?: string[];
   lastLoginDevice?: string;
+}
+
+interface ServerTransaction {
+  id: string;
+  userId: string;
+  userEmail: string;
+  type: 'DEPOSIT' | 'WITHDRAWAL' | 'INVESTMENT' | 'ROI_PAYOUT' | 'REFERRAL_BONUS';
+  amount: number;
+  currency: string;
+  fee: number;
+  status: 'COMPLETED' | 'PROCESSING' | 'PENDING' | 'FAILED';
+  timestamp: string;
+  txHash: string;
+  methodOrAddress: string;
+  note: string;
+  receiptNumber?: string;
 }
 
 interface StkPushRecord {
@@ -84,12 +103,16 @@ const profilesDB: Map<string, UserProfileData> = new Map([
       twoFactorEnabled: true,
       walletAddressUSDT: 'TXq7j8kP39LmNxR8w92Z0A1m4kVyTe6pQc',
       initialDepositKES: 100000,
+      availableBalanceKES: 100000,
+      totalDepositedKES: 100000,
+      totalWithdrawnKES: 0,
       isAdmin: true,
       role: 'superadmin'
     }
   ]
 ]);
 
+const transactionsDB: Map<string, ServerTransaction> = new Map();
 const stkTransactionsDB: Map<string, StkPushRecord> = new Map();
 const userInvestmentsDB: ServerInvestment[] = [];
 
@@ -243,6 +266,7 @@ app.post('/api/mpesa/stkpush', (req: Request, res: Response) => {
   const formattedPhone = String(phoneNumber || '254712345678').replace(/\D/g, '');
   const checkoutId = `ws_CO_${Date.now()}_${Math.floor(Math.random() * 1000000)}`;
   const merchantRequestId = `REQ_${Date.now()}`;
+  const receiptNumber = `QK${Math.random().toString(36).substring(2, 8).toUpperCase()}90`;
 
   const stkRecord: StkPushRecord = {
     checkoutId,
@@ -251,19 +275,37 @@ app.post('/api/mpesa/stkpush', (req: Request, res: Response) => {
     amountKES: depositAmount,
     tillNumber: '505031',
     status: 'COMPLETED',
-    mpesaReceiptNumber: `QK${Math.random().toString(36).substring(2, 8).toUpperCase()}90`,
+    mpesaReceiptNumber: receiptNumber,
     timestamp: new Date().toISOString(),
     customerName: customerName || 'Investor'
   };
 
   stkTransactionsDB.set(checkoutId, stkRecord);
 
+  // Also log into global transactionsDB
+  const txId = `tx_${Date.now()}`;
+  transactionsDB.set(txId, {
+    id: txId,
+    userId: 'usr_mpesa',
+    userEmail: customerName || 'mpesa_investor',
+    type: 'DEPOSIT',
+    amount: depositAmount,
+    currency: 'KES',
+    fee: 0,
+    status: 'COMPLETED',
+    timestamp: new Date().toISOString(),
+    txHash: receiptNumber,
+    methodOrAddress: `M-PESA Express (${formattedPhone})`,
+    note: `Direct Lipa Na M-PESA Till 505031 deposit`,
+    receiptNumber: receiptNumber
+  });
+
   res.json({
     ResponseCode: '0',
     ResponseDescription: 'Success. Request accepted for processing on Safaricom M-PESA STK Prompt',
     MerchantRequestID: merchantRequestId,
     CheckoutRequestID: checkoutId,
-    CustomerMessage: `Success! Lipa Na M-PESA STK Push of KES ${depositAmount.toLocaleString()} sent to ${formattedPhone}. Enter PIN on your phone to complete.`,
+    CustomerMessage: `Success! Lipa Na M-PESA STK Push of KES ${depositAmount.toLocaleString()} sent to ${formattedPhone}.`,
     receipt: stkRecord.mpesaReceiptNumber,
     till: '505031'
   });
@@ -280,6 +322,147 @@ app.get('/api/mpesa/status/:checkoutId', (req: Request, res: Response) => {
   res.json({
     success: true,
     record
+  });
+});
+
+// ==========================================
+// 3B. LIVE WALLET DEPOSIT & WITHDRAWAL GATEWAY
+// ==========================================
+app.post('/api/wallet/deposit', (req: Request, res: Response) => {
+  const { email, userId, amountKES, currency, method, txHash, customerName, phone } = req.body;
+  const depositAmount = Number(amountKES) || 0;
+
+  if (depositAmount <= 0) {
+    return res.status(400).json({ success: false, error: 'Deposit amount must be greater than zero' });
+  }
+
+  const lookupKey = (email || '').toLowerCase().trim();
+  let userProfile = profilesDB.get(lookupKey);
+
+  if (!userProfile && lookupKey) {
+    userProfile = {
+      id: userId || `usr_${Date.now()}`,
+      fullName: customerName || lookupKey.split('@')[0],
+      username: lookupKey.split('@')[0].replace(/[^a-zA-Z0-9]/g, ''),
+      email: lookupKey,
+      phone: phone || '+254 712 345 678',
+      mpesaNumber: phone || '0712345678',
+      country: 'Kenya',
+      referralCode: Math.floor(100000 + Math.random() * 900000).toString(),
+      joinedDate: new Date().toISOString().split('T')[0],
+      tier: depositAmount >= 200000 ? 'Platinum VIP' : depositAmount >= 100000 ? 'Gold' : depositAmount >= 30000 ? 'Silver' : 'Bronze',
+      kycStatus: 'Verified',
+      avatar: 'luxury',
+      twoFactorEnabled: true,
+      walletAddressUSDT: 'TXq' + Math.random().toString(36).substring(2, 10),
+      initialDepositKES: depositAmount,
+      availableBalanceKES: depositAmount,
+      totalDepositedKES: depositAmount,
+      totalWithdrawnKES: 0
+    };
+    profilesDB.set(lookupKey, userProfile);
+  } else if (userProfile) {
+    userProfile.availableBalanceKES = (userProfile.availableBalanceKES || 0) + depositAmount;
+    userProfile.totalDepositedKES = (userProfile.totalDepositedKES || 0) + depositAmount;
+    userProfile.initialDepositKES = (userProfile.initialDepositKES || 0) + depositAmount;
+    profilesDB.set(lookupKey, userProfile);
+  }
+
+  const receiptNumber = txHash || (currency === 'KES'
+    ? `QK${Math.floor(10000000 + Math.random() * 90000000)}`
+    : `0x${Math.random().toString(16).substring(2, 10)}${Math.random().toString(16).substring(2, 10)}`);
+
+  const txId = `tx_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+  const newTx: ServerTransaction = {
+    id: txId,
+    userId: userProfile?.id || userId || 'usr_client',
+    userEmail: lookupKey || 'investor@quantiqprime.com',
+    type: 'DEPOSIT',
+    amount: depositAmount,
+    currency: currency || 'KES',
+    fee: 0,
+    status: 'COMPLETED',
+    timestamp: new Date().toISOString(),
+    txHash: receiptNumber,
+    methodOrAddress: method || 'Instant Settlement Deposit',
+    note: `Deposit of ${currency || 'KES'} ${depositAmount.toLocaleString()} confirmed and credited`,
+    receiptNumber
+  };
+
+  transactionsDB.set(txId, newTx);
+
+  res.status(200).json({
+    success: true,
+    message: `Deposit of Ksh ${depositAmount.toLocaleString()} confirmed and credited successfully.`,
+    transaction: newTx,
+    availableBalanceKES: userProfile?.availableBalanceKES || depositAmount,
+    receiptNumber
+  });
+});
+
+app.post('/api/wallet/withdraw', (req: Request, res: Response) => {
+  const { email, userId, amountKES, currency, destination, method, phone, customerName } = req.body;
+  const withdrawAmount = Number(amountKES) || 0;
+
+  if (withdrawAmount <= 0) {
+    return res.status(400).json({ success: false, error: 'Withdrawal amount must be greater than zero' });
+  }
+
+  const lookupKey = (email || '').toLowerCase().trim();
+  let userProfile = profilesDB.get(lookupKey);
+
+  if (userProfile) {
+    userProfile.availableBalanceKES = Math.max(0, (userProfile.availableBalanceKES || 0) - withdrawAmount);
+    userProfile.totalWithdrawnKES = (userProfile.totalWithdrawnKES || 0) + withdrawAmount;
+    profilesDB.set(lookupKey, userProfile);
+  }
+
+  const isMpesa = currency === 'KES' || (destination && (destination.startsWith('07') || destination.startsWith('01') || destination.startsWith('254') || destination.startsWith('+254')));
+  const receiptNumber = isMpesa
+    ? `B2C-QK${Math.floor(10000000 + Math.random() * 90000000)}`
+    : `0x${Math.random().toString(16).substring(2, 10)}${Math.random().toString(16).substring(2, 10)}`;
+
+  const txId = `tx_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+  const newTx: ServerTransaction = {
+    id: txId,
+    userId: userProfile?.id || userId || 'usr_client',
+    userEmail: lookupKey || 'investor@quantiqprime.com',
+    type: 'WITHDRAWAL',
+    amount: withdrawAmount,
+    currency: currency || 'KES',
+    fee: 0,
+    status: 'COMPLETED',
+    timestamp: new Date().toISOString(),
+    txHash: receiptNumber,
+    methodOrAddress: destination || method || (isMpesa ? 'M-PESA B2C Payout' : 'Crypto Payout'),
+    note: `Withdrawal of ${currency || 'KES'} ${withdrawAmount.toLocaleString()} dispatched to ${destination || 'personal account'}`,
+    receiptNumber
+  };
+
+  transactionsDB.set(txId, newTx);
+
+  res.status(200).json({
+    success: true,
+    message: `Withdrawal of Ksh ${withdrawAmount.toLocaleString()} processed and dispatched successfully.`,
+    transaction: newTx,
+    availableBalanceKES: userProfile?.availableBalanceKES || 0,
+    receiptNumber
+  });
+});
+
+app.get('/api/wallet/transactions', (req: Request, res: Response) => {
+  const { email } = req.query;
+  let allTx = Array.from(transactionsDB.values());
+
+  if (email && typeof email === 'string') {
+    const lookup = email.toLowerCase().trim();
+    allTx = allTx.filter(t => t.userEmail.toLowerCase() === lookup);
+  }
+
+  res.json({
+    success: true,
+    count: allTx.length,
+    transactions: allTx.reverse()
   });
 });
 
@@ -425,7 +608,8 @@ app.get('/api/admin/database', (req: Request, res: Response) => {
       activeSponsorNode: '#505031 (Dennis Cheruiyot)'
     },
     customers: customersList,
-    mpesaTransactions: mpesaRecords
+    mpesaTransactions: mpesaRecords,
+    allTransactions: Array.from(transactionsDB.values()).reverse()
   });
 });
 
